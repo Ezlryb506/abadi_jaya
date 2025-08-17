@@ -1,169 +1,36 @@
-# Website Bengkel Las Abadi Jaya
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-Website resmi untuk Bengkel Las Abadi Jaya yang menyediakan layanan pembuatan produk besi dan stainless steel custom.
+## Getting Started
 
-## 🚀 Fitur Utama
+First, run the development server:
 
-- **Landing Page** - Presentasi bengkel dan layanan
-- **Katalog Produk** - Kategori produk dengan foto dan deskripsi
-- **Form Pesanan** - Sistem pemesanan online dengan redirect WhatsApp
-- **Admin Dashboard** - Manajemen transaksi, customer, dan tracking progress
-- **Tracking Progress** - Monitoring status pengerjaan proyek real-time
-
-## 🛠️ Teknologi yang Digunakan
-
-- **Frontend**: Next.js 14, TypeScript, Tailwind CSS
-- **Backend**: Supabase (Database, Authentication, Storage)
-- **Deployment**: Vercel
-- **Version Control**: Git
-
-## 📋 Kategori Produk
-
-- Pagar (Besi, Stainless, Minimalis)
-- Kanopi (Carport, Teras, Garasi)
-- Railing Tangga
-- Pintu Besi
-- Jendela
-- Teralis
-- Tangga Putar
-- Produk Minimalis
-- Produk Stainless Premium
-
-## 🗄️ Database Schema
-
-### Tabel Utama:
-- `customers` - Data pelanggan
-- `product_categories` - Kategori produk
-- `transactions` - Transaksi/pesanan
-- `payment_history` - Riwayat pembayaran
-- `project_updates` - Update progress proyek
-
-## 🚦 Status Proyek
-
-- [x] Setup proyek Next.js
-- [x] Install Supabase
-- [x] Setup database schema
-- [x] Setup Git repository
-- [ ] Konfigurasi environment variables
-- [ ] Setup Supabase project
-- [ ] Implementasi UI components
-- [ ] Landing page
-- [ ] Katalog produk
-- [ ] Form pesanan
-- [ ] Admin dashboard
-
-## 📁 Struktur Proyek
-
-```
-abadi_jaya/
-├── src/
-│   ├── app/           # Next.js app router
-│   ├── components/    # React components
-│   ├── lib/          # Utilities & services
-│   └── hooks/        # Custom hooks
-├── public/            # Static assets
-├── dokumen/          # Dokumentasi proyek
-└── package.json
-```
-
-## 🚀 Cara Menjalankan
-
-### Prerequisites
-- Node.js 18+ 
-- npm atau yarn
-- Akun Supabase
-
-### Installation
 ```bash
-# Clone repository
-git clone <repository-url>
-cd abadi_jaya
-
-# Install dependencies
-npm install
-
-# Setup environment variables
-cp .env.example .env.local
-# Edit .env.local dengan credentials Supabase
-
-# Run development server
 npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
 ```
 
-### Environment Variables
-```env
-NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-```
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-## 📚 Dokumentasi
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-- [Database Schema](dokumen/01_database_schema.sql)
-- [Database Queries](dokumen/02_database_queries.sql)
-- [Supabase Setup](dokumen/03_supabase_setup.md)
-- [Project Structure](dokumen/04_project_structure.md)
-- [Development Roadmap](dokumen/05_development_roadmap.md)
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-## 🔧 Development
+## Learn More
 
-### Git Workflow
-```bash
-# Buat branch baru untuk fitur
-git checkout -b feature/nama-fitur
+To learn more about Next.js, take a look at the following resources:
 
-# Commit perubahan
-git add .
-git commit -m "feat: tambah fitur nama-fitur"
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-# Push ke remote
-git push origin feature/nama-fitur
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-# Merge ke main setelah review
-git checkout main
-git merge feature/nama-fitur
-```
+## Deploy on Vercel
 
-### Commit Convention
-- `feat:` - Fitur baru
-- `fix:` - Bug fix
-- `docs:` - Dokumentasi
-- `style:` - Formatting, styling
-- `refactor:` - Refactoring code
-- `test:` - Testing
-- `chore:` - Maintenance
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
-## 📱 Screenshots
-
-*Screenshots akan ditambahkan setelah implementasi UI*
-
-## 🤝 Kontribusi
-
-1. Fork repository
-2. Buat feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit perubahan (`git commit -m 'Add some AmazingFeature'`)
-4. Push ke branch (`git push origin feature/AmazingFeature`)
-5. Buat Pull Request
-
-## 📄 License
-
-Distributed under the MIT License. See `LICENSE` for more information.
-
-## 📞 Kontak
-
-**Bengkel Las Abadi Jaya**
-- Website: [URL Website]
-- WhatsApp: [Nomor WhatsApp]
-- Email: [Email]
-- Alamat: [Alamat Bengkel]
-
-## 🙏 Acknowledgments
-
-- Next.js team untuk framework yang luar biasa
-- Supabase team untuk backend service
-- Tailwind CSS untuk styling framework
-- Komunitas developer Indonesia
-
----
-
-**Dibuat dengan ❤️ untuk Bengkel Las Abadi Jaya**
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
