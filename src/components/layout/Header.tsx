@@ -8,6 +8,10 @@ export default function Header() {
 
   const isActive = (href: string) => {
     if (href === '/contact') return pathname === '/contact';
+    if (href === '/catalog') return pathname === '/catalog';
+    if (href === '/login') return pathname === '/login';
+    if (href === '/customer-login') return pathname === '/customer-login';
+    if (href === '/gallery') return pathname === '/gallery';
     return pathname === '/' && href.startsWith('#');
   };
 
@@ -22,25 +26,26 @@ export default function Header() {
             </div>
             <span className="text-2xl font-bold text-gray-800 group-hover:text-orange-600 transition-colors">Abadi Jaya</span>
           </Link>
+          
           <nav className="hidden md:flex space-x-8">
-            <a
-              href="#beranda"
-              className={`transition-colors ${isActive('#beranda') ? 'text-orange-600 font-bold' : 'text-gray-600 hover:text-orange-500'}`}
+            <Link
+              href="/"
+              className={`transition-colors ${isActive('/') ? 'text-orange-600 font-bold' : 'text-gray-600 hover:text-orange-500'}`}
             >
               Beranda
-            </a>
-            <a
-              href="#layanan"
-              className={`transition-colors ${isActive('#layanan') ? 'text-orange-600 font-bold' : 'text-gray-600 hover:text-orange-500'}`}
+            </Link>
+            <Link
+              href="/catalog"
+              className={`transition-colors ${isActive('/catalog') ? 'text-orange-600 font-bold underline underline-offset-4' : 'text-gray-600 hover:text-orange-500'}`}
             >
-              Layanan
-            </a>
-            <a
-              href="#galeri"
-              className={`transition-colors ${isActive('#galeri') ? 'text-orange-600 font-bold' : 'text-gray-600 hover:text-orange-500'}`}
+              Katalog
+            </Link>
+            <Link
+              href="/gallery"
+              className={`transition-colors ${isActive('/gallery') ? 'text-orange-600 font-bold underline underline-offset-4' : 'text-gray-600 hover:text-orange-500'}`}
             >
               Galeri
-            </a>
+            </Link>
             <Link
               href="/contact"
               className={`transition-colors ${isActive('/contact') ? 'text-orange-600 font-bold underline underline-offset-4' : 'text-gray-600 hover:text-orange-500'}`}
@@ -48,12 +53,40 @@ export default function Header() {
               Kontak
             </Link>
           </nav>
-          <button 
-            className="bg-orange-500 text-white px-6 py-2 rounded-lg hover:bg-orange-600 transition-colors transform hover:scale-105 shadow-lg"
-            onClick={() => window.open('https://wa.me/6289653754317?text=Halo! Saya ingin konsultasi tentang jasa las', '_blank')}
-          >
-            Konsultasi
-          </button>
+          
+          <div className="flex items-center space-x-4">
+            {/* Customer Login Button */}
+            <Link
+              href="/customer-login"
+              className={`px-4 py-2 rounded-lg font-medium transition-all transform hover:scale-105 ${
+                isActive('/customer-login') 
+                  ? 'bg-blue-600 text-white shadow-lg' 
+                  : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+              }`}
+            >
+              👤 Customer Login
+            </Link>
+            
+            {/* Admin Login Button */}
+            <Link
+              href="/login"
+              className={`px-4 py-2 rounded-lg font-medium transition-all transform hover:scale-105 ${
+                isActive('/login') 
+                  ? 'bg-orange-600 text-white shadow-lg' 
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              🔐 Admin Login
+            </Link>
+            
+            {/* Konsultasi Button */}
+            <button
+              className="bg-orange-500 text-white px-6 py-2 rounded-lg hover:bg-orange-600 transition-colors transform hover:scale-105 shadow-lg"
+              onClick={() => window.open('https://wa.me/6289653754317?text=Halo! Saya ingin konsultasi tentang jasa las', '_blank')}
+            >
+              Konsultasi
+            </button>
+          </div>
         </div>
       </div>
     </header>

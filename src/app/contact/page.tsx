@@ -5,6 +5,9 @@ import { useState } from 'react';
 export default function ContactPage() {
   const [form, setForm] = useState({ name: '', email: '', message: '' });
   const [submitted, setSubmitted] = useState(false);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -15,111 +18,387 @@ export default function ContactPage() {
     setSubmitted(true);
   };
 
+  // Fungsi untuk mendapatkan lokasi pengguna
+  const getUserLocation = () => {
+    setIsLoadingLocation(true);
+    setLocationError(null);
+
+    if (!navigator.geolocation) {
+      setLocationError('Geolokasi tidak didukung di browser ini');
+      setIsLoadingLocation(false);
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        setUserLocation({ lat: latitude, lng: longitude });
+        setIsLoadingLocation(false);
+        
+        // Otomatis buka Google Maps dengan rute dari lokasi pengguna
+        openRouteFromUserLocation(latitude, longitude);
+      },
+      (error) => {
+        setIsLoadingLocation(false);
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            setLocationError('Akses lokasi ditolak. Silakan izinkan akses lokasi di browser Anda.');
+            break;
+          case error.POSITION_UNAVAILABLE:
+            setLocationError('Informasi lokasi tidak tersedia');
+            break;
+          case error.TIMEOUT:
+            setLocationError('Waktu permintaan lokasi habis');
+            break;
+          default:
+            setLocationError('Terjadi kesalahan saat mendapatkan lokasi');
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 60000
+      }
+    );
+  };
+
+  // Fungsi untuk membuka rute dari lokasi pengguna ke bengkel
+  const openRouteFromUserLocation = (userLat: number, userLng: number) => {
+    // Koordinat bengkel las Abadi Jaya
+    const bengkelLat = -6.254683;
+    const bengkelLng = 107.085045;
+    
+    // URL Google Maps dengan rute dari lokasi pengguna ke bengkel
+    const routeUrl = `https://www.google.com/maps/dir/${userLat},${userLng}/${bengkelLat},${bengkelLng}`;
+    window.open(routeUrl, '_blank');
+  };
+
+  // Fungsi untuk membuka Google Maps dengan alamat bengkel
+  const openGoogleMaps = () => {
+    const address = "Gg. Bunga, Wanasari, Kec. Cibitung, Kabupaten Bekasi, Jawa Barat 17520";
+    const encodedAddress = encodeURIComponent(address);
+    window.open(`https://www.google.com/maps/search/${encodedAddress}`, '_blank');
+  };
+
+  // Fungsi untuk membuka link Google Maps yang sudah disediakan
+  const openBengkelLocation = () => {
+    window.open('https://maps.app.goo.gl/B8xNUCjmEC7kEpaS8', '_blank');
+  };
+
+  const openWaze = () => {
+    const address = "Gg. Bunga, Wanasari, Kec. Cibitung, Kabupaten Bekasi, Jawa Barat 17520";
+    const encodedAddress = encodeURIComponent(address);
+    window.open(`https://waze.com/ul?q=${encodedAddress}`, '_blank');
+  };
+
+  const openAppleMaps = () => {
+    const address = "Gg. Bunga, Wanasari, Kec. Cibitung, Kabupaten Bekasi, Jawa Barat 17520";
+    const encodedAddress = encodeURIComponent(address);
+    window.open(`https://maps.apple.com/?q=${encodedAddress}`, '_blank');
+  };
+
   return (
-    <section className="min-h-[70vh] flex items-center justify-center bg-gradient-to-br from-orange-50 to-white py-16 px-4">
-      <div className="w-full max-w-5xl flex flex-col md:flex-row gap-8">
-        {/* Kontainer Form */}
-        <div className="flex-1 bg-white rounded-xl shadow-xl p-8 flex flex-col justify-center">
-          <h1 className="text-3xl font-bold text-orange-600 mb-4 text-center">Kontak Bengkel Las Abadi Jaya</h1>
-          <p className="text-gray-600 mb-8 text-center">
-            Silakan hubungi kami untuk konsultasi, pemesanan, atau pertanyaan lainnya.
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-orange-50 to-white">
+      {/* Hero Section */}
+      <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white py-20">
+        <div className="max-w-6xl mx-auto px-4 text-center">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4">
+            Hubungi Kami
+          </h1>
+          <p className="text-xl text-orange-100 max-w-2xl mx-auto">
+            Siap membantu mewujudkan proyek las dan fabrikasi besi impian Anda
           </p>
-          <div className="space-y-4 mb-8">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">📞</span>
-              <a
-                href="https://wa.me/6289653754317?text=Halo! Saya ingin konsultasi tentang jasa las"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-orange-600 hover:underline font-semibold"
-              >
-                0896-5375-4317 (WhatsApp)
-              </a>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">✉️</span>
-              <a href="mailto:info@abadi-jaya.com"
-                className="text-orange-600 hover:underline font-semibold">
-                info@abadi-jaya.com
-              </a>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">📍</span>
-              <a className="text-orange-600 font-semibold">
-                Jl. Bosih Raya, Cibitung, Wanasari, Gang Bunga, RT/RW 005/013, No 4
-             </a>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">🕒</span>
-              <a className="text-orange-600 font-semibold">
-                Senin - Sabtu: 08:00 - 17:00
-              </a>
-            </div>
-          </div>
-
-          {/* Form Kontak */}
-          <div className="mt-8">
-            <h2 className="text-xl font-semibold mb-4 text-orange-600">Form Kontak</h2>
-            {submitted ? (
-              <div className="bg-green-100 text-green-700 p-4 rounded-lg text-center">
-                Terima kasih! Pesan Anda sudah terkirim.
-              </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <input
-                  type="text"
-                  name="name"
-                  placeholder="Nama Anda"
-                  value={form.name}
-                  onChange={handleChange}
-                  required
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-orange-400"
-                />
-                <input
-                  type="email"
-                  name="email"
-                  placeholder="Email Anda"
-                  value={form.email}
-                  onChange={handleChange}
-                  required
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-orange-400"
-                />
-                <label htmlFor="message" className="block text-gray-700 font-medium">Pesan</label>
-                <textarea
-                  id="message"
-                  name="message"
-                  placeholder="Pesan Anda"
-                  value={form.message}
-                  onChange={handleChange}
-                  required
-                  rows={4}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-orange-400"
-                />
-                <button
-                  type="submit"
-                  className="w-full bg-orange-500 text-white py-2 rounded-lg font-semibold hover:bg-orange-600 transition-colors"
-                >
-                  Kirim Pesan
-                </button>
-              </form>
-            )}
-          </div>
-        </div>
-
-        {/* Kontainer Google Maps */}
-        <div className="flex-1 bg-white rounded-xl shadow-xl p-0 flex flex-col justify-center overflow-hidden min-h-[500px]">
-          <iframe
-            title="Lokasi Bengkel Las Abadi Jaya"
-            src="https://www.google.com/maps?q=-6.254683, 107.085045&z=15&output=embed"
-            width="100%"
-            height="100%"
-            className="w-full h-full min-h-[350px] md:min-h-[500px] rounded-xl border-0"
-            allowFullScreen={true}
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-          ></iframe>
         </div>
       </div>
-    </section>
+
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 py-16 -mt-10 relative z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          
+          {/* Contact Info Cards - Left Sidebar */}
+          <div className="lg:col-span-1 space-y-6">
+            {/* Phone Card */}
+            <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
+                  <span className="text-2xl">📞</span>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-800">Telepon & WhatsApp</h3>
+                  <a
+                    href="https://wa.me/6289653754317?text=Halo! Saya ingin konsultasi tentang jasa las"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-orange-600 hover:text-orange-700 font-medium text-lg"
+                  >
+                    0896-5375-4317
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            {/* Email Card */}
+            <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                  <span className="text-2xl">✉️</span>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-800">Email</h3>
+                  <a
+                    href="mailto:info@abadi-jaya.com"
+                    className="text-blue-600 hover:text-blue-700 font-medium"
+                  >
+                    info@abadi-jaya.com
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            {/* Enhanced Address Card dengan Smart Route Finding */}
+            <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+              <div className="flex items-center space-x-4 mb-4">
+                <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                  <span className="text-2xl">📍</span>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-800">Alamat</h3>
+                  <p className="text-gray-600">Gg. Bunga, Wanasari, Kec. Cibitung, Kabupaten Bekasi, Jawa Barat 17520</p>
+                </div>
+              </div>
+              
+              {/* Smart Route Finding Section */}
+              <div className="space-y-4">
+                <h4 className="text-sm font-medium text-gray-700 mb-3">Pencarian Rute Cerdas:</h4>
+                
+                {/* Auto Route Button */}
+                <button
+                  onClick={getUserLocation}
+                  disabled={isLoadingLocation}
+                  className={`w-full flex items-center justify-center gap-2 py-3 px-4 rounded-lg text-sm font-medium transition-all transform hover:scale-105 shadow-md hover:shadow-lg ${
+                    isLoadingLocation
+                      ? 'bg-gray-400 text-white cursor-not-allowed'
+                      : 'bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700'
+                  }`}
+                >
+                  {isLoadingLocation ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Mendeteksi Lokasi...
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-lg">🚀</span>
+                      Rute Otomatis dari Lokasi Saya
+                    </>
+                  )}
+                </button>
+
+                {/* Location Status */}
+                {userLocation && (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-center">
+                    <p className="text-green-700 text-sm font-medium">✅ Lokasi terdeteksi!</p>
+                    <p className="text-green-600 text-xs">Rute sedang dibuka di Google Maps</p>
+                  </div>
+                )}
+
+                {locationError && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-center">
+                    <p className="text-red-700 text-sm font-medium">❌ {locationError}</p>
+                  </div>
+                )}
+
+                {/* Manual Route Options */}
+                <div className="pt-2 border-t border-gray-200">
+                  <h5 className="text-xs font-medium text-gray-600 mb-2">Atau pilih platform:</h5>
+                  <div className="grid grid-cols-1 gap-2">
+                    <button
+                      onClick={openBengkelLocation}
+                      className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-red-500 to-red-600 text-white py-2 px-4 rounded-lg text-sm font-medium hover:from-red-600 hover:to-red-700 transition-all transform hover:scale-105 shadow-md hover:shadow-lg"
+                    >
+                      <span className="text-lg">📍</span>
+                      Lihat Lokasi Bengkel
+                    </button>
+                    <button
+                      onClick={openGoogleMaps}
+                      className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-2 px-4 rounded-lg text-sm font-medium hover:from-blue-600 hover:to-blue-700 transition-all transform hover:scale-105 shadow-md hover:shadow-lg"
+                    >
+                      <span className="text-lg">🗺️</span>
+                      Google Maps
+                    </button>
+                    <button
+                      onClick={openWaze}
+                      className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-blue-400 to-cyan-500 text-white py-2 px-4 rounded-lg text-sm font-medium hover:from-blue-500 hover:to-cyan-600 transition-all transform hover:scale-105 shadow-md hover:shadow-lg"
+                    >
+                      <span className="text-lg">🧭</span>
+                      Waze
+                    </button>
+                    <button
+                      onClick={openAppleMaps}
+                      className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-gray-600 to-gray-700 text-white py-2 px-4 rounded-lg text-sm font-medium hover:from-gray-700 hover:to-gray-800 transition-all transform hover:scale-105 shadow-md hover:shadow-lg"
+                    >
+                      <span className="text-lg">🍎</span>
+                      Apple Maps
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Hours Card */}
+            <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                  <span className="text-2xl">🕒</span>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-800">Jam Operasional</h3>
+                  <p className="text-gray-600">Senin - Sabtu</p>
+                  <p className="text-gray-600 font-medium">08:00 - 17:00</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Form & Map - Right Side */}
+          <div className="lg:col-span-2 space-y-8">
+            
+            {/* Contact Form Card */}
+            <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
+              <div className="text-center mb-8">
+                <h2 className="text-2xl font-bold text-gray-800 mb-2">Kirim Pesan</h2>
+                <p className="text-gray-600">Kami akan segera menghubungi Anda</p>
+              </div>
+
+              {submitted ? (
+                <div className="bg-green-50 border border-green-200 rounded-xl p-6 text-center">
+                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span className="text-2xl text-green-600">✅</span>
+                  </div>
+                  <h3 className="text-lg font-semibold text-green-800 mb-2">Pesan Terkirim!</h3>
+                  <p className="text-green-700">Terima kasih atas pesan Anda. Kami akan segera menghubungi Anda.</p>
+                </div>
+              ) : (
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                        Nama Lengkap
+                      </label>
+                      <input
+                        id="name"
+                        type="text"
+                        name="name"
+                        placeholder="Masukkan nama lengkap"
+                        value={form.name}
+                        onChange={handleChange}
+                        required
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                        Email
+                      </label>
+                      <input
+                        id="email"
+                        type="email"
+                        name="email"
+                        placeholder="Masukkan email"
+                        value={form.email}
+                        onChange={handleChange}
+                        required
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
+                      Pesan
+                    </label>
+                    <textarea
+                      id="message"
+                      name="message"
+                      placeholder="Tulis pesan Anda di sini..."
+                      value={form.message}
+                      onChange={handleChange}
+                      required
+                      rows={5}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all resize-none"
+                    />
+                  </div>
+                  
+                  <button
+                    type="submit"
+                    className="w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white py-4 rounded-xl font-semibold text-lg hover:from-orange-600 hover:to-orange-700 transition-all transform hover:scale-[1.02] shadow-lg hover:shadow-xl"
+                  >
+                    Kirim Pesan
+                  </button>
+                </form>
+              )}
+            </div>
+
+            {/* Enhanced Map Card dengan Smart Route Finding */}
+            <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
+              <div className="p-6 bg-gray-50 border-b border-gray-200">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-800">Lokasi Bengkel</h3>
+                    <p className="text-gray-600 text-sm">Gg. Bunga, Wanasari, Kec. Cibitung, Kabupaten Bekasi, Jawa Barat 17520</p>
+                  </div>
+                  
+                  {/* Smart Route Finding Button */}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={getUserLocation}
+                      disabled={isLoadingLocation}
+                      className={`flex items-center justify-center gap-2 py-2 px-4 rounded-lg text-sm font-medium transition-all transform hover:scale-105 shadow-md hover:shadow-lg ${
+                        isLoadingLocation
+                          ? 'bg-gray-400 text-white cursor-not-allowed'
+                          : 'bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700'
+                      }`}
+                    >
+                      {isLoadingLocation ? (
+                        <>
+                          <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin"></div>
+                          Deteksi...
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-sm">🚀</span>
+                          Rute Otomatis
+                        </>
+                      )}
+                    </button>
+                    
+                    {/* <button
+                      onClick={openBengkelLocation}
+                      className="flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white py-2 px-4 rounded-lg text-sm font-medium hover:from-orange-600 hover:to-orange-700 transition-all transform hover:scale-105 shadow-md hover:shadow-lg whitespace-nowrap"
+                    >
+                      <span className="text-sm">📍</span>
+                      Lihat Lokasi
+                    </button> */}
+                  </div>
+                </div>
+              </div>
+              <div className="h-80 md:h-96">
+                <iframe
+                  title="Lokasi Bengkel Las Abadi Jaya"
+                  src="https://www.google.com/maps?q=-6.254683,107.085045&z=15&output=embed"
+                  width="100%"
+                  height="100%"
+                  className="w-full h-full border-0"
+                  allowFullScreen={true}
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                ></iframe>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

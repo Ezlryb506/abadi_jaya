@@ -87,7 +87,7 @@ export default function RootLayout({
                 <div className="space-y-2 text-gray-300">
                   <div className="flex items-center space-x-2">
                     <span>📍</span>
-                    <span>Jl. Contoh No. 123, Jakarta</span>
+                    <span>Gg. Bunga, Wanasari, Kec. Cibitung, Kabupaten Bekasi, Jawa Barat 17520</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <span>📞</span>
