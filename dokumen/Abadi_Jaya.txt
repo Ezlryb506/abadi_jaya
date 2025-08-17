@@ -1,0 +1,48 @@
+Project Website Bengkel Las yang berisi:
+- Landing Page (Nama bengkel Abadi Jaya), konten landing page lainnya
+- Katalog produk dari database (memiliki foto) jenis produk antaralain : pagar, kanopi, railing tangga, pintu besi, jendela, teralis, tangga putar, minimalis, stainless, pagar bekas yang masih layak
+- Konsultasi dengan WA terkait pemesanan, perbaikan, perombakan
+- Manajemen Database / Dashboard admin (Produk, User, Transaksi, status pemesanan), mungkin akan dikembangkan hingga review user
+- Kontak & Alamat Bengkel
+- halaman login
+
+Tujuan lain:
+- Menambah pengalaman saya sebagai calon fullstack web dev
+- Mempelajari Git / Version Control
+- Menambah wawasan programing/tech framework
+- Mempelajari cara optimasi pembuatan website secara keseluruhan
+- Mempelajari langkah kerja software architect
+
+Menggunakan:
+- Fullstack Next.js
+- supabase
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+1. Efisiensi query database
+2. SEO
+3. Skalabilitas
+4. Code easy to maintain
+5. struktur file/code sesuai framework
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+1. Analisis Databasenya -> bagaimana interaksi databasenya
+2. Sistem Dashboard Adminnya -> apakah memenuhi kebutuhan owner
+3. 
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Pertanyaan untuk Analisis Lebih Lanjut:
+1. Apakah bengkel ini menerima pesanan online atau hanya konsultasi via WA?
+2. Apakah ada sistem estimasi harga otomatis atau semua via konsultasi manual?
+3. Apakah ada produk "ready stock" atau semua custom order?
+4. Bagaimana dengan sistem pembayaran? DP + pelunasan atau full payment?
+5. Apakah ada sistem tracking progress pengerjaan untuk customer?
+
+ini yang ada di fikiran saya, tolong analisis kembali:
+1. sepertinya setelah customer memesan produk/jasa -> catat ke transaksi database dengan statusnya (untuk kepentingan tracking progress) -> alihkan ke percakapan dengan whatsapp
+2. saya tidak tahu bagaimana dan seberapa sulit penerapan sistem estimasi harga otomatisnya, jadi kemungkinan besar konsultasi via whatsapp
+3. semua custom order
+4. untuk pembayaran bisa dengan DP, Cicil, atau full payment
+5. ya sepertinya bagus jika ada sistem tracking progress dan tracking transaksi
