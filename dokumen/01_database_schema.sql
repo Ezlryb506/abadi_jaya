@@ -80,6 +80,12 @@ CREATE TABLE project_updates (
     created_at TIMESTAMP DEFAULT NOW()
 );
 
+-- Tabel untuk menyimpan user admin
+CREATE TABLE admin_users (
+    auth_user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
 -- =====================================================
 -- TRIGGERS DAN FUNCTIONS
 -- =====================================================
@@ -203,6 +209,70 @@ CREATE POLICY customers_insert_own ON public.customers
 -- Policy untuk UPDATE (update data sendiri)
 CREATE POLICY customers_update_own ON public.customers
     FOR UPDATE USING (auth.uid() = auth_user_id);
+
+-- Policy tambahan: Admin bisa melihat semua data customer
+CREATE POLICY "Admin can view all customers"
+    ON public.customers
+    FOR SELECT
+    USING (is_admin());
+
+-- =====================================================
+-- RLS (ROW LEVEL SECURITY) UNTUK TRANSACTIONS
+-- =====================================================
+
+-- Aktifkan RLS untuk tabel transactions
+ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;
+
+-- Function untuk memeriksa apakah user adalah admin dengan mengecek tabel admin_users
+CREATE OR REPLACE FUNCTION is_admin()
+RETURNS BOOLEAN AS $$
+BEGIN
+    RETURN EXISTS (SELECT 1 FROM public.admin_users WHERE auth_user_id = auth.uid());
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Policy 1: Admin memiliki akses penuh ke semua transaksi
+CREATE POLICY "Admin full access on transactions"
+    ON public.transactions
+    FOR ALL
+    USING (is_admin())
+    WITH CHECK (is_admin());
+
+-- Policy 2: User hanya bisa melihat transaksi miliknya
+CREATE POLICY "User can see own transactions"
+    ON public.transactions
+    FOR SELECT
+    USING (
+        (SELECT auth_user_id FROM public.customers WHERE id = customer_id) = auth.uid()
+    );
+
+-- Policy 3: User hanya bisa membuat transaksi untuk dirinya sendiri
+CREATE POLICY "User can insert own transactions"
+    ON public.transactions
+    FOR INSERT
+    WITH CHECK (
+        (SELECT auth_user_id FROM public.customers WHERE id = customer_id) = auth.uid()
+    );
+
+-- Policy 4: User hanya bisa mengupdate transaksi miliknya
+CREATE POLICY "User can update own transactions"
+    ON public.transactions
+    FOR UPDATE
+    USING (
+        (SELECT auth_user_id FROM public.customers WHERE id = customer_id) = auth.uid()
+    )
+    WITH CHECK (
+        (SELECT auth_user_id FROM public.customers WHERE id = customer_id) = auth.uid()
+    );
+
+-- Policy 5: User hanya bisa menghapus transaksi miliknya
+CREATE POLICY "User can delete own transactions"
+    ON public.transactions
+    FOR DELETE
+    USING (
+        (SELECT auth_user_id FROM public.customers WHERE id = customer_id) = auth.uid()
+    );
+
 
 -- =====================================================
 -- SAMPLE DATA UNTUK TESTING

@@ -63,7 +63,7 @@ export default function LoginPage() {
         return;
       }
 
-      router.replace('/admin');
+      router.replace('/admin-dashboard');
     } finally {
       setIsLoading(false);
     }

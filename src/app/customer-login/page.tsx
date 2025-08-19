@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabaseClient';
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function CustomerLoginPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -19,6 +19,7 @@ export default function CustomerLoginPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     (async () => {
@@ -62,7 +63,8 @@ export default function CustomerLoginPage() {
         }
 
         setSuccess('Login berhasil!');
-        router.replace("/user-dashboard");
+        const redirectUrl = searchParams.get('redirect') || '/user-dashboard';
+        router.replace(redirectUrl);
       } else {
         if (!formData.name || !formData.email || !formData.password || !formData.phone) {
           setError('Semua field harus diisi');
@@ -173,6 +175,7 @@ export default function CustomerLoginPage() {
                     value={formData.name}
                     onChange={handleChange}
                     className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all pl-10 bg-white text-gray-900 placeholder-gray-500 font-medium"
+                    autoComplete="name"
                     placeholder="Masukkan nama lengkap"
                     style={{
                       color: '#111827',
@@ -201,6 +204,7 @@ export default function CustomerLoginPage() {
                     value={formData.phone}
                     onChange={handleChange}
                     className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all pl-10 bg-white text-gray-900 placeholder-gray-500 font-medium"
+                    autoComplete="tel"
                     placeholder="Masukkan nomor telepon"
                     style={{
                       color: '#111827',
@@ -228,6 +232,7 @@ export default function CustomerLoginPage() {
                     value={formData.address}
                     onChange={handleChange}
                     className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all pl-10 bg-white text-gray-900 placeholder-gray-500 font-medium resize-none"
+                    autoComplete="street-address"
                     placeholder="Masukkan alamat lengkap"
                     style={{
                       color: '#111827',
@@ -255,6 +260,7 @@ export default function CustomerLoginPage() {
                   value={formData.email}
                   onChange={handleChange}
                   className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all pl-10 bg-white text-gray-900 placeholder-gray-500 font-medium"
+                  autoComplete="email"
                   placeholder="Masukkan email"
                   style={{
                     color: '#111827',
@@ -281,6 +287,7 @@ export default function CustomerLoginPage() {
                   value={formData.password}
                   onChange={handleChange}
                   className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all pl-10 pr-12 bg-white text-gray-900 placeholder-gray-500 font-medium"
+                  autoComplete={isLogin ? 'current-password' : 'new-password'}
                   placeholder="Masukkan password"
                   style={{
                     color: '#111827',
@@ -294,6 +301,8 @@ export default function CustomerLoginPage() {
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  aria-pressed={showPassword}
+                  aria-label={showPassword ? 'Sembunyikan password' : 'Tampilkan password'}
                 >
                   {showPassword ? '🙈' : '👁️'}
                 </button>
@@ -302,7 +311,7 @@ export default function CustomerLoginPage() {
 
             {/* Error Message */}
             {error && (
-              <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+              <div className="bg-red-50 border border-red-200 rounded-xl p-4" role="alert" aria-live="polite">
                 <div className="flex items-center">
                   <span className="text-red-500 mr-2">❌</span>
                   <p className="text-red-700 text-sm font-medium">{error}</p>
@@ -312,7 +321,7 @@ export default function CustomerLoginPage() {
 
             {/* Success Message */}
             {success && (
-              <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+              <div className="bg-green-50 border border-green-200 rounded-xl p-4" role="alert" aria-live="polite">
                 <div className="flex items-center">
                   <span className="text-green-500 mr-2">✅</span>
                   <p className="text-green-700 text-sm font-medium">{success}</p>

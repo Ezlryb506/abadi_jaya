@@ -10,6 +10,11 @@ export default function Header() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const init = async () => {
@@ -54,6 +59,8 @@ export default function Header() {
     if (href === '/gallery') return pathname === '/gallery';
     return false;
   };
+
+  if (!mounted) return null;
 
   return (
     <header className="bg-white shadow-lg sticky top-0 z-50">
@@ -141,7 +148,7 @@ export default function Header() {
             {userEmail && (
               <div className="flex items-center gap-2">
                 {isAdmin && (
-                  <Link href="/admin" className="px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium border-2 border-gray-200 shadow-md">Dashboard</Link>
+                  <Link href="/admin-dashboard" className="px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium border-2 border-gray-200 shadow-md">Dashboard</Link>
                 )}
               </div>
             )}
@@ -159,12 +166,7 @@ export default function Header() {
               </Link>
             )}
 
-            <button
-              className="bg-orange-500 text-white px-6 py-2 rounded-lg hover:bg-orange-600 transition-colors transform hover:scale-105 shadow-lg border-2 border-orange-500 hover:border-orange-600 cursor-pointer"
-              onClick={() => window.open('https://wa.me/6289653754317?text=Halo! Saya ingin konsultasi tentang jasa las', '_blank')}
-            >
-              Konsultasi
-            </button>
+            {/* Konsultasi button removed on desktop to prevent overlap */}
           </div>
 
           {/* Mobile Menu Button */}
@@ -187,10 +189,10 @@ export default function Header() {
         {/* Mobile Navigation Menu */}
         {mobileMenuOpen && (
           <div className="lg:hidden border-t border-gray-200 py-4">
-            <nav className="flex flex-col space-y-3 mb-4">
+            <nav className="flex flex-col items-center space-y-3 mb-4">
               <Link
                 href="/"
-                className={`px-3 py-2 rounded-lg font-medium transition-colors border-2 ${
+                className={`inline-flex w-11/12 max-w-xs justify-center text-center px-3 py-2 rounded-lg font-medium transition-colors border-2 ${
                   isActive('/') 
                     ? 'bg-orange-100 text-orange-700 border-orange-200' 
                     : 'text-gray-600 hover:bg-orange-50 border-transparent hover:border-orange-100'
@@ -201,7 +203,7 @@ export default function Header() {
               </Link>
               <Link
                 href="/catalog"
-                className={`px-3 py-2 rounded-lg font-medium transition-colors border-2 ${
+                className={`inline-flex w-11/12 max-w-xs justify-center text-center px-3 py-2 rounded-lg font-medium transition-colors border-2 ${
                   isActive('/catalog') 
                     ? 'bg-orange-100 text-orange-700 border-orange-200' 
                     : 'text-gray-600 hover:bg-orange-50 border-transparent hover:border-orange-100'
@@ -212,7 +214,7 @@ export default function Header() {
               </Link>
               <Link
                 href="/gallery"
-                className={`px-3 py-2 rounded-lg font-medium transition-colors border-2 ${
+                className={`inline-flex w-11/12 max-w-xs justify-center text-center px-3 py-2 rounded-lg font-medium transition-colors border-2 ${
                   isActive('/gallery') 
                     ? 'bg-orange-100 text-orange-700 border-orange-200' 
                     : 'text-gray-600 hover:bg-orange-50 border-transparent hover:border-orange-100'
@@ -223,7 +225,7 @@ export default function Header() {
               </Link>
               <Link
                 href="/contact"
-                className={`px-3 py-2 rounded-lg font-medium transition-colors border-2 ${
+                className={`inline-flex w-11/12 max-w-xs justify-center text-center px-3 py-2 rounded-lg font-medium transition-colors border-2 ${
                   isActive('/contact') 
                     ? 'bg-orange-100 text-orange-700 border-orange-200' 
                     : 'text-gray-600 hover:bg-orange-50 border-transparent hover:border-orange-100'
@@ -234,13 +236,13 @@ export default function Header() {
               </Link>
             </nav>
 
-            {/* Mobile Action Buttons */}
-            <div className="space-y-3">
+            {/* Mobile Action Buttons (centered) */}
+            <div className="space-y-3 flex flex-col items-center">
               {!userEmail && (
                 <>
                   <Link
                     href="/customer-login"
-                    className={`block w-full text-center px-4 py-2 rounded-lg font-medium transition-all border-2 shadow-md ${
+                    className={`inline-flex w-11/12 max-w-xs justify-center text-center px-4 py-2 rounded-lg font-medium transition-all border-2 shadow-md ${
                       isActive('/customer-login') 
                         ? 'bg-blue-600 text-white border-blue-600 shadow-lg' 
                         : 'bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200 hover:border-blue-300'
@@ -251,7 +253,7 @@ export default function Header() {
                   </Link>
                   <Link
                     href="/login"
-                    className={`block w-full text-center px-4 py-2 rounded-lg font-medium transition-all border-2 shadow-md ${
+                    className={`inline-flex w-11/12 max-w-xs justify-center text-center px-4 py-2 rounded-lg font-medium transition-all border-2 shadow-md ${
                       isActive('/login') 
                         ? 'bg-orange-600 text-white border-orange-600 shadow-lg' 
                         : 'bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200 hover:border-gray-300'
@@ -264,11 +266,11 @@ export default function Header() {
               )}
 
               {userEmail && (
-                <div className="space-y-2">
+                <div className="space-y-2 flex flex-col items-center">
                   {isAdmin && (
                     <Link 
-                      href="/admin" 
-                      className="block w-full text-center px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium border-2 border-gray-200 shadow-md"
+                      href="/admin-dashboard" 
+                      className="inline-flex w-11/12 max-w-xs justify-center text-center px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium border-2 border-gray-200 shadow-md"
                       onClick={() => setMobileMenuOpen(false)}
                     >
                       Dashboard
@@ -280,7 +282,7 @@ export default function Header() {
               {userEmail && !isAdmin && (
                 <Link
                   href="/user-dashboard"
-                  className={`block w-full text-center px-3 py-2 rounded-lg font-medium transition-all border-2 shadow-md ${
+                  className={`inline-flex w-11/12 max-w-xs justify-center text-center px-3 py-2 rounded-lg font-medium transition-all border-2 shadow-md ${
                     pathname === '/user-dashboard'
                       ? 'bg-blue-600 text-white border-blue-600 shadow-lg'
                       : 'bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200 hover:border-blue-300'
@@ -292,7 +294,7 @@ export default function Header() {
               )}
 
               <button
-                className="w-full bg-orange-500 text-white px-6 py-2 rounded-lg hover:bg-orange-600 transition-colors shadow-lg border-2 border-orange-500 hover:border-orange-600"
+                className="w-11/12 max-w-xs bg-orange-500 text-white px-6 py-2 rounded-lg hover:bg-orange-600 transition-colors shadow-lg border-2 border-orange-500 hover:border-orange-600"
                 onClick={() => {
                   window.open('https://wa.me/6289653754317?text=Halo! Saya ingin konsultasi tentang jasa las', '_blank');
                   setMobileMenuOpen(false);

@@ -25,7 +25,7 @@ export default function HeroSection() {
         {/* Hero Title dengan Enhanced Typography */}
         <div className="mb-12 animate-fade-in-up">
           <div className="mb-6">
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-slate-800 via-orange-600 to-amber-600 mb-4 leading-tight">
+            <h1 className="text-5xl md:text-7xl lg:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-slate-800 via-orange-600 to-amber-600 mb-4 leading-tight pb-2">
               Bengkel Las
             </h1>
             <div className="relative pb-4"> {/* Added padding-bottom for Y */}

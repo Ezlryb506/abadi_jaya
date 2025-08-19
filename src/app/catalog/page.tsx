@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
+import { User } from '@supabase/supabase-js';
+import { toast } from 'sonner';
 
 interface ProductUI {
   id: number;
@@ -24,8 +26,17 @@ export default function CatalogPage() {
   const [products, setProducts] = useState<ProductUI[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [user, setUser] = useState<User | null>(null);
+  const [orderLoading, setOrderLoading] = useState(false);
 
   useEffect(() => {
+    // Check user authentication
+    const checkUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
+    checkUser();
+
     const fetchData = async () => {
       setLoading(true);
       setError('');
@@ -94,6 +105,76 @@ export default function CatalogPage() {
     const message = `Halo! Saya tertarik dengan produk ${product.name}. Bisa minta informasi lebih detail?`;
     const encodedMessage = encodeURIComponent(message);
     window.open(`https://wa.me/6289653754317?text=${encodedMessage}`, '_blank');
+  };
+
+  const handleOrder = async (product: ProductUI) => {
+    if (!user) {
+      toast.info('Silakan masuk untuk memesan.', {
+        description: 'Anda akan diarahkan ke halaman login.',
+        duration: 5000,
+        action: {
+          label: 'Login',
+          onClick: () => window.location.href = '/login?redirect=/catalog',
+        },
+      });
+      return;
+    }
+
+    setOrderLoading(true);
+
+    try {
+      const { data: customerData, error: customerError } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('auth_user_id', user.id)
+        .single();
+
+      if (customerError) {
+        throw new Error('Data customer tidak ditemukan. Silakan lengkapi profil Anda.');
+      }
+
+      const { data: categoryData, error: categoryError } = await supabase
+        .from('product_categories')
+        .select('id')
+        .eq('name', product.category)
+        .single();
+
+      if (categoryError) {
+        throw new Error('Kategori produk tidak ditemukan.');
+      }
+
+      const { data: transactionData, error: transactionError } = await supabase
+        .from('transactions')
+        .insert({
+          customer_id: customerData.id,
+          category_id: categoryData.id,
+          product_id: product.id,
+          description: `Pesanan untuk produk: ${product.name}`,
+          project_status: 'Survey',
+          estimated_price: typeof product.priceText === 'string' && product.priceText !== '-' 
+            ? parseFloat(product.priceText.replace(/[^0-9]/g, '')) 
+            : 0,
+          payment_method: 'DP',
+        })
+        .select()
+        .single();
+
+      if (transactionError) {
+        throw new Error(`Gagal membuat pesanan: ${transactionError.message}`);
+      }
+
+      toast.success('Pesanan berhasil dibuat!', {
+        description: 'Anda dapat melihat detail pesanan di dasbor Anda.',
+        duration: 5000,
+      });
+
+    } catch (error: any) {
+      toast.error('Gagal membuat pesanan.', {
+        description: error.message || 'Terjadi kesalahan yang tidak diketahui.',
+      });
+    } finally {
+      setOrderLoading(false);
+    }
   };
 
   return (
@@ -175,7 +256,7 @@ export default function CatalogPage() {
           {filteredProducts.map((product) => (
             <div
               key={product.id}
-              className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer"
+              className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer flex flex-col"
               onClick={() => setSelectedProduct(product)}
             >
               {/* Product Image */}
@@ -193,7 +274,7 @@ export default function CatalogPage() {
               </div>
 
               {/* Product Info */}
-              <div className="p-6">
+              <div className="p-6 flex flex-col flex-1">
                 <div className="mb-3">
                   <span className="inline-block bg-orange-100 text-orange-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
                     {product.category}
@@ -204,7 +285,7 @@ export default function CatalogPage() {
                   {product.name}
                 </h3>
                 
-                <p className="text-gray-600 text-sm mb-4 line-clamp-3">
+                <p className="text-gray-600 text-sm mb-4 line-clamp-3 flex-grow">
                   {product.description}
                 </p>
 
@@ -234,13 +315,23 @@ export default function CatalogPage() {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex gap-2">
+                <div className="flex gap-2 mt-auto">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleOrder(product);
+                    }}
+                    disabled={orderLoading}
+                    className="flex-1 bg-gradient-to-r from-green-500 to-green-600 text-white py-2 px-3 rounded-lg text-sm font-medium hover:from-green-600 hover:to-green-700 transition-all transform hover:scale-105 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {orderLoading ? '⏳ Memproses...' : '🛒 Pesan'}
+                  </button>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       openWhatsApp(product);
                     }}
-                    className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 text-white py-2 px-4 rounded-lg text-sm font-medium hover:from-orange-600 hover:to-orange-700 transition-all transform hover:scale-105 cursor-pointer"
+                    className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 text-white py-2 px-3 rounded-lg text-sm font-medium hover:from-orange-600 hover:to-orange-700 transition-all transform hover:scale-105 cursor-pointer"
                   >
                     💬 Konsultasi
                   </button>
@@ -249,7 +340,7 @@ export default function CatalogPage() {
                       e.stopPropagation();
                       setSelectedProduct(product);
                     }}
-                    className="px-4 py-2 border border-orange-500 text-orange-600 rounded-lg text-sm font-medium hover:bg-orange-500 hover:text-white transition-all cursor-pointer"
+                    className="px-3 py-2 border border-orange-500 text-orange-600 rounded-lg text-sm font-medium hover:bg-orange-500 hover:text-white transition-all cursor-pointer"
                   >
                     📋 Detail
                   </button>
@@ -345,12 +436,21 @@ export default function CatalogPage() {
                     <div className="text-3xl font-bold text-orange-600 mb-4">
                       {selectedProduct.priceText}
                     </div>
-                    <button
-                      onClick={() => openWhatsApp(selectedProduct)}
-                      className="w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white py-3 px-6 rounded-xl text-lg font-semibold hover:from-orange-600 hover:to-orange-700 transition-all transform hover:scale-105 shadow-lg hover:shadow-xl"
-                    >
-                      💬 Konsultasi Sekarang
-                    </button>
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => handleOrder(selectedProduct)}
+                        disabled={orderLoading}
+                        className="flex-1 bg-gradient-to-r from-green-500 to-green-600 text-white py-3 px-6 rounded-xl text-lg font-semibold hover:from-green-600 hover:to-green-700 transition-all transform hover:scale-105 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {orderLoading ? '⏳ Memproses...' : '🛒 Pesan Sekarang'}
+                      </button>
+                      <button
+                        onClick={() => openWhatsApp(selectedProduct)}
+                        className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 text-white py-3 px-6 rounded-xl text-lg font-semibold hover:from-orange-600 hover:to-orange-700 transition-all transform hover:scale-105 shadow-lg hover:shadow-xl"
+                      >
+                        💬 Konsultasi
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
