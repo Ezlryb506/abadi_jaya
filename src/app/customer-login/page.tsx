@@ -1,7 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { supabase } from '@/lib/supabaseClient';
+import { useRouter } from "next/navigation";
 
 export default function CustomerLoginPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -16,6 +18,16 @@ export default function CustomerLoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const router = useRouter();
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.auth.getUser();
+      if (data?.user) {
+        router.replace("/user-dashboard");
+      }
+    })();
+  }, [router]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({
@@ -32,39 +44,58 @@ export default function CustomerLoginPage() {
     setError('');
     setSuccess('');
 
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    try {
+      if (isLogin) {
+        if (!formData.email || !formData.password) {
+          setError('Email dan password harus diisi');
+          return;
+        }
 
-    if (isLogin) {
-      // Login logic
-      if (!formData.email || !formData.password) {
-        setError('Email dan password harus diisi');
-        setIsLoading(false);
-        return;
-      }
+        const { error } = await supabase.auth.signInWithPassword({
+          email: formData.email,
+          password: formData.password,
+        });
 
-      // Mock login (replace with real API call)
-      if (formData.email === 'customer@example.com' && formData.password === 'customer123') {
-        setSuccess('Login berhasil! Redirecting to customer dashboard...');
-        // window.location.href = '/customer-dashboard';
+        if (error) {
+          setError(error.message || 'Email atau password salah');
+          return;
+        }
+
+        setSuccess('Login berhasil!');
+        router.replace("/user-dashboard");
       } else {
-        setError('Email atau password salah');
-      }
-    } else {
-      // Registration logic
-      if (!formData.name || !formData.email || !formData.password || !formData.phone) {
-        setError('Semua field harus diisi');
-        setIsLoading(false);
-        return;
-      }
+        if (!formData.name || !formData.email || !formData.password || !formData.phone) {
+          setError('Semua field harus diisi');
+          return;
+        }
 
-      // Mock registration (replace with real API call)
-      setSuccess('Registrasi berhasil! Silakan login dengan akun Anda.');
-      setIsLogin(true);
-      setFormData({ email: '', password: '', name: '', phone: '', address: '' });
+        const { error } = await supabase.auth.signUp({
+          email: formData.email,
+          password: formData.password,
+          options: {
+            data: {
+              name: formData.name,
+              phone: formData.phone,
+              address: formData.address,
+            },
+            emailRedirectTo: typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : undefined,
+          },
+        });
+
+        if (error) {
+          setError(error.message || 'Registrasi gagal');
+          return;
+        }
+
+        setSuccess('Registrasi berhasil! Silakan cek email untuk verifikasi (jika diperlukan), lalu login.');
+        setIsLogin(true);
+        setFormData({ email: '', password: '', name: '', phone: '', address: '' });
+      }
+    } catch (err: any) {
+      setError(err?.message || 'Terjadi kesalahan tak terduga');
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   };
 
   return (

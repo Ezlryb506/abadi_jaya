@@ -2,10 +2,13 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabaseClient';
 
 export default function LoginPage() {
+  const router = useRouter();
   const [formData, setFormData] = useState({
-    username: '',
+    email: '',
     password: ''
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -24,25 +27,46 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
     setError('');
+    try {
+      if (!formData.email || !formData.password) {
+        setError('Email dan password harus diisi');
+        return;
+      }
 
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password,
+      });
+      if (signInError) {
+        setError(signInError.message || 'Email atau password salah');
+        return;
+      }
 
-    // Basic validation
-    if (!formData.username || !formData.password) {
-      setError('Username dan password harus diisi');
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setError('Gagal mendapatkan data user');
+        return;
+      }
+
+      const { data: adminRow, error: adminErr } = await supabase
+        .from('admin_users')
+        .select('auth_user_id')
+        .eq('auth_user_id', user.id)
+        .maybeSingle();
+      if (adminErr) {
+        setError('Gagal memverifikasi admin');
+        return;
+      }
+      if (!adminRow) {
+        setError('Akun ini bukan admin');
+        await supabase.auth.signOut();
+        return;
+      }
+
+      router.replace('/admin');
+    } finally {
       setIsLoading(false);
-      return;
     }
-
-    // Mock authentication
-    if (formData.username === 'admin' && formData.password === 'admin123') {
-      alert('Login berhasil! Redirecting to dashboard...');
-    } else {
-      setError('Username atau password salah');
-    }
-
-    setIsLoading(false);
   };
 
   return (
@@ -70,21 +94,21 @@ export default function LoginPage() {
         {/* Login Form */}
         <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
           <form className="space-y-6" onSubmit={handleSubmit}>
-            {/* Username Field */}
+            {/* Email Field */}
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
-                Username
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                Email
               </label>
               <div className="relative">
                 <input
-                  id="username"
-                  name="username"
-                  type="text"
+                  id="email"
+                  name="email"
+                  type="email"
                   required
-                  value={formData.username}
+                  value={formData.email}
                   onChange={handleChange}
                   className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all pl-10 bg-white text-gray-900 placeholder-gray-500 font-medium"
-                  placeholder="Masukkan username"
+                  placeholder="Masukkan email"
                   style={{
                     color: '#111827',
                     backgroundColor: '#ffffff'
@@ -163,12 +187,11 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Demo Credentials */}
+          {/* Info */}
           <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
-            <h4 className="text-sm font-semibold text-blue-800 mb-2">Demo Credentials:</h4>
+            <h4 className="text-sm font-semibold text-blue-800 mb-2">Info Login Admin:</h4>
             <div className="text-xs text-blue-700 space-y-1">
-              <p><strong>Username:</strong> admin</p>
-              <p><strong>Password:</strong> admin123</p>
+              <p>Gunakan email & password akun yang sudah didaftarkan dan diberi hak admin.</p>
             </div>
           </div>
 

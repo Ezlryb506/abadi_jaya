@@ -50,7 +50,7 @@ export default function HeroSection() {
         {/* Enhanced CTA Buttons */}
         <div className="flex flex-col sm:flex-row gap-6 justify-center items-center animate-fade-in-up animation-delay-200 mb-16">
           <button 
-            className="group relative bg-gradient-to-r from-orange-500 via-red-500 to-amber-500 text-white px-10 py-5 rounded-2xl text-xl font-bold hover:from-orange-600 hover:via-red-600 hover:to-amber-600 transition-all duration-500 transform hover:scale-110 hover:-translate-y-1 shadow-2xl hover:shadow-orange-500/25 overflow-hidden"
+            className="group relative bg-gradient-to-r from-orange-500 via-red-500 to-amber-500 text-white px-10 py-5 rounded-2xl text-xl font-bold hover:from-orange-600 hover:via-red-600 hover:to-amber-600 transition-all duration-500 transform hover:scale-110 hover:-translate-y-1 shadow-2xl hover:shadow-orange-500/25 overflow-hidden cursor-pointer"
             onClick={() => window.open('https://wa.me/6289653754317?text=Halo! Saya ingin konsultasi tentang jasa las', '_blank')}
           >
             {/* Button Background Animation */}
@@ -84,10 +84,10 @@ export default function HeroSection() {
           <div className="group text-center transform hover:scale-110 transition-all duration-500">
             <div className="relative">
               <div className="text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-500 mb-3 group-hover:from-orange-600 group-hover:to-red-600 transition-all duration-500">
-                500+
+                1200+
               </div>
               <div className="absolute inset-0 text-4xl md:text-5xl font-black text-orange-500/20 blur-lg -z-10 group-hover:blur-xl transition-all duration-500">
-                500+
+                1200+
               </div>
             </div>
             <div className="text-slate-600 font-semibold text-lg">Proyek Selesai</div>
@@ -97,10 +97,10 @@ export default function HeroSection() {
           <div className="group text-center transform hover:scale-110 transition-all duration-500">
             <div className="relative">
               <div className="text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-cyan-500 mb-3 group-hover:from-blue-600 group-hover:to-cyan-600 transition-all duration-500">
-                5+
+                20+
               </div>
               <div className="absolute inset-0 text-4xl md:text-5xl font-black text-blue-500/20 blur-lg -z-10 group-hover:blur-xl transition-all duration-500">
-                5+
+                20+
               </div>
             </div>
             <div className="text-slate-600 font-semibold text-lg">Tahun Pengalaman</div>
@@ -110,10 +110,10 @@ export default function HeroSection() {
           <div className="group text-center transform hover:scale-110 transition-all duration-500">
             <div className="relative">
               <div className="text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-500 to-emerald-500 mb-3 group-hover:from-green-600 group-hover:to-emerald-600 transition-all duration-500">
-                98%
+                96%
               </div>
               <div className="absolute inset-0 text-4xl md:text-5xl font-black text-green-500/20 blur-lg -z-10 group-hover:blur-xl transition-all duration-500">
-                98%
+                96%
               </div>
             </div>
             <div className="text-slate-600 font-semibold text-lg">Customer Puas</div>
@@ -124,7 +124,7 @@ export default function HeroSection() {
         {/* Floating Action Button */}
         <div className="fixed bottom-8 right-8 z-50 animate-bounce">
           <button 
-            className="group w-16 h-16 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-full shadow-2xl hover:shadow-orange-500/50 transition-all duration-300 transform hover:scale-110"
+            className="group w-16 h-16 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-full shadow-2xl hover:shadow-orange-500/50 transition-all duration-300 transform hover:scale-110 cursor-pointer"
             onClick={() => window.open('https://wa.me/6289653754317?text=Halo! Saya ingin konsultasi tentang jasa las', '_blank')}
           >
             <span className="text-2xl">💬</span>

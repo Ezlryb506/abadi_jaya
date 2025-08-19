@@ -57,15 +57,19 @@ export default function RootLayout({
                 <p className="text-gray-300 mb-4">
                   Spesialis jasa las dan fabrikasi besi berkualitas tinggi dengan pengalaman bertahun-tahun.
                 </p>
-                <div className="flex space-x-4">
-                  <a href="#" className="text-gray-300 hover:text-orange-500 transition-colors">
-                    <span className="text-xl">📱</span>
-                  </a>
-                  <a href="#" className="text-gray-300 hover:text-orange-500 transition-colors">
-                    <span className="text-xl">📘</span>
-                  </a>
-                  <a href="#" className="text-gray-300 hover:text-orange-500 transition-colors">
-                    <span className="text-xl">📷</span>
+                
+                {/* Bagian Baru: Laporkan Masalah / Umpan Balik */}
+                <div className="border-t border-gray-700 mt-8 pt-8 text-center text-gray-300">
+                  <p className="mb-4">
+                    Ada masalah di website? <br className="md:hidden" /> Laporkan kepada kami agar dapat segera kami perbaiki.
+                  </p>
+                  <a
+                    href="https://wa.me/6288809635936?text=Halo Developer Website Abadi Jaya! Saya menemukan hal berikut di website: [Jelaskan masalahnya/pertanyaan Anda]"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center px-4 py-2 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600 transition-colors shadow-md cursor-pointer"
+                  >
+                    <span className="text-xl mr-2">💬</span> Laporkan Masalah
                   </a>
                 </div>
               </div>

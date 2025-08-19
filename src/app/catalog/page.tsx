@@ -1,156 +1,96 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { supabase } from '@/lib/supabaseClient';
 
-interface Product {
+interface ProductUI {
   id: number;
   name: string;
   category: string;
   description: string;
-  price: string;
+  priceText: string;
   image: string;
   features: string[];
   specifications: Record<string, string>;
 }
 
-const products: Product[] = [
-  {
-    id: 1,
-    name: "Pagar Besi Minimalis",
-    category: "Pagar",
-    description: "Pagar besi dengan desain minimalis modern, cocok untuk rumah kontemporer. Terbuat dari besi berkualitas tinggi dengan finishing yang tahan karat.",
-    price: "Rp 450.000/m²",
-    image: "🏗️",
-    features: ["Anti karat", "Desain minimalis", "Tahan lama", "Mudah dipasang"],
-    specifications: {
-      "Material": "Besi Hollow 4x4",
-      "Ketebalan": "1.2mm",
-      "Finishing": "Cat Powder Coating",
-      "Garansi": "2 tahun"
-    }
-  },
-  {
-    id: 2,
-    name: "Kanopi Carport Stainless",
-    category: "Kanopi",
-    description: "Kanopi carport stainless steel dengan desain elegan dan tahan cuaca. Sempurna untuk melindungi kendaraan dari panas dan hujan.",
-    price: "Rp 2.500.000/m²",
-    image: "🚗",
-    features: ["Stainless steel 304", "Anti karat", "Tahan cuaca", "Desain modern"],
-    specifications: {
-      "Material": "Stainless Steel 304",
-      "Ketebalan": "1.5mm",
-      "Kemiringan": "15°",
-      "Garansi": "3 tahun"
-    }
-  },
-  {
-    id: 3,
-    name: "Railing Tangga Spiral",
-    category: "Railing",
-    description: "Railing tangga spiral dengan desain unik dan elegan. Terbuat dari stainless steel dengan detail yang presisi dan finishing yang sempurna.",
-    price: "Rp 1.800.000/m",
-    image: "🔄",
-    features: ["Stainless steel", "Desain spiral", "Presisi tinggi", "Finishing sempurna"],
-    specifications: {
-      "Material": "Stainless Steel 316",
-      "Diameter": "Custom",
-      "Finishing": "Mirror Polish",
-      "Garansi": "2 tahun"
-    }
-  },
-  {
-    id: 4,
-    name: "Pintu Besi Minimalis",
-    category: "Pintu",
-    description: "Pintu besi dengan desain minimalis dan keamanan tinggi. Dilengkapi dengan sistem penguncian yang aman dan tahan terhadap upaya pembobolan.",
-    price: "Rp 3.200.000/unit",
-    image: "🚪",
-    features: ["Keamanan tinggi", "Desain minimalis", "Sistem kunci aman", "Tahan bobol"],
-    specifications: {
-      "Material": "Besi Plat 2mm",
-      "Ketebalan": "2mm",
-      "Sistem Kunci": "Multi Point Lock",
-      "Garansi": "3 tahun"
-    }
-  },
-  {
-    id: 5,
-    name: "Jendela Besi Artistik",
-    category: "Jendela",
-    description: "Jendela besi dengan motif artistik yang unik. Menggabungkan keindahan seni dengan fungsionalitas jendela yang optimal.",
-    price: "Rp 1.500.000/unit",
-    image: "🪟",
-    features: ["Motif artistik", "Ventilasi optimal", "Desain unik", "Tahan lama"],
-    specifications: {
-      "Material": "Besi Hollow 3x3",
-      "Ketebalan": "1.2mm",
-      "Finishing": "Cat Duco",
-      "Garansi": "2 tahun"
-    }
-  },
-  {
-    id: 6,
-    name: "Teralis Jendela Modern",
-    category: "Teralis",
-    description: "Teralis jendela dengan desain modern dan keamanan tinggi. Memberikan perlindungan ekstra tanpa mengurangi estetika rumah.",
-    price: "Rp 800.000/unit",
-    image: "🔒",
-    features: ["Keamanan tinggi", "Desain modern", "Mudah dibersihkan", "Tahan karat"],
-    specifications: {
-      "Material": "Besi Hollow 2x2",
-      "Ketebalan": "1mm",
-      "Finishing": "Cat Powder Coating",
-      "Garansi": "2 tahun"
-    }
-  },
-  {
-    id: 7,
-    name: "Tangga Putar Stainless",
-    category: "Tangga",
-    description: "Tangga putar stainless steel dengan desain yang memukau. Sempurna untuk rumah dengan space terbatas namun tetap ingin memiliki tangga yang elegan.",
-    price: "Rp 8.500.000/unit",
-    image: "🔄",
-    features: ["Stainless steel", "Desain putar", "Space saving", "Elegant"],
-    specifications: {
-      "Material": "Stainless Steel 304",
-      "Diameter": "Custom",
-      "Finishing": "Mirror Polish",
-      "Garansi": "3 tahun"
-    }
-  },
-  {
-    id: 8,
-    name: "Pagar Minimalis Modern",
-    category: "Pagar",
-    description: "Pagar dengan desain minimalis modern yang cocok untuk rumah kontemporer. Menggunakan material berkualitas tinggi dengan finishing yang sempurna.",
-    price: "Rp 550.000/m²",
-    image: "🏠",
-    features: ["Desain modern", "Material berkualitas", "Finishing sempurna", "Mudah dipasang"],
-    specifications: {
-      "Material": "Besi Hollow 5x5",
-      "Ketebalan": "1.5mm",
-      "Finishing": "Cat Powder Coating",
-      "Garansi": "2 tahun"
-    }
-  }
-];
-
-const categories = ['Semua', 'Pagar', 'Kanopi', 'Railing', 'Pintu', 'Jendela', 'Teralis', 'Tangga'];
+// Data diambil dari Supabase, tidak lagi dari sample statis
 
 export default function CatalogPage() {
+  const [categories, setCategories] = useState<string[]>(['Semua']);
   const [selectedCategory, setSelectedCategory] = useState('Semua');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<ProductUI | null>(null);
+  const [products, setProducts] = useState<ProductUI[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const filteredProducts = products.filter(product => {
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      setError('');
+      // Fetch all categories
+      const { data: catData, error: catError } = await supabase
+        .from('product_categories')
+        .select('name')
+        .order('name');
+      if (catError) {
+        setError('Gagal memuat kategori');
+        setLoading(false);
+        return;
+      }
+      const allCategories = ['Semua', ...((catData || []).map((c: any) => c.name))];
+      setCategories(allCategories);
+
+      // Fetch products
+      const { data, error } = await supabase
+        .from('products')
+        .select('id,name,description,price,image_url,product_categories(name)')
+        .eq('is_active', true)
+        .order('id', { ascending: false });
+      if (error) {
+        setError('Gagal memuat produk');
+        setLoading(false);
+        return;
+      }
+      const categoryIcon = (name?: string) => {
+        switch ((name || '').toLowerCase()) {
+          case 'pagar': return '🏗️';
+          case 'kanopi': return '🚗';
+          case 'railing tangga': return '🪜';
+          case 'pintu besi': return '🚪';
+          case 'jendela': return '🪟';
+          case 'teralis': return '🔒';
+          case 'tangga putar': return '🔄';
+          case 'stainless': return '✨';
+          case 'minimalis': return '📏';
+          default: return '🧰';
+        }
+      };
+      const mapped: ProductUI[] = (data || []).map((p: any) => ({
+        id: p.id,
+        name: p.name,
+        category: p.product_categories?.name || 'Lainnya',
+        description: p.description || '',
+        priceText: typeof p.price === 'number' ? `Rp ${p.price.toLocaleString('id-ID')}` : '-',
+        image: p.image_url || categoryIcon(p.product_categories?.name),
+        features: [],
+        specifications: {},
+      }));
+      setProducts(mapped);
+      setLoading(false);
+    };
+    fetchData();
+  }, []);
+
+  const filteredProducts = useMemo(() => products.filter(product => {
     const matchesCategory = selectedCategory === 'Semua' || product.category === selectedCategory;
     const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          product.description.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
-  });
+  }), [products, selectedCategory, searchQuery]);
 
-  const openWhatsApp = (product: Product) => {
+  const openWhatsApp = (product: ProductUI) => {
     const message = `Halo! Saya tertarik dengan produk ${product.name}. Bisa minta informasi lebih detail?`;
     const encodedMessage = encodeURIComponent(message);
     window.open(`https://wa.me/6289653754317?text=${encodedMessage}`, '_blank');
@@ -240,7 +180,16 @@ export default function CatalogPage() {
             >
               {/* Product Image */}
               <div className="h-48 bg-gradient-to-br from-orange-100 to-orange-200 flex items-center justify-center">
-                <span className="text-6xl">{product.image}</span>
+                {product.image.startsWith('http') ? (
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="object-contain h-40 w-full"
+                    loading="lazy"
+                  />
+                ) : (
+                  <span className="text-6xl">{product.image}</span>
+                )}
               </div>
 
               {/* Product Info */}
@@ -261,7 +210,7 @@ export default function CatalogPage() {
 
                 <div className="mb-4">
                   <span className="text-2xl font-bold text-orange-600">
-                    {product.price}
+                    {(product as any).priceText || '-'}
                   </span>
                 </div>
 
@@ -291,7 +240,7 @@ export default function CatalogPage() {
                       e.stopPropagation();
                       openWhatsApp(product);
                     }}
-                    className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 text-white py-2 px-4 rounded-lg text-sm font-medium hover:from-orange-600 hover:to-orange-700 transition-all transform hover:scale-105"
+                    className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 text-white py-2 px-4 rounded-lg text-sm font-medium hover:from-orange-600 hover:to-orange-700 transition-all transform hover:scale-105 cursor-pointer"
                   >
                     💬 Konsultasi
                   </button>
@@ -300,7 +249,7 @@ export default function CatalogPage() {
                       e.stopPropagation();
                       setSelectedProduct(product);
                     }}
-                    className="px-4 py-2 border border-orange-500 text-orange-600 rounded-lg text-sm font-medium hover:bg-orange-500 hover:text-white transition-all"
+                    className="px-4 py-2 border border-orange-500 text-orange-600 rounded-lg text-sm font-medium hover:bg-orange-500 hover:text-white transition-all cursor-pointer"
                   >
                     📋 Detail
                   </button>
@@ -349,7 +298,16 @@ export default function CatalogPage() {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Product Image */}
                 <div className="h-64 bg-gradient-to-br from-orange-100 to-orange-200 rounded-xl flex items-center justify-center">
-                  <span className="text-8xl">{selectedProduct.image}</span>
+                  {selectedProduct.image.startsWith('http') ? (
+                    <img
+                      src={selectedProduct.image}
+                      alt={selectedProduct.name}
+                      className="object-contain h-56 w-full"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <span className="text-8xl">{selectedProduct.image}</span>
+                  )}
                 </div>
 
                 {/* Product Details */}
@@ -385,7 +343,7 @@ export default function CatalogPage() {
 
                   <div className="mb-6">
                     <div className="text-3xl font-bold text-orange-600 mb-4">
-                      {selectedProduct.price}
+                      {selectedProduct.priceText}
                     </div>
                     <button
                       onClick={() => openWhatsApp(selectedProduct)}

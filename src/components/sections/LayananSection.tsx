@@ -117,7 +117,7 @@ export default function LayananSection() {
               {/* Hover Effect */}
               <div className="mt-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                 <button 
-                  className="w-full bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-600 transition-colors"
+                  className="w-full bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-600 transition-colors cursor-pointer"
                   onClick={() => window.open('https://wa.me/6289653754317?text=Halo! Saya ingin konsultasi tentang jasa las', '_blank')}
                 >
                   Konsultasi Sekarang
