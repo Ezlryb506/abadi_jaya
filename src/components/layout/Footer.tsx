@@ -17,7 +17,7 @@ export default function Footer() {
             {/* Bagian Baru: Laporkan Masalah / Umpan Balik */}
             <div className="border-t border-gray-700 mt-8 pt-8 text-center text-gray-300">
               <p className="mb-4">
-                Ada masalah di website? <br className="md:hidden" /> Laporkan kepada kami agar dapat segera kami perbaiki.
+                Ada masalah di website? <br className="md:hidden" /> Laporkan kepada kami agar secepatnya kami perbaiki.
               </p>
               <a
                 href="https://wa.me/6288809635936?text=Halo Developer Website Abadi Jaya! Saya menemukan hal berikut di website: [Jelaskan masalahnya/pertanyaan Anda]"

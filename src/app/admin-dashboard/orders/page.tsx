@@ -80,7 +80,7 @@ const OrdersPage = () => {
       <div className="space-y-6">
       <div className="bg-white rounded-2xl shadow p-6 border border-gray-100">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-800">Kelola Pesanan</h1>
+          <h1 className="text-2xl font-bold text-gray-800 border-b border-gray-200 pb-3 w-full">Kelola Pesanan</h1>
         </div>
       </div>
 
@@ -95,7 +95,47 @@ const OrdersPage = () => {
           />
         </div>
 
-        <div className="overflow-x-auto">
+        {/* List (Mobile) */}
+        <div className="md:hidden space-y-3">
+          {loading ? (
+            <div className="text-center py-4">Memuat data...</div>
+          ) : error ? (
+            <div className="text-center py-4 text-red-500">{error}</div>
+          ) : filteredOrders.length === 0 ? (
+            <div className="text-center py-4 text-gray-500">Tidak ada pesanan.</div>
+          ) : (
+            filteredOrders.map((order) => {
+              const statusClass = getStatusClass(order.project_status);
+              return (
+                <div key={order.id} className="rounded-xl border border-gray-200 p-4 shadow-sm">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm text-gray-500">ID Pesanan</p>
+                      <p className="text-base font-semibold">#{order.id}</p>
+                    </div>
+                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusClass}`}>{order.project_status}</span>
+                  </div>
+                  <div className="mt-2 text-sm text-gray-700 space-y-1">
+                    <p><strong>Pelanggan:</strong> {order.customers?.name || 'N/A'}</p>
+                    <p><strong>Tanggal:</strong> {new Date(order.order_date).toLocaleDateString('id-ID')}</p>
+                    <p><strong>Total:</strong> Rp{new Intl.NumberFormat('id-ID').format(order.estimated_price)}</p>
+                  </div>
+                  <div className="mt-3">
+                    <button
+                      onClick={() => router.push(`/admin-dashboard/orders/${order.id}`)}
+                      className="w-full px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition-colors"
+                    >
+                      Lihat Detail
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* Tabel (Desktop) */}
+        <div className="overflow-x-auto hidden md:block">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
@@ -121,7 +161,7 @@ const OrdersPage = () => {
                   <tr key={order.id}>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{order.id}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{order.customers?.name || 'N/A'}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(order.order_date).toLocaleDateString()}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(order.order_date).toLocaleDateString('id-ID')}</td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusClass(order.project_status)}`}>
                         {order.project_status}
@@ -129,7 +169,13 @@ const OrdersPage = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Rp{new Intl.NumberFormat('id-ID').format(order.estimated_price)}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <button onClick={() => router.push(`/admin-dashboard/orders/${order.id}`)} className="text-indigo-600 hover:text-indigo-900">Detail</button>
+                      <button
+                        onClick={() => router.push(`/admin-dashboard/orders/${order.id}`)}
+                        className="px-3 py-1.5 bg-sky-600 text-white rounded-md hover:bg-sky-700 transition-colors"
+                        title="Lihat Detail Pesanan"
+                      >
+                        Lihat Detail
+                      </button>
                     </td>
                   </tr>
                 ))

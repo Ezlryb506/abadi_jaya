@@ -21,6 +21,72 @@ export default function useProductsAdmin() {
 
   const BUCKET = 'Abadi Jaya';
 
+  // Ekstrak {bucket, path} dari public image_url Supabase
+  // Format: https://<project>.supabase.co/storage/v1/object/public/<bucket>/<path>
+  const parseStoragePath = (url: string): { bucket: string; path: string } | null => {
+    try {
+      const marker = '/object/public/';
+      const idx = url.indexOf(marker);
+      if (idx === -1) return null;
+      const after = url.substring(idx + marker.length);
+      const parts = after.split('/');
+      const bucket = decodeURIComponent(parts.shift() || '');
+      const path = decodeURIComponent(parts.join('/'));
+      if (!bucket || !path) return null;
+      return { bucket, path };
+    } catch {
+      return null;
+    }
+  };
+
+  // State untuk memilih gambar yang sudah ada di Storage
+  const [existingImages, setExistingImages] = useState<Array<{ name: string; url: string; path: string }>>([]);
+  const [loadingImages, setLoadingImages] = useState(false);
+  const [imagePickerOpen, setImagePickerOpen] = useState(false);
+  const [selectedExistingUrl, setSelectedExistingUrl] = useState<string | null>(null);
+
+  const openImagePicker = async () => {
+    setImagePickerOpen(true);
+    await fetchExistingImages();
+  };
+
+  const closeImagePicker = () => setImagePickerOpen(false);
+
+  const fetchExistingImages = async () => {
+    setLoadingImages(true);
+    try {
+      // List file di folder products/
+      const { data, error } = await supabase.storage.from(BUCKET).list('products', { limit: 100, sortBy: { column: 'name', order: 'asc' } });
+      if (error) throw error;
+      const files: Array<{ name: string; url: string; path: string }> = [];
+      for (const item of data || []) {
+        if (!item || !item.name) continue;
+        const path = `products/${item.name}`;
+        // Gunakan signed URL agar tetap bisa tampil jika bucket private
+        const { data: signed, error: signErr } = await supabase.storage.from(BUCKET).createSignedUrl(path, 3600);
+        if (signErr) {
+          const { data: pub } = supabase.storage.from(BUCKET).getPublicUrl(path);
+          files.push({ name: item.name, url: pub.publicUrl, path });
+        } else {
+          files.push({ name: item.name, url: signed.signedUrl, path });
+        }
+      }
+      setExistingImages(files);
+    } catch (e) {
+      // silent fail: biarkan grid kosong jika gagal
+    } finally {
+      setLoadingImages(false);
+    }
+  };
+
+  const selectExistingImage = (url: string) => {
+    setSelectedExistingUrl(url);
+    setFile(null); // pastikan tidak double sumber gambar
+    setImagePickerOpen(false);
+  };
+
+  const clearSelectedExisting = () => setSelectedExistingUrl(null);
+
   useEffect(() => {
     (async () => {
       setLoading(true);
@@ -105,7 +171,19 @@ export default function useProductsAdmin() {
     const priceNum = form.price ? Number(form.price) : null;
     let imageUrl: string | null = null;
     try {
-      if (file) imageUrl = await uploadImage(file);
+      if (selectedExistingUrl) {
+        // Cari item yang dipilih berdasarkan signed URL, lalu ambil public URL dari path untuk disimpan ke DB
+        const picked = existingImages.find(i => i.url === selectedExistingUrl);
+        if (picked) {
+          const { data: pub } = supabase.storage.from(BUCKET).getPublicUrl(picked.path);
+          imageUrl = pub.publicUrl;
+        } else {
+          // fallback: jika tidak ketemu, tetap simpan nilai yang ada
+          imageUrl = selectedExistingUrl;
+        }
+      } else if (file) {
+        imageUrl = await uploadImage(file);
+      }
       const { error } = await supabase.from('products').insert({
         name: form.name,
         description: form.description || null,
@@ -118,6 +196,7 @@ export default function useProductsAdmin() {
       await fetchProducts();
       setForm({ name: '', category_id: '', price: '', description: '' });
       setFile(null);
+      setSelectedExistingUrl(null);
     } catch (e) {
       console.error(e);
       setError('Gagal menambahkan produk.');
@@ -157,6 +236,14 @@ export default function useProductsAdmin() {
       const { error } = await supabase.from('products').update(payload).eq('id', editing.id);
       if (error) throw error;
 
+      // Jika update sukses dan ada gambar baru, hapus gambar lama untuk menghindari orphan files
+      if (imageUrl !== undefined && editing.image_url) {
+        const info = parseStoragePath(editing.image_url);
+        if (info) {
+          await supabase.storage.from(info.bucket).remove([info.path]);
+        }
+      }
+
       await fetchProducts();
       setEditing(null);
       setEditFile(null);
@@ -182,8 +269,26 @@ export default function useProductsAdmin() {
   const handleDelete = async (id: number) => {
     if (!confirm('Hapus produk ini?')) return;
     try {
-      const { error } = await supabase.from('products').delete().eq('id', id);
-      if (error) throw error;
+      // Ambil image_url terlebih dahulu untuk menghapus file storage
+      const { data: prod, error: selErr } = await supabase
+        .from('products')
+        .select('image_url')
+        .eq('id', id)
+        .single();
+      if (selErr) throw selErr;
+
+      // Hapus file storage jika ada
+      if (prod?.image_url) {
+        const info = parseStoragePath(prod.image_url);
+        if (info) {
+          await supabase.storage.from(info.bucket).remove([info.path]);
+        }
+      }
+
+      // Hapus row produk di DB
+      const { error: delErr } = await supabase.from('products').delete().eq('id', id);
+      if (delErr) throw delErr;
+
       setProducts(prev => prev.filter(p => p.id !== id));
     } catch (e) {
       console.error(e);
@@ -202,6 +307,10 @@ export default function useProductsAdmin() {
     editing,
     file,
     editFile,
+    existingImages,
+    loadingImages,
+    imagePickerOpen,
+    selectedExistingUrl,
     // setters
     setEditing,
     // handlers
@@ -214,5 +323,10 @@ export default function useProductsAdmin() {
     toggleActive,
     handleDelete,
     handleEditFileChange,
+    openImagePicker,
+    closeImagePicker,
+    fetchExistingImages,
+    selectExistingImage,
+    clearSelectedExisting,
   };
 }

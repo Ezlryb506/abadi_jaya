@@ -13,6 +13,15 @@ interface ProductFormProps {
   onChange: (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
   onFileChange: (e: ChangeEvent<HTMLInputElement>) => void;
   file: File | null;
+  // Image picker dari Storage
+  existingImages: Array<{ name: string; url: string; path: string }>;
+  loadingImages: boolean;
+  imagePickerOpen: boolean;
+  selectedExistingUrl: string | null;
+  onOpenImagePicker: () => void;
+  onCloseImagePicker: () => void;
+  onSelectExistingImage: (url: string) => void;
+  onClearSelectedExisting: () => void;
 }
 
 export default function ProductForm({
@@ -25,6 +34,14 @@ export default function ProductForm({
   onChange,
   onFileChange,
   file,
+  existingImages,
+  loadingImages,
+  imagePickerOpen,
+  selectedExistingUrl,
+  onOpenImagePicker,
+  onCloseImagePicker,
+  onSelectExistingImage,
+  onClearSelectedExisting,
 }: ProductFormProps) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const objectUrlRef = useRef<string | null>(null);
@@ -121,10 +138,10 @@ export default function ProductForm({
           accept="image/*"
           onChange={onFileChange}
           className="sr-only"
-          required={!editing}
+          required={!editing && !selectedExistingUrl}
           id="product-image-input"
         />
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
@@ -133,6 +150,25 @@ export default function ProductForm({
             <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M12 12v9m0-9l3 3m-3-3l-3 3M16 8a4 4 0 10-8 0"/></svg>
             Pilih Gambar
           </button>
+          <button
+            type="button"
+            onClick={onOpenImagePicker}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-sky-300 transition"
+          >
+            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7h18M3 12h18M3 17h18"/></svg>
+            Pilih dari Storage
+          </button>
+          {selectedExistingUrl && (
+            <button
+              type="button"
+              onClick={onClearSelectedExisting}
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-red-200 text-red-700 hover:bg-red-50 transition"
+              title="Hapus pilihan gambar dari Storage"
+            >
+              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
+              Bersihkan Pilihan
+            </button>
+          )}
           {file && (
             <span className="text-sm text-gray-600 truncate max-w-xs" title={file.name}>
               {file.name} ({(file.size / 1024).toFixed(2)} KB)
@@ -143,6 +179,8 @@ export default function ProductForm({
         <div className="mt-4">
           {previewUrl ? (
             <img src={previewUrl} alt="Preview" className="w-full max-w-sm h-40 object-cover rounded-lg border" />
+          ) : selectedExistingUrl ? (
+            <img src={selectedExistingUrl} alt="Selected from storage" className="w-full max-w-sm h-40 object-cover rounded-lg border" />
           ) : (
             file && (
               <p className="text-sm text-gray-500">File dipilih: {file.name} ({(file.size / 1024).toFixed(2)} KB)</p>
@@ -150,6 +188,48 @@ export default function ProductForm({
           )}
         </div>
       </div>
+
+      {/* Modal Image Picker dari Storage */}
+      {imagePickerOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onCloseImagePicker} />
+          <div className="relative z-10 w-full max-w-3xl mx-4 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b">
+              <h3 className="text-lg font-semibold">Pilih Gambar dari Storage</h3>
+              <button onClick={onCloseImagePicker} className="p-2 rounded-lg hover:bg-gray-100" aria-label="Tutup">
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+            </div>
+            <div className="p-5">
+              {loadingImages ? (
+                <div className="text-sm text-gray-500">Memuat gambar...</div>
+              ) : existingImages.length === 0 ? (
+                <div className="text-sm text-gray-500">Belum ada gambar di folder <code>products/</code>.</div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                  {existingImages.map(img => (
+                    <button
+                      key={img.path}
+                      type="button"
+                      onClick={() => onSelectExistingImage(img.url)}
+                      className="group relative rounded-xl overflow-hidden border hover:shadow-md transition focus:outline-none focus:ring-2 focus:ring-orange-300"
+                      title={img.name}
+                    >
+                      <img src={img.url} alt={img.name} className="w-full h-28 object-cover group-hover:scale-[1.02] transition-transform" />
+                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/50 to-transparent p-2">
+                        <p className="text-xs text-white truncate">{img.name}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="px-5 py-4 border-t flex justify-end">
+              <button onClick={onCloseImagePicker} type="button" className="px-4 py-2 rounded-xl border hover:bg-gray-50">Tutup</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="flex justify-end gap-3 pt-4">
         <button

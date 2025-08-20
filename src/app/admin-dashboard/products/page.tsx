@@ -26,6 +26,15 @@ export default function AdminPage() {
     toggleActive,
     handleDelete,
     handleEditFileChange,
+    // image picker
+    existingImages,
+    loadingImages,
+    imagePickerOpen,
+    selectedExistingUrl,
+    openImagePicker,
+    closeImagePicker,
+    selectExistingImage,
+    clearSelectedExisting,
   } = useProductsAdmin();
 
   // state and effects dikelola di hook useProductsAdmin
@@ -128,6 +137,15 @@ export default function AdminPage() {
         onChange={handleChange}
         onFileChange={handleFileChange}
         file={file}
+        // image picker props
+        existingImages={existingImages}
+        loadingImages={loadingImages}
+        imagePickerOpen={imagePickerOpen}
+        selectedExistingUrl={selectedExistingUrl}
+        onOpenImagePicker={openImagePicker}
+        onCloseImagePicker={closeImagePicker}
+        onSelectExistingImage={selectExistingImage}
+        onClearSelectedExisting={clearSelectedExisting}
       />
       </section>
 
