@@ -14,6 +14,11 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  // Reset password state (admin)
+  const [showReset, setShowReset] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetInfo, setResetInfo] = useState('');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -66,6 +71,31 @@ export default function LoginPage() {
       router.replace('/admin-dashboard');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Reset Password (Admin)
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setResetLoading(true);
+    setResetInfo('');
+    try {
+      const email = (resetEmail || formData.email).trim();
+      if (!email) {
+        setResetInfo('Mohon isi email terlebih dahulu.');
+        return;
+      }
+      const redirectTo = typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : undefined;
+      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+      if (error) {
+        setResetInfo(error.message || 'Gagal mengirim tautan reset password.');
+        return;
+      }
+      setResetInfo('Tautan reset password telah dikirim. Periksa inbox/spam email Anda.');
+    } catch (err: any) {
+      setResetInfo(err?.message || 'Terjadi kesalahan saat reset password.');
+    } finally {
+      setResetLoading(false);
     }
   };
 
@@ -153,6 +183,17 @@ export default function LoginPage() {
               </div>
             </div>
 
+            {/* Lupa Password */}
+            <div className="text-right -mt-2">
+              <button
+                type="button"
+                onClick={() => { setShowReset(true); setResetEmail(formData.email); setResetInfo(''); }}
+                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+              >
+                Lupa password?
+              </button>
+            </div>
+
             {/* Error Message */}
             {error && (
               <div className="bg-red-50 border border-red-200 rounded-xl p-4">
@@ -215,6 +256,41 @@ export default function LoginPage() {
       {/* Floating Elements */}
       <div className="fixed top-20 right-20 w-32 h-32 bg-gradient-to-r from-orange-300/20 to-red-300/20 rounded-full mix-blend-multiply filter blur-2xl animate-float-slow pointer-events-none"></div>
       <div className="fixed bottom-20 left-20 w-24 h-24 bg-gradient-to-r from-blue-300/20 to-cyan-300/20 rounded-full mix-blend-multiply filter blur-2xl animate-float-medium pointer-events-none"></div>
+
+      {/* Modal Reset Password (Admin) */}
+      {showReset && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/30" onClick={() => setShowReset(false)} />
+          <div className="relative z-10 w-full max-w-md bg-white rounded-2xl shadow-xl border p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold">Reset Password Admin</h3>
+              <button className="p-2 rounded-lg hover:bg-gray-100" onClick={() => setShowReset(false)} aria-label="Tutup">✖️</button>
+            </div>
+            <form onSubmit={handleResetPassword} className="space-y-4">
+              <div className="relative">
+                <input
+                  type="email"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all pl-10 bg-white text-gray-900 placeholder-gray-500 font-medium"
+                  placeholder="Masukkan email admin"
+                  required
+                />
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">✉️</span>
+              </div>
+              {resetInfo && (
+                <div className="text-sm p-3 rounded-lg border bg-gray-50 text-gray-700">{resetInfo}</div>
+              )}
+              <div className="flex justify-end gap-2">
+                <button type="button" onClick={() => setShowReset(false)} className="px-4 py-2 rounded-xl border hover:bg-gray-50">Batal</button>
+                <button type="submit" disabled={resetLoading} className={`px-4 py-2 rounded-xl text-white ${resetLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-orange-500 hover:bg-orange-600'}`}>
+                  {resetLoading ? 'Mengirim...' : 'Kirim Tautan Reset'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

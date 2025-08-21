@@ -25,7 +25,6 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       // redirect to login page
       router.replace("/login");
     } catch (err) {
-      console.error(err);
       alert("Gagal logout. Coba lagi.");
     }
   };
@@ -57,7 +56,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   };
 
   return (
-    <div className="min-h-screen flex bg-gradient-to-br from-gray-50 via-orange-50 to-white">
+    <div className="min-h-screen flex bg-gradient-to-br from-gray-50 via-orange-50 to-white overflow-x-hidden">
       {/* Mobile Header Bar */}
       <div className="xl:hidden fixed top-20 left-4 z-50">
         <button
@@ -105,6 +104,11 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="h-5 w-5"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h18M3 9h18M3 15h18M3 21h18"/></svg>}
           />
           <NavItem
+            href="/admin-dashboard/reviews"
+            label="Ulasan"
+            icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="h-5 w-5"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.802 2.036a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.802-2.036a1 1 0 00-1.175 0l-2.802 2.036c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L3.98 8.72c-.783-.57-.38-1.81.588-1.81H8.03a1 1 0 00.95-.69l1.07-3.292z"/></svg>}
+          />
+          <NavItem
             href="/admin-dashboard/settings"
             label="Pengaturan"
             icon={<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="h-5 w-5"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.89 3.31.877 2.42 2.42-.458.794-.19 1.805.604 2.263 1.543.89 1.121 3.2-.604 3.2-.92 0-1.667.746-1.667 1.667 0 1.725-2.31 2.147-3.2.604a1.724 1.724 0 00-2.263-.604c-1.543.89-3.31-.877-2.42-2.42.458-.794.19-1.805-.604-2.263-1.543-.89-1.121-3.2.604-3.2.92 0 1.667-.746 1.667-1.667zM12 15a3 3 0 100-6 3 3 0 000 6z"/></svg>}
@@ -135,7 +139,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       )}
 
       {/* Main Content */}
-      <main className="flex-1 p-4 lg:p-8 pt-16 lg:pt-8">
+      <main className="flex-1 p-4 lg:p-8 pt-16 lg:pt-8 overflow-x-hidden">
         {children}
       </main>
     </div>

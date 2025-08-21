@@ -33,7 +33,7 @@ export default function CtaSection() {
             <button
               aria-label="Konsultasi via WhatsApp"
               title="Konsultasi via WhatsApp"
-              className="group relative inline-flex items-center justify-center bg-gradient-to-r from-orange-500 to-amber-400 text-white px-8 sm:px-10 py-4 sm:py-5 rounded-2xl text-lg sm:text-xl font-bold shadow-xl hover:from-orange-600 hover:to-amber-500 transition-all duration-300 transform motion-safe:hover:scale-[1.03] motion-safe:hover:-translate-y-0.5 focus:outline-none focus-visible:ring-4 focus-visible:ring-orange-300"
+              className="group relative inline-flex items-center justify-center bg-gradient-to-r from-orange-500 to-amber-400 text-white px-8 sm:px-10 py-4 sm:py-5 rounded-2xl text-lg sm:text-xl font-bold shadow-xl hover:from-orange-600 hover:to-amber-500 transition-all duration-300 transform motion-safe:hover:scale-[1.03] motion-safe:hover:-translate-y-0.5 focus:outline-none focus-visible:ring-4 focus-visible:ring-orange-300 cursor-pointer"
               onClick={() => window.open('https://wa.me/6289653754317?text=Halo! Saya ingin konsultasi tentang jasa las', '_blank')}
             >
               <span className="flex items-center gap-3">

@@ -25,7 +25,6 @@ const OrdersPage = () => {
         .order('order_date', { ascending: false });
 
       if (error) {
-        console.error('Error fetching orders:', error);
         setError('Gagal memuat data pesanan.');
       } else {
         setOrders(data || []);

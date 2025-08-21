@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import dynamic from 'next/dynamic';
@@ -8,8 +8,6 @@ import dynamic from 'next/dynamic';
 import Sidebar from "@/app/user-dashboard/components/Sidebar";
 import ProfileSection from "@/app/user-dashboard/components/ProfileSection";
 import OrdersSection from "@/app/user-dashboard/components/OrdersSection";
-import NewOrderSection from "@/app/user-dashboard/components/NewOrderSection";
-import ReviewSection from "@/app/user-dashboard/components/ReviewSection";
 
 // Lazy load FaqSection
 const FaqSection = dynamic(() => import("@/app/user-dashboard/components/FaqSection"), {
@@ -133,33 +131,70 @@ export default function UserDashboardPage() {
 		})();
 	    }, [user]);
 
-    // Fetch orders berdasarkan customer_id
-	useEffect(() => {
-		(async () => {
-			if (!customerId) return;
-			setOrdersLoading(true);
-			setOrdersErr("");
-			const { data, error } = await supabase
-				.from("transactions")
-				.select(`
-					id,
-					created_at,
-					estimated_price,
-					project_status,
-					products:products(name, product_categories(name))
-				`)
-				.eq("customer_id", customerId)
-				.order("created_at", { ascending: false });
+    	// Fetch orders berdasarkan customer_id
+	const fetchOrders = useCallback(async () => {
+		if (!customerId) return;
+		setOrdersLoading(true);
+		setOrdersErr("");
+		const { data, error } = await supabase
+			.from("transactions")
+			.select(`
+				id,
+				created_at,
+				estimated_completion,
+				estimated_price,
+				project_status,
+				products:products(name, product_categories(name)),
+				customers:customers(name),
+				payment_history (*),
+				project_updates (*),
+				reviews (*)
+			`)
+			.eq("customer_id", customerId)
+			.order("created_at", { ascending: false });
 
-			if (error) {
-				console.error('Supabase order fetch error:', error);
-				setOrdersErr("Gagal memuat data pesanan");
-			} else {
-				setOrders(data || []);
-			}
-			setOrdersLoading(false);
-		})();
+		if (error) {
+			setOrdersErr("Gagal memuat data pesanan");
+		} else {
+			setOrders(data || []);
+		}
+		setOrdersLoading(false);
 	}, [customerId]);
+
+	useEffect(() => {
+		if (!customerId) return;
+		fetchOrders();
+	}, [customerId, fetchOrders]);
+
+	// Realtime subscription
+	useEffect(() => {
+		if (!customerId) return;
+		// Buat channel khusus per customer agar mudah dibersihkan
+		const channel = supabase
+			.channel(`user-dashboard:${customerId}`)
+			.on('postgres_changes', { event: '*', schema: 'public', table: 'transactions', filter: `customer_id=eq.${customerId}` }, () => {
+				fetchOrders();
+			})
+			.on('postgres_changes', { event: '*', schema: 'public', table: 'project_updates' }, (payload) => {
+				// Jika menyangkut transaksi milik customer ini, refetch
+				const txId = (payload.new as any)?.transaction_id ?? (payload.old as any)?.transaction_id;
+				if (!txId) return;
+				const involve = orders.some(o => o.id === txId);
+				if (involve) fetchOrders();
+			})
+			.on('postgres_changes', { event: '*', schema: 'public', table: 'payment_history' }, (payload) => {
+				const txId = (payload.new as any)?.transaction_id ?? (payload.old as any)?.transaction_id;
+				if (!txId) return;
+				const involve = orders.some(o => o.id === txId);
+				if (involve) fetchOrders();
+			})
+			.subscribe();
+
+		return () => {
+			supabase.removeChannel(channel);
+		};
+	// sengaja depend di customerId & orders agar filter berjalan, dan channel terganti bila customer berubah
+	}, [customerId, orders, fetchOrders]);
 
 	const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
 		const { name, value } = e.target as any;
@@ -231,12 +266,8 @@ export default function UserDashboardPage() {
 					profileErr={profileErr} 
 				/>;
 			case 'orders':
-				return <OrdersSection orders={orders} loading={ordersLoading} error={ordersErr} />;
-			case 'order-new':
-				return <NewOrderSection />;
-			case 'review':
-				return <ReviewSection />;
-			case 'faq':
+				return <OrdersSection orders={orders} loading={ordersLoading} error={ordersErr} customerId={customerId} />;
+case 'faq':
 				return <FaqSection />;
 			default:
 				return null;

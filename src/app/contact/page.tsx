@@ -3,20 +3,10 @@
 import { useState } from 'react';
 
 export default function ContactPage() {
-  const [form, setForm] = useState({ name: '', email: '', message: '' });
-  const [submitted, setSubmitted] = useState(false);
+  
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitted(true);
-  };
 
   // Fungsi untuk mendapatkan lokasi pengguna
   const getUserLocation = () => {
@@ -85,18 +75,6 @@ export default function ContactPage() {
     window.open('https://maps.app.goo.gl/B8xNUCjmEC7kEpaS8', '_blank');
   };
 
-  const openWaze = () => {
-    const address = "Gg. Bunga, Wanasari, Kec. Cibitung, Kabupaten Bekasi, Jawa Barat 17520";
-    const encodedAddress = encodeURIComponent(address);
-    window.open(`https://waze.com/ul?q=${encodedAddress}`, '_blank');
-  };
-
-  const openAppleMaps = () => {
-    const address = "Gg. Bunga, Wanasari, Kec. Cibitung, Kabupaten Bekasi, Jawa Barat 17520";
-    const encodedAddress = encodeURIComponent(address);
-    window.open(`https://maps.apple.com/?q=${encodedAddress}`, '_blank');
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-orange-50 to-white">
       {/* Hero Section */}
@@ -106,7 +84,7 @@ export default function ContactPage() {
             Hubungi Kami
           </h1>
           <p className="text-xl text-orange-100 max-w-2xl mx-auto">
-            Siap membantu mewujudkan proyek las dan fabrikasi besi impian Anda
+            Siap membantu mewujudkan proyek las dan fabrikasi besi impian Anda.
           </p>
         </div>
       </div>
@@ -132,24 +110,6 @@ export default function ContactPage() {
                     className="text-orange-600 hover:text-orange-700 font-medium text-lg"
                   >
                     0896-5375-4317
-                  </a>
-                </div>
-              </div>
-            </div>
-
-            {/* Email Card */}
-            <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                  <span className="text-2xl">✉️</span>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-800">Email</h3>
-                  <a
-                    href="mailto:info@abadi-jaya.com"
-                    className="text-blue-600 hover:text-blue-700 font-medium"
-                  >
-                    info@abadi-jaya.com
                   </a>
                 </div>
               </div>
@@ -226,20 +186,7 @@ export default function ContactPage() {
                       <span className="text-lg">🗺️</span>
                       Google Maps
                     </button>
-                    <button
-                      onClick={openWaze}
-                      className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-blue-400 to-cyan-500 text-white py-2 px-4 rounded-lg text-sm font-medium hover:from-blue-500 hover:to-cyan-600 transition-all transform hover:scale-105 shadow-md hover:shadow-lg"
-                    >
-                      <span className="text-lg">🧭</span>
-                      Waze
-                    </button>
-                    <button
-                      onClick={openAppleMaps}
-                      className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-gray-600 to-gray-700 text-white py-2 px-4 rounded-lg text-sm font-medium hover:from-gray-700 hover:to-gray-800 transition-all transform hover:scale-105 shadow-md hover:shadow-lg"
-                    >
-                      <span className="text-lg">🍎</span>
-                      Apple Maps
-                    </button>
+                    
                   </div>
                 </div>
               </div>
@@ -262,83 +209,6 @@ export default function ContactPage() {
 
           {/* Form & Map - Right Side */}
           <div className="lg:col-span-2 space-y-8">
-            
-            {/* Contact Form Card */}
-            <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
-              <div className="text-center mb-8">
-                <h2 className="text-2xl font-bold text-gray-800 mb-2">Kirim Pesan</h2>
-                <p className="text-gray-600">Kami akan segera menghubungi Anda</p>
-              </div>
-
-              {submitted ? (
-                <div className="bg-green-50 border border-green-200 rounded-xl p-6 text-center">
-                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <span className="text-2xl text-green-600">✅</span>
-                  </div>
-                  <h3 className="text-lg font-semibold text-green-800 mb-2">Pesan Terkirim!</h3>
-                  <p className="text-green-700">Terima kasih atas pesan Anda. Kami akan segera menghubungi Anda.</p>
-                </div>
-              ) : (
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                        Nama Lengkap
-                      </label>
-                      <input
-                        id="name"
-                        type="text"
-                        name="name"
-                        placeholder="Masukkan nama lengkap"
-                        value={form.name}
-                        onChange={handleChange}
-                        required
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                        Email
-                      </label>
-                      <input
-                        id="email"
-                        type="email"
-                        name="email"
-                        placeholder="Masukkan email"
-                        value={form.email}
-                        onChange={handleChange}
-                        required
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
-                      />
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
-                      Pesan
-                    </label>
-                    <textarea
-                      id="message"
-                      name="message"
-                      placeholder="Tulis pesan Anda di sini..."
-                      value={form.message}
-                      onChange={handleChange}
-                      required
-                      rows={5}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all resize-none"
-                    />
-                  </div>
-                  
-                  <button
-                    type="submit"
-                    className="w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white py-4 rounded-xl font-semibold text-lg hover:from-orange-600 hover:to-orange-700 transition-all transform hover:scale-[1.02] shadow-lg hover:shadow-xl"
-                  >
-                    Kirim Pesan
-                  </button>
-                </form>
-              )}
-            </div>
 
             {/* Enhanced Map Card dengan Smart Route Finding */}
             <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">

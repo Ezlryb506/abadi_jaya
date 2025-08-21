@@ -39,8 +39,8 @@ export default function EditProductModal({ open, form, categories, submitting, o
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-start sm:items-center justify-center p-4 sm:p-6 z-50 overflow-y-auto">
-      <div className="bg-white rounded-2xl shadow-xl max-w-xl w-full p-6 md:p-7 max-h-[85vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/50 flex items-start sm:items-center justify-center p-4 sm:p-6 z-50 overflow-y-auto" role="dialog" aria-modal="true" aria-label="Edit Produk">
+      <div className="bg-white rounded-2xl shadow-xl max-w-xl w-full p-6 md:p-7 max-h-[90svh] md:max-h-[85vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-semibold text-gray-800">Edit Produk</h3>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-xl">×</button>
@@ -73,7 +73,7 @@ export default function EditProductModal({ open, form, categories, submitting, o
               <div className="border rounded-xl p-3 bg-gray-50">
                 <div className="text-xs text-gray-500 mb-2">Saat ini</div>
                 {currentImageUrl ? (
-                  <img src={currentImageUrl} alt="Current" className="w-full h-40 object-cover rounded-lg border" />
+                  <img src={currentImageUrl} alt="Current" loading="lazy" className="w-full h-40 object-cover rounded-lg border" />
                 ) : (
                   <div className="w-full h-40 flex items-center justify-center text-gray-400 border rounded-lg bg-white">Tidak ada gambar</div>
                 )}
@@ -81,7 +81,7 @@ export default function EditProductModal({ open, form, categories, submitting, o
               <div className="border rounded-xl p-3 bg-gray-50">
                 <div className="text-xs text-gray-500 mb-2">Preview baru</div>
                 {previewUrl ? (
-                  <img src={previewUrl} alt="Preview" className="w-full h-40 object-cover rounded-lg border" />
+                  <img src={previewUrl} alt="Preview" loading="lazy" className="w-full h-40 object-cover rounded-lg border" />
                 ) : (
                   <div className="w-full h-40 flex items-center justify-center text-gray-400 border rounded-lg bg-white">Belum dipilih</div>
                 )}

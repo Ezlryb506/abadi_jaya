@@ -123,7 +123,8 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="min-h-screen px-4 py-6 overflow-x-hidden">
+      <div className="max-w-7xl mx-auto space-y-6">
 
       {/* Form tambah produk */}
       <section id="add-product" aria-label="Tambah Produk">
@@ -171,6 +172,7 @@ export default function AdminPage() {
         onFileChange={handleEditFileChange}
         currentImageUrl={editing?.image_url ?? null}
       />
+      </div>
     </div>
   );
 }

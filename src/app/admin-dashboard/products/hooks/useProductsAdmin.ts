@@ -100,7 +100,6 @@ export default function useProductsAdmin() {
       try {
         await Promise.all([fetchProducts(), fetchCategories()]);
       } catch (e) {
-        console.error(e);
         setError('Gagal memuat data.');
       } finally {
         setLoading(false);
@@ -198,7 +197,6 @@ export default function useProductsAdmin() {
       setFile(null);
       setSelectedExistingUrl(null);
     } catch (e) {
-      console.error(e);
       setError('Gagal menambahkan produk.');
     } finally {
       setSubmitting(false);
@@ -248,7 +246,6 @@ export default function useProductsAdmin() {
       setEditing(null);
       setEditFile(null);
     } catch (e) {
-      console.error(e);
       setError('Gagal memperbarui produk.');
     } finally {
       setSubmitting(false);
@@ -261,7 +258,6 @@ export default function useProductsAdmin() {
       if (error) throw error;
       setProducts(prev => prev.map(p => (p.id === id ? { ...p, is_active: newStatus } : p)));
     } catch (e) {
-      console.error(e);
       setError('Gagal mengubah status produk.');
     }
   };
@@ -291,7 +287,6 @@ export default function useProductsAdmin() {
 
       setProducts(prev => prev.filter(p => p.id !== id));
     } catch (e) {
-      console.error(e);
       setError('Gagal menghapus produk.');
     }
   };

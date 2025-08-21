@@ -56,7 +56,7 @@ export default function Header() {
     if (href === '/catalog') return pathname === '/catalog';
     if (href === '/login') return pathname === '/login';
     if (href === '/customer-login') return pathname === '/customer-login';
-    if (href === '/gallery') return pathname === '/gallery';
+    if (href === '/testimoni') return pathname === '/testimoni';
     return false;
   };
 
@@ -97,14 +97,14 @@ export default function Header() {
               Katalog
             </Link>
             <Link
-              href="/gallery"
+              href="/testimoni"
               className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                isActive('/gallery') 
+                isActive('/testimoni') 
                   ? 'bg-orange-100 text-orange-700 border-2 border-orange-200' 
                   : 'text-gray-600 hover:text-orange-500 hover:bg-orange-50 border-2 border-transparent'
               }`}
             >
-              Galeri
+              Testimoni
             </Link>
             <Link
               href="/contact"
@@ -213,15 +213,15 @@ export default function Header() {
                 Katalog
               </Link>
               <Link
-                href="/gallery"
+                href="/testimoni"
                 className={`inline-flex w-11/12 max-w-xs justify-center text-center px-3 py-2 rounded-lg font-medium transition-colors border-2 ${
-                  isActive('/gallery') 
+                  isActive('/testimoni') 
                     ? 'bg-orange-100 text-orange-700 border-orange-200' 
                     : 'text-gray-600 hover:bg-orange-50 border-transparent hover:border-orange-100'
                 }`}
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Galeri
+                Testimoni
               </Link>
               <Link
                 href="/contact"

@@ -39,8 +39,8 @@ export default function HeroSection() {
             </div>
           </div>
           
-          <p className="text-xl md:text-2xl text-slate-600 max-w-4xl mx-auto leading-relaxed font-medium">
-            Spesialis jasa las dan fabrikasi besi berkualitas tinggi dengan teknologi modern. 
+          <p className="text-xl md:text-2xl text-slate-600 leading-relaxed font-medium">
+            Spesialis jasa las, pagar kustom dan fabrikasi besi berkualitas tinggi. 
             <span className="block mt-2 text-orange-600 font-semibold">
               Dari pagar minimalis hingga kanopi stainless, kami siap mewujudkan ide Anda menjadi kenyataan.
             </span>

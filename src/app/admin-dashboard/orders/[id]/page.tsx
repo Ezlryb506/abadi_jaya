@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useParams, useRouter } from 'next/navigation';
 import EditOrderModal from '../components/EditOrderModal';
+import { formatTanggal } from '@/lib/format';
 
 const OrderDetailPage = () => {
   const { id } = useParams();
@@ -142,7 +143,6 @@ const OrderDetailPage = () => {
       setEditingPayment(null);
       setEpAmount(''); setEpDate(''); setEpNotes(''); setEpFile(null);
     } catch (err) {
-      console.error(err);
       setToast({ type: 'error', message: 'Gagal memperbarui pembayaran.' });
     } finally {
       setUpdatingPayment(false);
@@ -166,7 +166,6 @@ const OrderDetailPage = () => {
       });
       setToast({ type: 'success', message: 'Riwayat pembayaran berhasil dihapus.' });
     } catch (err) {
-      console.error(err);
       setToast({ type: 'error', message: 'Gagal menghapus pembayaran.' });
     }
   };
@@ -189,7 +188,6 @@ const OrderDetailPage = () => {
         .single();
 
       if (error) {
-        console.error('Error fetching order details:', error);
         setError('Gagal memuat detail pesanan.');
       } else {
         setOrder(data);
@@ -247,6 +245,14 @@ const OrderDetailPage = () => {
   const remaining = Math.max(0, est - paid);
   const pct = est > 0 ? Math.min(100, Math.round((paid / est) * 100)) : 0;
 
+  // Estimated completion helpers (admin view)
+  const dueDate = order?.estimated_completion ? new Date(order.estimated_completion) : null;
+  const isCompleted = order?.project_status === 'Completed';
+  const now = new Date();
+  const endOfDue = dueDate ? new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate(), 23, 59, 59) : null;
+  const isOverdue = !!(endOfDue && now > endOfDue && !isCompleted);
+  const daysLate = isOverdue && endOfDue ? Math.ceil((now.getTime() - endOfDue.getTime()) / (1000 * 60 * 60 * 24)) : 0;
+
   const handleAddUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!id) return;
@@ -270,7 +276,6 @@ const OrderDetailPage = () => {
       }, order.project_updates[0]);
       const latestStatus = latest?.status as string | undefined;
       if (latestStatus && latestStatus === updStatus) {
-        console.info('[project_updates] blocked: duplicate consecutive status ->', updStatus);
         setToast({ type: 'info', message: `Status "${updStatus}" sudah menjadi update terbaru/terakhir. Pilih status lain / batalkan update.` });
         return;
       }
@@ -311,20 +316,17 @@ const OrderDetailPage = () => {
         photo_url,
         updated_by: actor,
       };
-      console.info('[project_updates] inserting payload:', payload);
       const { data: insertedUpdate, error } = await supabase
         .from('project_updates')
         .insert(payload)
         .select()
         .single();
       if (error) throw error;
-      console.info('[project_updates] inserted:', insertedUpdate);
       // Sinkronkan status transaksi jika status baru tidak mundur
       try {
         const currentIdx = projectStatuses.indexOf(order.project_status as string);
         const newIdx = projectStatuses.indexOf(updStatus);
         if (newIdx >= currentIdx && updStatus !== order.project_status) {
-          console.info('[transactions] updating project_status ->', updStatus);
           const { error: txErr } = await supabase
             .from('transactions')
             .update({ project_status: updStatus })
@@ -333,10 +335,8 @@ const OrderDetailPage = () => {
           // Optimistic update status transaksi di state lokal
           setOrder((prev: any) => prev ? { ...prev, project_status: updStatus } : prev);
         } else {
-          console.info('[transactions] skip update: status tidak lebih tinggi atau sama dengan status saat ini');
         }
       } catch (syncErr) {
-        console.error('[transactions] gagal sinkron status:', syncErr);
         setToast({ type: 'error', message: 'Status transaksi gagal disinkronkan. Silakan refresh.' });
       }
       // Optimistic update ke daftar project_updates di state lokal
@@ -352,7 +352,6 @@ const OrderDetailPage = () => {
       setIsUpdateModalOpen(false);
       setToast({ type: 'success', message: 'Update proyek berhasil ditambahkan.' });
     } catch (err: any) {
-      console.error(err);
       setError('Gagal menambahkan update proyek.');
       const msg = err?.message || 'Terjadi kesalahan saat menyimpan update proyek.';
       setToast({ type: 'error', message: msg });
@@ -444,7 +443,6 @@ const OrderDetailPage = () => {
       setToast({ type: 'success', message: 'Pembayaran berhasil ditambahkan.' });
       setIsAddPaymentOpen(false);
     } catch (err) {
-      console.error(err);
       setToast({ type: 'error', message: 'Gagal menambahkan pembayaran. Silakan coba lagi.' });
     } finally {
       setAddingPayment(false);
@@ -502,14 +500,15 @@ const OrderDetailPage = () => {
                 </span>
               ) : (
                 <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700 px-3 py-1 text-xs">
-                  Terakhir sinkron: {lastSyncedAt ? lastSyncedAt.toLocaleTimeString('id-ID') : '-'}
+                  Terakhir sinkron: {lastSyncedAt ? formatTanggal(lastSyncedAt, true) : '-'}
                 </span>
               )}
             </div>
           </div>
           <div className="space-y-2">
-            <p><strong>Tanggal Pesan:</strong> {new Date(order.order_date).toLocaleDateString('id-ID')}</p>
+            <p><strong>Tanggal Pesan:</strong> {formatTanggal(order.order_date, false)}</p>
             <p><strong>Status Proyek:</strong> {order.project_status}</p>
+            <p className="flex items-center gap-2"><strong>Estimasi Selesai:</strong> <span className={`${isOverdue ? 'text-red-600 font-semibold' : ''}`}>{dueDate ? formatTanggal(dueDate.toISOString(), false) : '-'}</span>{isOverdue && (<span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-red-200 bg-red-50 text-red-700 text-xs">Terlambat{daysLate > 0 ? ` ${daysLate}h` : ''}</span>)}</p>
             <p><strong>Harga:</strong> Rp {new Intl.NumberFormat('id-ID').format(order.estimated_price)}</p>
             <p><strong>Total Bayar:</strong> Rp {new Intl.NumberFormat('id-ID').format(order.total_paid)}</p>
             <p className="text-sm text-gray-600"><strong>Sisa Tagihan:</strong> Rp {new Intl.NumberFormat('id-ID').format(remaining)}</p>
@@ -566,13 +565,13 @@ const OrderDetailPage = () => {
           <h2 className="text-lg font-semibold border-b border-gray-200 pb-3 mb-4">Update Proyek</h2>
           {/* Form dipindah ke modal. Bagian ini hanya menampilkan riwayat. */}
           <ul className="space-y-3 break-words">
-            {order.project_updates.length > 0 ? [...order.project_updates]
+            {Array.isArray(order.project_updates) && order.project_updates.length > 0 ? [...order.project_updates]
               .sort((a:any,b:any)=> new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
               .map((update: any) => (
               <li key={update.id} className="border-b pb-2">
                 <p><strong>Status:</strong> {update.status}</p>
                 <p>{update.description}</p>
-                <p className="text-sm text-gray-500">{new Date(update.created_at).toLocaleString('id-ID')}</p>
+                <p className="text-sm text-gray-500">{formatTanggal(update.created_at, true)}</p>
                 {update.photo_url && (
                   <img src={update.photo_url} alt="update" className="mt-2 w-full max-w-full h-auto aspect-video object-cover rounded" />
                 )}
@@ -584,14 +583,14 @@ const OrderDetailPage = () => {
         <div className="bg-white rounded-2xl shadow p-6 border border-gray-100">
           <h2 className="text-lg font-semibold border-b border-gray-200 pb-3 mb-4">Riwayat Pembayaran</h2>
           <ul className="space-y-3">
-            {order.payment_history.length > 0 ? [...order.payment_history]
+            {Array.isArray(order.payment_history) && order.payment_history.length > 0 ? [...order.payment_history]
               .sort((a:any,b:any)=> new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime())
               .map((payment: any) => (
               <li key={payment.id} className="border-b pb-3">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p><strong>Jumlah:</strong> Rp{new Intl.NumberFormat('id-ID').format(payment.payment_amount)}</p>
-                    <p className="text-sm text-gray-500">{new Date(payment.payment_date).toLocaleString('id-ID')}</p>
+                    <p className="text-sm text-gray-500">{formatTanggal(payment.payment_date, true)}</p>
                     {payment.payment_notes && (
                       <p className="text-sm text-gray-600">{payment.payment_notes}</p>
                     )}

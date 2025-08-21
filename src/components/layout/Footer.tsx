@@ -31,14 +31,16 @@ export default function Footer() {
           </div>
 
           <div>
-            <h4 className="text-lg font-semibold mb-4">Layanan</h4>
+            <h4 className="text-lg font-semibold mb-4">Layanan kustom</h4>
             <ul className="space-y-2 text-gray-300">
               <li>Pagar Besi</li>
-              <li>Kanopi & Carport</li>
+              <li>Kanopi</li>
               <li>Railing Tangga</li>
               <li>Pintu Besi</li>
               <li>Jendela & Teralis</li>
               <li>Stainless Steel</li>
+              <li>Rolling Door</li>
+              <li>Gerbang</li>
             </ul>
           </div>
 

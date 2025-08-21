@@ -9,6 +9,7 @@ interface Order {
   estimated_price: number;
   total_paid?: number;
   description?: string;
+  estimated_completion?: string | null;
 }
 
 interface EditOrderModalProps {
@@ -19,7 +20,7 @@ interface EditOrderModalProps {
 }
 
 const EditOrderModal = ({ order, isOpen, onClose, onSave }: EditOrderModalProps) => {
-  const [formData, setFormData] = useState({ project_status: '', estimated_price: 0, description: '' });
+  const [formData, setFormData] = useState({ project_status: '', estimated_price: 0, description: '', estimated_completion: '' as string | null });
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
@@ -30,6 +31,8 @@ const EditOrderModal = ({ order, isOpen, onClose, onSave }: EditOrderModalProps)
         project_status: order.project_status,
         estimated_price: order.estimated_price,
         description: order.description ?? '',
+        // Normalisasi ke format input type="date" (YYYY-MM-DD)
+        estimated_completion: order.estimated_completion ? new Date(order.estimated_completion).toISOString().slice(0,10) : '',
       });
     }
   }, [order]);
@@ -71,6 +74,15 @@ const EditOrderModal = ({ order, isOpen, onClose, onSave }: EditOrderModalProps)
       setError('Estimasi harga harus angka > 0.');
       return;
     }
+    // Validasi: estimated_completion jika diisi harus tanggal valid
+    if (formData.estimated_completion) {
+      const d = new Date(formData.estimated_completion);
+      if (isNaN(d.getTime())) {
+        setIsSaving(false);
+        setError('Tanggal estimasi selesai tidak valid.');
+        return;
+      }
+    }
     // Validasi: estimated_price tidak boleh kurang dari total_paid (schema: check_total_paid)
     const totalPaid = order.total_paid ?? 0;
     if (formData.estimated_price < totalPaid) {
@@ -99,13 +111,14 @@ const EditOrderModal = ({ order, isOpen, onClose, onSave }: EditOrderModalProps)
         project_status: formData.project_status,
         estimated_price: formData.estimated_price,
         description: (formData.description || '').trim() || null,
+        // Kolom DATE menerima string 'YYYY-MM-DD' atau null
+        estimated_completion: formData.estimated_completion ? formData.estimated_completion : null,
       })
       .eq('id', order.id);
 
     setIsSaving(false);
 
     if (updateError) {
-      console.error('Error updating order:', updateError);
       // Mapping pesan error Supabase/DB ke pesan ramah
       const msg = String(updateError.message || '').toLowerCase();
       if (msg.includes('check_total_paid') || msg.includes('total_paid') && msg.includes('estimated_price')) {
@@ -169,6 +182,19 @@ const EditOrderModal = ({ order, isOpen, onClose, onSave }: EditOrderModalProps)
               disabled={isSaving}
             />
             <p className="mt-2 text-sm text-gray-600">Total dibayar saat ini: Rp{new Intl.NumberFormat('id-ID').format(order.total_paid ?? 0)}</p>
+          </div>
+          <div className="col-span-1">
+            <label htmlFor="estimated_completion" className="block text-base font-medium text-gray-800">Estimasi Selesai</label>
+            <input
+              type="date"
+              id="estimated_completion"
+              name="estimated_completion"
+              value={formData.estimated_completion || ''}
+              onChange={handleChange}
+              className="mt-2 block w-full rounded-xl border-gray-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 text-base px-4 py-3"
+              disabled={isSaving}
+            />
+            <p className="mt-1 text-xs text-gray-500">Opsional. Kosongkan jika belum dapat estimasi pasti.</p>
           </div>
           <div className="md:col-span-2 col-span-1">
             <label htmlFor="description" className="block text-base font-medium text-gray-800">Deskripsi Kustom</label>

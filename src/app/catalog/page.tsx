@@ -185,9 +185,7 @@ export default function CatalogPage() {
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
             Katalog Produk
           </h1>
-          <p className="text-xl text-orange-100 max-w-2xl mx-auto">
-            Temukan produk las dan fabrikasi besi berkualitas tinggi untuk kebutuhan Anda
-          </p>
+          <p className="text-xl text-orange-100">Temukan produk las dan fabrikasi besi berkualitas tinggi untuk kebutuhan Anda.</p>
         </div>
       </div>
 

@@ -3,8 +3,6 @@ import { Dialog } from '@headlessui/react';
 const menuItems = [
   { key: 'profile', label: 'Profil' },
   { key: 'orders', label: 'Pesanan Saya' },
-  { key: 'order-new', label: 'Pesan Baru' },
-  { key: 'review', label: 'Review' },
   { key: 'faq', label: 'FAQ & Bantuan' },
 ];
 

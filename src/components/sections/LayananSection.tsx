@@ -7,7 +7,6 @@ interface ServiceCard {
   icon: string;
   title: string;
   description: string;
-  price: string;
   category: string;
 }
 
@@ -17,7 +16,6 @@ const services: ServiceCard[] = [
     icon: '🏗️',
     title: 'Pagar Besi',
     description: 'Pagar minimalis, pagar klasik, pagar modern dengan berbagai desain dan ukuran',
-    price: 'Mulai Rp 500.000',
     category: 'Pagar'
   },
   {
@@ -25,7 +23,6 @@ const services: ServiceCard[] = [
     icon: '🏠',
     title: 'Kanopi & Carport',
     description: 'Kanopi teras, carport mobil, kanopi garasi dengan material berkualitas',
-    price: 'Mulai Rp 1.000.000',
     category: 'Kanopi'
   },
   {
@@ -33,7 +30,6 @@ const services: ServiceCard[] = [
     icon: '🪜',
     title: 'Railing Tangga',
     description: 'Railing tangga putar, railing minimalis, railing stainless steel',
-    price: 'Mulai Rp 800.000',
     category: 'Railing'
   },
   {
@@ -41,7 +37,6 @@ const services: ServiceCard[] = [
     icon: '🚪',
     title: 'Pintu Besi',
     description: 'Pintu garasi, rolling door, pintu besi dengan sistem keamanan tinggi',
-    price: 'Mulai Rp 1.500.000',
     category: 'Pintu'
   },
   {
@@ -49,7 +44,6 @@ const services: ServiceCard[] = [
     icon: '🪟',
     title: 'Jendela & Teralis',
     description: 'Jendela besi, kasa nyamuk, teralis jendela dengan desain menarik',
-    price: 'Mulai Rp 300.000',
     category: 'Jendela'
   },
   {
@@ -57,9 +51,50 @@ const services: ServiceCard[] = [
     icon: '✨',
     title: 'Stainless Steel',
     description: 'Produk stainless steel premium dengan finishing berkualitas tinggi',
-    price: 'Mulai Rp 1.000.000',
     category: 'Stainless'
-  }
+  },
+  {
+    id: 7,
+    icon: '🌿',
+    title: 'Pergola & Kanopi Taman',
+    description: 'Pergola/kanopi estetis untuk teras & taman, material besi/stainless',
+    category: 'Kanopi',
+  },
+  {
+    id: 8,
+    icon: '🪟',
+    title: 'Railing Balkon',
+    description: 'Railing balkon minimalis/stainless, aman & elegan untuk indoor/outdoor',
+    category: 'Railing',
+  },
+  {
+    id: 9,
+    icon: '🚪',
+    title: 'Pintu Gerbang',
+    description: 'Pintu gerbang minimalis/stainless, aman & elegan untuk indoor/outdoor',
+    category: 'Pintu',
+  },
+  {
+    id: 11,
+    icon: '✨',
+    title: 'Kitchen Set Stainless',
+    description: 'Meja sink & kabinet stainless untuk dapur komersial/rumah',
+    category: 'Stainless',
+  },
+  {
+    id: 12,
+    icon: '🧰',
+    title: 'Rak & Meja Stainless',
+    description: 'Rak gudang/meja kerja stainless, kuat & higienis',
+    category: 'Stainless',
+  },
+  {
+    id: 13,
+    icon: '🧭',
+    title: 'Handrail Tangga Stainless',
+    description: 'Handrail ergonomis untuk rumah/sarana publik, finishing premium',
+    category: 'Stainless',
+  },
 ];
 
 export default function LayananSection() {
@@ -79,7 +114,7 @@ export default function LayananSection() {
             Layanan Unggulan Kami
           </h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Berbagai jenis jasa las dan fabrikasi dengan kualitas terbaik dan harga terjangkau
+            Berbagai jenis jasa las, pagar kustom dan fabrikasi dengan kualitas terbaik dan harga terjangkau
           </p>
         </div>
 
@@ -112,10 +147,9 @@ export default function LayananSection() {
               </div>
               <h3 className="text-xl font-semibold text-gray-800 mb-2">{service.title}</h3>
               <p className="text-gray-600 mb-4">{service.description}</p>
-              <div className="text-orange-500 font-semibold">{service.price}</div>
               
-              {/* Hover Effect */}
-              <div className="mt-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              {/* Action Button: always visible on mobile, hover-reveal on ≥sm */}
+              <div className="mt-4 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-300">
                 <button 
                   className="w-full bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-600 transition-colors cursor-pointer"
                   onClick={() => window.open('https://wa.me/6289653754317?text=Halo! Saya ingin konsultasi tentang jasa las', '_blank')}

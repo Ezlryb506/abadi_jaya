@@ -191,40 +191,47 @@ export default function ProductForm({
 
       {/* Modal Image Picker dari Storage */}
       {imagePickerOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-4 sm:p-6 overflow-y-auto overscroll-contain">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onCloseImagePicker} />
-          <div className="relative z-10 w-full max-w-3xl mx-4 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-4 border-b">
+          <div
+            className="relative z-10 w-full max-w-3xl mx-0 sm:mx-4 bg-white rounded-xl sm:rounded-2xl shadow-xl border border-gray-100 overflow-hidden max-h-[90svh] md:max-h-[85vh] flex flex-col"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Pilih Gambar dari Storage"
+          >
+            <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-4 border-b bg-white/95 supports-[backdrop-filter]:backdrop-blur">
               <h3 className="text-lg font-semibold">Pilih Gambar dari Storage</h3>
               <button onClick={onCloseImagePicker} className="p-2 rounded-lg hover:bg-gray-100" aria-label="Tutup">
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
               </button>
             </div>
-            <div className="p-5">
+            <div className="flex-1 min-h-0 p-3 sm:p-5 overflow-y-auto">
               {loadingImages ? (
                 <div className="text-sm text-gray-500">Memuat gambar...</div>
               ) : existingImages.length === 0 ? (
                 <div className="text-sm text-gray-500">Belum ada gambar di folder <code>products/</code>.</div>
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
                   {existingImages.map(img => (
                     <button
                       key={img.path}
                       type="button"
                       onClick={() => onSelectExistingImage(img.url)}
-                      className="group relative rounded-xl overflow-hidden border hover:shadow-md transition focus:outline-none focus:ring-2 focus:ring-orange-300"
+                      className="group rounded-xl border hover:shadow-md transition focus:outline-none focus:ring-2 focus:ring-orange-300 flex flex-col items-center p-2"
                       title={img.name}
                     >
-                      <img src={img.url} alt={img.name} className="w-full h-28 object-cover group-hover:scale-[1.02] transition-transform" />
-                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/50 to-transparent p-2">
-                        <p className="text-xs text-white truncate">{img.name}</p>
+                      <div className="relative w-full max-w-[170px] sm:max-w-full">
+                        <img src={img.url} alt={img.name} className="w-full h-28 sm:h-24 md:h-24 object-cover group-hover:scale-[1.02] transition-transform mx-auto rounded-md" />
+                        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/50 to-transparent p-2 rounded-b-md">
+                          <p className="text-[11px] text-white truncate">{img.name}</p>
+                        </div>
                       </div>
                     </button>
                   ))}
                 </div>
               )}
             </div>
-            <div className="px-5 py-4 border-t flex justify-end">
+            <div className="sticky bottom-0 z-10 px-4 sm:px-5 py-3 sm:py-4 border-t flex justify-end bg-white/95 supports-[backdrop-filter]:backdrop-blur">
               <button onClick={onCloseImagePicker} type="button" className="px-4 py-2 rounded-xl border hover:bg-gray-50">Tutup</button>
             </div>
           </div>
