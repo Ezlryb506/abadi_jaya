@@ -1,6 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+export const dynamic = 'force-dynamic';
+
+import { Suspense, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter, useSearchParams } from "next/navigation";
@@ -17,7 +19,7 @@ const isValidPhone = (v: string) => /^(?:\+62|62|0)8\d{7,13}$/.test(normalizePho
 const isValidRTRW = (v: string) => (v || '').trim() === '' || /^\d{1,3}\/\d{1,3}$/.test((v || '').trim());
 const isValidHouseNumber = (v: string) => /^[-A-Za-z0-9\/]{1,10}$/.test((v || '').trim());
 
-export default function CustomerLoginPage() {
+function CustomerLoginInner() {
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
     email: '',
@@ -853,5 +855,19 @@ export default function CustomerLoginPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function CustomerLoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <p className="text-gray-700">Memuat...</p>
+        </div>
+      }
+    >
+      <CustomerLoginInner />
+    </Suspense>
   );
 }
