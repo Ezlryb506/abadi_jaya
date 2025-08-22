@@ -1,6 +1,8 @@
 'use client';
 
 import { ProductRow } from '../types';
+import Image from 'next/image';
+import { useEffect, useState } from 'react';
 
 interface ProductRowProps {
   product: ProductRow;
@@ -9,15 +11,36 @@ interface ProductRowProps {
   onDelete: (id: number) => void;
 }
 
+// Format harga hanya di client untuk menghindari mismatch SSR vs Client
+function PriceText({ value }: { value: number | null }) {
+  const [text, setText] = useState<string>(value != null ? `Rp ${value}` : '-');
+  useEffect(() => {
+    if (value == null) setText('-');
+    else {
+      try {
+        setText(`Rp ${new Intl.NumberFormat('id-ID').format(value)}`);
+      } catch {
+        setText(`Rp ${value}`);
+      }
+    }
+  }, [value]);
+  return <span suppressHydrationWarning>{text}</span>;
+}
+
 export default function ProductRowComponent({ product, onEdit, onToggleStatus, onDelete }: ProductRowProps) {
   return (
     <tr key={product.id} className="border-b hover:bg-gray-50/70 transition-colors">
       <td className="px-5 md:px-6 py-3">
         {product.image_url ? (
-          <img 
+          <Image 
             src={product.image_url} 
             alt={product.name} 
+            width={64}
+            height={64}
             className="w-16 h-16 object-cover rounded"
+            sizes="64px"
+            loading="lazy"
+            decoding="async"
           />
         ) : (
           <div className="w-16 h-16 bg-gray-200 rounded flex items-center justify-center text-gray-500">
@@ -28,7 +51,7 @@ export default function ProductRowComponent({ product, onEdit, onToggleStatus, o
       <td className="px-5 md:px-6 py-3">{product.name}</td>
       <td className="px-5 md:px-6 py-3">{product.product_categories?.name || '-'}</td>
       <td className="px-5 md:px-6 py-3">
-        {product.price ? `Rp ${product.price.toLocaleString('id-ID')}` : '-'}
+        <PriceText value={product.price} />
       </td>
       <td className="px-5 md:px-6 py-3">
         <span 
@@ -81,3 +104,4 @@ export default function ProductRowComponent({ product, onEdit, onToggleStatus, o
     </tr>
   );
 }
+

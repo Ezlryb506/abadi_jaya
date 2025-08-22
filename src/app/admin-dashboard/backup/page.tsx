@@ -1,23 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, ChangeEvent, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
-
-interface ProductRow {
-  id: number;
-  name: string;
-  description: string | null;
-  price: number | null;
-  is_active: boolean | null;
-  image_url?: string | null;
-  product_categories: { name: string } | null;
-}
-
-interface CategoryRow {
-  id: number;
-  name: string;
-}
+import { ProductRow, CategoryRow } from '../types';
+import Image from 'next/image';
 
 export default function AdminPage() {
   const router = useRouter();
@@ -76,7 +63,7 @@ export default function AdminPage() {
       setError('Gagal memuat produk');
       return;
     }
-    const normalized: ProductRow[] = (data || []).map((p: any) => ({
+    const normalized: ProductRow[] = (data || []).map((p) => ({
       id: p.id,
       name: p.name,
       description: p.description,
@@ -85,16 +72,16 @@ export default function AdminPage() {
       image_url: p.image_url ?? null,
       product_categories: Array.isArray(p.product_categories)
         ? (p.product_categories[0] ? { name: String(p.product_categories[0].name) } : null)
-        : (p.product_categories ? { name: String(p.product_categories.name) } : null),
+        : (p.product_categories ? { name: String((p.product_categories as {name: string})?.name) } : null),
     }));
     setProducts(normalized);
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleAddProduct = async (e: React.FormEvent) => {
+  const handleAddProduct = async (e: FormEvent) => {
     e.preventDefault();
     if (!form.name || !form.category_id) return;
     setSubmitting(true);
@@ -113,8 +100,8 @@ export default function AdminPage() {
         const { data: pub } = supabase.storage.from(BUCKET).getPublicUrl(filePath);
         imageUrl = pub.publicUrl;
       }
-    } catch (err: any) {
-      setError(err?.message || 'Upload gambar gagal');
+    } catch (err) {
+      setError((err as Error).message || 'Upload gambar gagal');
       setSubmitting(false);
       return;
     }
@@ -158,13 +145,13 @@ export default function AdminPage() {
     setEditFile(null);
   };
 
-  const handleUpdateProduct = async (e: React.FormEvent) => {
+  const handleUpdateProduct = async (e: FormEvent) => {
     e.preventDefault();
     if (!editing) return;
     setSubmitting(true);
     setError('');
     const priceNum = form.price ? Number(form.price) : null;
-    const payload: any = { name: form.name, price: priceNum, description: form.description || null };
+    const payload: Partial<ProductRow> = { name: form.name, price: priceNum, description: form.description || null };
     try {
       if (editFile) {
         const filePath = `products/${Date.now()}_${editFile.name}`;
@@ -177,12 +164,12 @@ export default function AdminPage() {
         const { data: pub } = supabase.storage.from(BUCKET).getPublicUrl(filePath);
         payload.image_url = pub.publicUrl;
       }
-    } catch (err: any) {
-      setError(err?.message || 'Upload gambar gagal');
+    } catch (err) {
+      setError((err as Error).message || 'Upload gambar gagal');
       setSubmitting(false);
       return;
     }
-    if (form.category_id) payload.category_id = Number(form.category_id);
+    if (form.category_id) (payload as {category_id: number}).category_id = Number(form.category_id);
     const { error } = await supabase.from('products').update(payload).eq('id', editing.id);
     if (error) {
       setError(error.message || 'Gagal mengubah produk');
@@ -282,7 +269,19 @@ export default function AdminPage() {
                 {products.map(p => (
                   <tr key={p.id} className="border-t">
                     <td className="py-3 pr-4">{p.id}</td>
-                    <td className="py-3 pr-4">{p.image_url ? (<img src={p.image_url} alt={p.name} className="w-12 h-12 object-cover rounded" />) : (<span className="text-gray-400">—</span>)}</td>
+                    <td className="py-3 pr-4">
+                      {p.image_url ? (
+                        <Image
+                          src={p.image_url}
+                          alt={p.name}
+                          width={48}
+                          height={48}
+                          className="rounded object-cover"
+                        />
+                      ) : (
+                        <span className="text-gray-400">—</span>
+                      )}
+                    </td>
                     <td className="py-3 pr-4 font-medium text-gray-800">{p.name}</td>
                     <td className="py-3 pr-4">{p.product_categories?.name || '-'}</td>
                     <td className="py-3 pr-4">{typeof p.price === 'number' ? `Rp ${p.price.toLocaleString('id-ID')}` : '-'}</td>
@@ -343,5 +342,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
-

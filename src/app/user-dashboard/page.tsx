@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import dynamic from 'next/dynamic';
+import type { User } from '@supabase/supabase-js';
 
 // Import new components
 import Sidebar from "@/app/user-dashboard/components/Sidebar";
@@ -15,9 +16,40 @@ const FaqSection = dynamic(() => import("@/app/user-dashboard/components/FaqSect
 	ssr: true,
 });
 
+type TransactionRow = {
+    id: number;
+    created_at: string;
+    estimated_completion: string | null;
+    estimated_price: number | null;
+    project_status: string | null;
+    products: { name: string; product_categories: { name: string } | null } | null;
+    customers: { name: string } | null;
+    payment_history: Array<{
+        id: number;
+        payment_amount: number;
+        payment_date: string;
+        payment_notes: string | null;
+        payment_proof: string | null;
+    }>;
+    project_updates: Array<{
+        id: number;
+        status: string;
+        description: string | null;
+        created_at: string;
+        photo_url: string | null;
+    }>;
+    reviews: Array<{
+        id: number;
+        rating: number;
+        comment: string | null;
+        show_name: boolean;
+        display_name: string | null;
+    }>;
+};
+
 export default function UserDashboardPage() {
 	const [activeMenu, setActiveMenu] = useState("profile");
-	const [user, setUser] = useState<any>(null);
+	const [user, setUser] = useState<User | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [showLogoutModal, setShowLogoutModal] = useState(false);
 	const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -30,7 +62,7 @@ export default function UserDashboardPage() {
 	const [profileMsg, setProfileMsg] = useState<string>("");
 	const [profileErr, setProfileErr] = useState<string>("");
 	    // Orders state
-	const [orders, setOrders] = useState<any[]>([]);
+	const [orders, setOrders] = useState<TransactionRow[]>([]);
 	const [ordersLoading, setOrdersLoading] = useState(false);
 	const [ordersErr, setOrdersErr] = useState<string>("");
 
@@ -156,7 +188,64 @@ export default function UserDashboardPage() {
 		if (error) {
 			setOrdersErr("Gagal memuat data pesanan");
 		} else {
-			setOrders(data || []);
+			const takeFirstObject = (v: unknown): Record<string, unknown> | null => {
+				if (Array.isArray(v)) {
+					const first = v[0];
+					return first && typeof first === 'object' ? (first as Record<string, unknown>) : null;
+				}
+				return v && typeof v === 'object' ? (v as Record<string, unknown>) : null;
+			};
+
+			const normalized: TransactionRow[] = (Array.isArray(data) ? data : []).map((row: unknown) => {
+				const r = row as Record<string, unknown>;
+				const prodObj = takeFirstObject(r.products);
+				const catObj = prodObj ? takeFirstObject((prodObj as Record<string, unknown>)["product_categories"]) : null;
+				const custObj = takeFirstObject(r.customers);
+
+				return {
+					id: Number(r.id),
+					created_at: String(r.created_at ?? ''),
+					estimated_completion: r.estimated_completion ? String(r.estimated_completion) : null,
+					estimated_price: typeof r.estimated_price === 'number' ? (r.estimated_price as number) : (r.estimated_price ? Number(r.estimated_price) : null),
+					project_status: r.project_status ? String(r.project_status) : null,
+					products: prodObj ? {
+						name: typeof prodObj["name"] === 'string' ? (prodObj["name"] as string) : String(prodObj["name"] ?? ''),
+						product_categories: catObj ? { name: typeof catObj["name"] === 'string' ? (catObj["name"] as string) : String(catObj["name"] ?? '') } : null,
+					} : null,
+					customers: custObj ? { name: typeof custObj["name"] === 'string' ? (custObj["name"] as string) : String(custObj["name"] ?? '') } : null,
+					payment_history: Array.isArray(r.payment_history) ? (r.payment_history as Array<unknown>).map((pv) => {
+						const p = pv as Record<string, unknown>;
+						return {
+							id: Number(p.id),
+							payment_amount: Number(p.payment_amount ?? 0),
+							payment_date: String(p.payment_date ?? ''),
+							payment_notes: p.payment_notes ? String(p.payment_notes) : null,
+							payment_proof: p.payment_proof ? String(p.payment_proof) : null,
+						};
+					}) : [],
+					project_updates: Array.isArray(r.project_updates) ? (r.project_updates as Array<unknown>).map((uv) => {
+						const u = uv as Record<string, unknown>;
+						return {
+							id: Number(u.id),
+							status: String(u.status ?? ''),
+							description: u.description ? String(u.description) : null,
+							created_at: String(u.created_at ?? ''),
+							photo_url: u.photo_url ? String(u.photo_url) : null,
+						};
+					}) : [],
+					reviews: Array.isArray(r.reviews) ? (r.reviews as Array<unknown>).map((rvv) => {
+						const rv = rvv as Record<string, unknown>;
+						return {
+							id: Number(rv.id),
+							rating: Number(rv.rating ?? 0),
+							comment: rv.comment ? String(rv.comment) : null,
+							show_name: Boolean(rv.show_name),
+							display_name: rv.display_name ? String(rv.display_name) : null,
+						};
+					}) : [],
+				};
+			});
+			setOrders(normalized);
 		}
 		setOrdersLoading(false);
 	}, [customerId]);
@@ -166,75 +255,45 @@ export default function UserDashboardPage() {
 		fetchOrders();
 	}, [customerId, fetchOrders]);
 
-	// Realtime subscription
-	useEffect(() => {
-		if (!customerId) return;
-		// Buat channel khusus per customer agar mudah dibersihkan
-		const channel = supabase
-			.channel(`user-dashboard:${customerId}`)
-			.on('postgres_changes', { event: '*', schema: 'public', table: 'transactions', filter: `customer_id=eq.${customerId}` }, () => {
-				fetchOrders();
-			})
-			.on('postgres_changes', { event: '*', schema: 'public', table: 'project_updates' }, (payload) => {
-				// Jika menyangkut transaksi milik customer ini, refetch
-				const txId = (payload.new as any)?.transaction_id ?? (payload.old as any)?.transaction_id;
-				if (!txId) return;
-				const involve = orders.some(o => o.id === txId);
-				if (involve) fetchOrders();
-			})
-			.on('postgres_changes', { event: '*', schema: 'public', table: 'payment_history' }, (payload) => {
-				const txId = (payload.new as any)?.transaction_id ?? (payload.old as any)?.transaction_id;
-				if (!txId) return;
-				const involve = orders.some(o => o.id === txId);
-				if (involve) fetchOrders();
-			})
-			.subscribe();
-
-		return () => {
-			supabase.removeChannel(channel);
-		};
-	// sengaja depend di customerId & orders agar filter berjalan, dan channel terganti bila customer berubah
-	}, [customerId, orders, fetchOrders]);
-
 	const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-		const { name, value } = e.target as any;
-		setProfileForm(prev => ({ ...prev, [name]: value }));
+		const target = e.target as HTMLInputElement | HTMLTextAreaElement;
+		const { name, value } = target;
+		setProfileForm((prev) => ({ ...prev, [name]: value }));
 	};
 
 	const handleProfileSave = async (e: React.FormEvent) => {
 		e.preventDefault();
-		
-		if (!customerId) {
-			const { data: retryData } = await supabase.from("customers").select("id").eq("auth_user_id", user?.id).maybeSingle();
-			if (retryData?.id) {
-				setCustomerId(retryData.id);
-			} else {
-				setProfileErr("Profil belum siap, silakan refresh halaman");
-				return;
-			}
-		}
-		
+		if (!customerId) return;
 		setProfileSaving(true);
 		setProfileMsg("");
 		setProfileErr("");
-		
+
 		const rtRw = profileForm.rtRw ? `RT/RW ${profileForm.rtRw}` : "";
 		const noRumah = profileForm.noRumah ? `No. ${profileForm.noRumah}` : "";
-		
-		const fullAddress = [profileForm.provinsi, profileForm.kota, profileForm.kecamatan, profileForm.kelurahan, profileForm.namaJalan, profileForm.gang, rtRw, noRumah].filter(Boolean).join(", ");
+		const fullAddress = [
+			profileForm.provinsi,
+			profileForm.kota,
+			profileForm.kecamatan,
+			profileForm.kelurahan,
+			profileForm.namaJalan,
+			profileForm.gang,
+			rtRw,
+			noRumah,
+		]
+			.filter(Boolean)
+			.join(", ");
 
 		try {
 			const { error } = await supabase
 				.from("customers")
 				.update({ name: profileForm.name, phone: profileForm.phone || null, address: fullAddress || null })
 				.eq("id", customerId);
-			
 			if (error) {
 				setProfileErr(error.message || "Gagal menyimpan profil");
 			} else {
 				setProfileMsg("Profil berhasil diperbarui");
 			}
-		} catch (err) {
+		} catch {
 			setProfileErr("Terjadi kesalahan sistem");
 		}
 		setProfileSaving(false);
@@ -255,19 +314,21 @@ export default function UserDashboardPage() {
 	const renderContent = () => {
 		switch (activeMenu) {
 			case 'profile':
-				return <ProfileSection 
-					user={user} 
-					profileForm={profileForm} 
-					handleProfileChange={handleProfileChange} 
-					handleProfileSave={handleProfileSave} 
-					profileSaving={profileSaving} 
-					profileLoading={profileLoading} 
-					profileMsg={profileMsg} 
-					profileErr={profileErr} 
-				/>;
+				return (
+					<ProfileSection
+						user={user}
+						profileForm={profileForm}
+						handleProfileChange={handleProfileChange}
+						handleProfileSave={handleProfileSave}
+						profileSaving={profileSaving}
+						profileLoading={profileLoading}
+						profileMsg={profileMsg}
+						profileErr={profileErr}
+					/>
+				);
 			case 'orders':
 				return <OrdersSection orders={orders} loading={ordersLoading} error={ordersErr} customerId={customerId} />;
-case 'faq':
+			case 'faq':
 				return <FaqSection />;
 			default:
 				return null;
@@ -287,9 +348,9 @@ case 'faq':
 				)}
 			</button>
 
-			<Sidebar 
+			<Sidebar
 				user={user}
-				profileForm={profileForm}
+				profileForm={{ name: profileForm.name }}
 				activeMenu={activeMenu}
 				setActiveMenu={setActiveMenu}
 				handleLogout={handleLogout}

@@ -92,8 +92,9 @@ export default function LoginPage() {
         return;
       }
       setResetInfo('Tautan reset password telah dikirim. Periksa inbox/spam email Anda.');
-    } catch (err: any) {
-      setResetInfo(err?.message || 'Terjadi kesalahan saat reset password.');
+    } catch (err: unknown) {
+      const msg = (err && typeof err === 'object' && 'message' in err) ? String((err as { message?: unknown }).message) : undefined;
+      setResetInfo(msg || 'Terjadi kesalahan saat reset password.');
     } finally {
       setResetLoading(false);
     }

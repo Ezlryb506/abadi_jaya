@@ -1,4 +1,5 @@
 import { Dialog } from '@headlessui/react';
+import type { User } from '@supabase/supabase-js';
 
 const menuItems = [
   { key: 'profile', label: 'Profil' },
@@ -7,7 +8,7 @@ const menuItems = [
 ];
 
 interface SidebarProps {
-  user: any;
+  user: User | null;
   profileForm: { name: string };
   activeMenu: string;
   setActiveMenu: (menu: string) => void;

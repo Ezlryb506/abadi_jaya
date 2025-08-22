@@ -21,21 +21,19 @@ const ReadMoreClamp = ({ text, lines = 5 }: { text: string; lines?: number }) =>
   const [expanded, setExpanded] = useState(false);
   const [showToggle, setShowToggle] = useState(false);
   const pRef = useRef<HTMLParagraphElement | null>(null);
-
-  if (!text) return null;
-  const cleanText = text.replace(/<br\s*\/?>(?=\n|\r|$)/gi, '').replace(/<br\s*\/?>(?!\n|\r|$)/gi, '');
+  const cleanText = text ? text.replace(/<br\s*\/?>/gi, '') : '';
 
   useEffect(() => {
-    const el = pRef.current as HTMLParagraphElement | null;
-    if (!el) return;
-    // Cek overflow hanya saat collapsed
-    if (!expanded) {
+    const el = pRef.current;
+    if (el && !expanded) {
       const needToggle = el.scrollHeight > el.clientHeight + 2; // toleransi
       setShowToggle(needToggle);
-    } else {
+    } else if (el) {
       setShowToggle(true);
     }
-  }, [cleanText, expanded]);
+  }, [cleanText, expanded, lines]);
+
+  if (!text) return null;
 
   return (
     <div className="relative">
@@ -141,10 +139,74 @@ export default function TestimoniPage() {
       if (basicErr) {
         setError("Gagal memuat testimoni");
       } else {
-        setItems(basic as any);
+        const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null;
+        const normalize = (arr: unknown): ReviewRow[] => {
+          if (!Array.isArray(arr)) return [];
+          return arr.map((x): ReviewRow => {
+            const o: Record<string, unknown> = isObj(x) ? (x as Record<string, unknown>) : {} as Record<string, unknown>;
+            return {
+              id: Number((o["id"] as unknown) ?? 0),
+              rating: Number((o["rating"] as unknown) ?? 0),
+              comment: ((): string | null => {
+                const v = o["comment"] as unknown;
+                return v == null ? null : String(v);
+              })(),
+              created_at: String((o["created_at"] as unknown) ?? ''),
+              show_name: ((): boolean | null => {
+                const v = o["show_name"] as unknown;
+                return v == null ? null : Boolean(v);
+              })(),
+              display_name: ((): string | null => {
+                const v = o["display_name"] as unknown;
+                return v == null ? null : String(v);
+              })(),
+              product_name: ((): string | null => {
+                const v = o["product_name"] as unknown;
+                return v == null ? null : String(v);
+              })(),
+              product_description: ((): string | null => {
+                const v = o["product_description"] as unknown;
+                return v == null ? null : String(v);
+              })(),
+            };
+          });
+        };
+        setItems(normalize(basic));
       }
     } else {
-      setItems(data as any);
+      const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null;
+      const normalize = (arr: unknown): ReviewRow[] => {
+        if (!Array.isArray(arr)) return [];
+        return arr.map((x): ReviewRow => {
+          const o: Record<string, unknown> = isObj(x) ? (x as Record<string, unknown>) : {} as Record<string, unknown>;
+          return {
+            id: Number((o["id"] as unknown) ?? 0),
+            rating: Number((o["rating"] as unknown) ?? 0),
+            comment: ((): string | null => {
+              const v = o["comment"] as unknown;
+              return v == null ? null : String(v);
+            })(),
+            created_at: String((o["created_at"] as unknown) ?? ''),
+            show_name: ((): boolean | null => {
+              const v = o["show_name"] as unknown;
+              return v == null ? null : Boolean(v);
+            })(),
+            display_name: ((): string | null => {
+              const v = o["display_name"] as unknown;
+              return v == null ? null : String(v);
+            })(),
+            product_name: ((): string | null => {
+              const v = o["product_name"] as unknown;
+              return v == null ? null : String(v);
+            })(),
+            product_description: ((): string | null => {
+              const v = o["product_description"] as unknown;
+              return v == null ? null : String(v);
+            })(),
+          };
+        });
+      };
+      setItems(normalize(data));
     }
     setLoading(false);
   };

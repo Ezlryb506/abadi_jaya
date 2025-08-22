@@ -44,11 +44,11 @@ export const formatTanggal = (date: string | Date, withTime = true): string => {
 
 export const hitungPembayaran = (
   estimated: number | string | null | undefined,
-  payments: Array<any> | null | undefined
+  payments: Array<{ payment_amount: number | string | null | undefined }> | null | undefined
 ) => {
   const est = Number(estimated || 0);
   const paid = Array.isArray(payments)
-    ? payments.reduce((sum: number, p: any) => sum + (Number(p?.payment_amount) || 0), 0)
+    ? payments.reduce((sum: number, p: { payment_amount: number | string | null | undefined }) => sum + (Number(p?.payment_amount) || 0), 0)
     : 0;
   const remaining = Math.max(0, est - paid);
   const pct = est > 0 ? Math.min(100, Math.round((paid / est) * 100)) : 0;

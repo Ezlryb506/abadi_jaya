@@ -4,7 +4,6 @@ import ProductList from './components/ProductList';
 import ProductForm from './components/ProductForm';
 import EditProductModal from './components/EditProductModal';
 import useProductsAdmin from './hooks/useProductsAdmin';
-import { ProductRow, CategoryRow, ProductFormData } from '../types';
 
 export default function AdminPage() {
   const {

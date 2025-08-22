@@ -2,7 +2,19 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import { Yaldevi } from 'next/font/google';
+
+interface UserMetadata {
+  name?: string;
+  provinsi?: string;
+  kota?: string;
+  kecamatan?: string;
+  kelurahan?: string;
+  namaJalan?: string;
+  gang?: string;
+  rtRw?: string;
+  noRumah?: string;
+  address?: string;
+}
 
 interface FormState {
   name: string;
@@ -52,18 +64,19 @@ export default function AdminProfile() {
         return;
       }
       const user = data.user;
+      const meta: Partial<UserMetadata> = (user?.user_metadata ?? {}) as Partial<UserMetadata>;
       setForm((f) => ({
         ...f,
-        name: (user?.user_metadata as any)?.name || '',
+        name: meta?.name || '',
         email: user?.email || '',
-        provinsi: (user?.user_metadata as any)?.provinsi || '',
-        kota: (user?.user_metadata as any)?.kota || '',
-        kecamatan: (user?.user_metadata as any)?.kecamatan || '',
-        kelurahan: (user?.user_metadata as any)?.kelurahan || '',
-        namaJalan: (user?.user_metadata as any)?.namaJalan || '',
-        gang: (user?.user_metadata as any)?.gang || '',
-        rtRw: (user?.user_metadata as any)?.rtRw || '',
-        noRumah: (user?.user_metadata as any)?.noRumah || '',
+        provinsi: meta?.provinsi || '',
+        kota: meta?.kota || '',
+        kecamatan: meta?.kecamatan || '',
+        kelurahan: meta?.kelurahan || '',
+        namaJalan: meta?.namaJalan || '',
+        gang: meta?.gang || '',
+        rtRw: meta?.rtRw || '',
+        noRumah: meta?.noRumah || '',
       }));
       setLoading(false);
     };
@@ -96,7 +109,7 @@ export default function AdminProfile() {
       const currentEmail = userData.user?.email || '';
 
       const payload: {
-        data?: Record<string, any>;
+        data?: Record<string, string>;
         email?: string;
         password?: string;
       } = {};
@@ -182,24 +195,26 @@ export default function AdminProfile() {
       // Prefer the returned user from metadata update; fallback to refetch if missing
       const u = metaUpd?.user ?? (await supabase.auth.getUser()).data?.user;
       if (u) {
+        const meta2: Partial<UserMetadata> = (u.user_metadata ?? {}) as Partial<UserMetadata>;
         setForm((f) => ({
           ...f,
-          name: (u.user_metadata as any)?.name ?? f.name,
-          provinsi: (u.user_metadata as any)?.provinsi ?? f.provinsi,
-          kota: (u.user_metadata as any)?.kota ?? f.kota,
-          kecamatan: (u.user_metadata as any)?.kecamatan ?? f.kecamatan,
-          kelurahan: (u.user_metadata as any)?.kelurahan ?? f.kelurahan,
-          namaJalan: (u.user_metadata as any)?.namaJalan ?? f.namaJalan,
-          gang: (u.user_metadata as any)?.gang ?? f.gang,
-          rtRw: (u.user_metadata as any)?.rtRw ?? f.rtRw,
-          noRumah: (u.user_metadata as any)?.noRumah ?? f.noRumah,
+          name: meta2?.name ?? f.name,
+          provinsi: meta2?.provinsi ?? f.provinsi,
+          kota: meta2?.kota ?? f.kota,
+          kecamatan: meta2?.kecamatan ?? f.kecamatan,
+          kelurahan: meta2?.kelurahan ?? f.kelurahan,
+          namaJalan: meta2?.namaJalan ?? f.namaJalan,
+          gang: meta2?.gang ?? f.gang,
+          rtRw: meta2?.rtRw ?? f.rtRw,
+          noRumah: meta2?.noRumah ?? f.noRumah,
         }));
       }
 
       setMessage('Profil berhasil diperbarui.');
       setForm((f) => ({ ...f, newPassword: '', confirmPassword: '' }));
-    } catch (err: any) {
-      setError(err?.message || 'Gagal memperbarui profil');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Gagal memperbarui profil';
+      setError(message);
     } finally {
       setSaving(false);
     }

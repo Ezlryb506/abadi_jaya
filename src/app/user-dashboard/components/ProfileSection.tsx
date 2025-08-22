@@ -1,3 +1,5 @@
+import type { User } from '@supabase/supabase-js';
+
 interface ProfileForm {
   name: string;
   phone: string;
@@ -13,7 +15,7 @@ interface ProfileForm {
 }
 
 interface ProfileSectionProps {
-  user: any;
+  user: User | null;
   profileForm: ProfileForm;
   handleProfileChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   handleProfileSave: (e: React.FormEvent) => void;

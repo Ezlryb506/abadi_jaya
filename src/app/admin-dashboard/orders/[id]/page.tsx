@@ -3,13 +3,15 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useParams, useRouter } from 'next/navigation';
+import Image from 'next/image';
 import EditOrderModal from '../components/EditOrderModal';
 import { formatTanggal } from '@/lib/format';
+import { Transaction, PaymentHistory, ProjectUpdate } from '../../types';
 
 const OrderDetailPage = () => {
   const { id } = useParams();
   const router = useRouter();
-  const [order, setOrder] = useState<any>(null);
+  const [order, setOrder] = useState<Transaction | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -37,7 +39,7 @@ const OrderDetailPage = () => {
   const [syncing, setSyncing] = useState(false);
   const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
   // Edit Payment Modal State
-  const [editingPayment, setEditingPayment] = useState<any | null>(null);
+  const [editingPayment, setEditingPayment] = useState<PaymentHistory | null>(null);
   const [epAmount, setEpAmount] = useState<string>('');
   const [epDate, setEpDate] = useState<string>('');
   const [epNotes, setEpNotes] = useState<string>('');
@@ -53,7 +55,7 @@ const OrderDetailPage = () => {
   };
 
   // Open Edit Payment Modal
-  const openEditPayment = (payment: any) => {
+  const openEditPayment = (payment: PaymentHistory) => {
     setEditingPayment(payment);
     setEpAmount(String(payment.payment_amount ?? ''));
     // payment_date mungkin ISO, normalize ke input datetime-local
@@ -117,7 +119,7 @@ const OrderDetailPage = () => {
       if (epFile) {
         payment_proof = await uploadToStorage('payments', epFile);
       }
-      const payload: any = {
+      const payload: Partial<PaymentHistory> = {
         payment_amount: newAmount,
         payment_date: epDate ? new Date(epDate).toISOString() : editingPayment.payment_date,
         payment_notes: epNotes || null,
@@ -131,18 +133,18 @@ const OrderDetailPage = () => {
         .single();
       if (error) throw error;
       // Optimistic update: replace item pada state lokal
-      setOrder((prev: any) => {
+      setOrder((prev) => {
         if (!prev) return prev;
         const prevList = Array.isArray(prev.payment_history) ? prev.payment_history : [];
-        const nextList = prevList.map((p: any) => (p.id === editingPayment.id ? { ...p, ...updated } : p));
+        const nextList = prevList.map((p) => (p.id === editingPayment.id ? { ...p, ...updated } : p));
         // Recompute total lokal agar header langsung update
-        const nextTotal = nextList.reduce((sum: number, p: any) => sum + (Number(p?.payment_amount) || 0), 0);
+        const nextTotal = nextList.reduce((sum, p) => sum + (Number(p?.payment_amount) || 0), 0);
         return { ...prev, payment_history: nextList, total_paid: nextTotal };
       });
       setToast({ type: 'success', message: 'Riwayat pembayaran berhasil diperbarui.' });
       setEditingPayment(null);
       setEpAmount(''); setEpDate(''); setEpNotes(''); setEpFile(null);
-    } catch (err) {
+    } catch {
       setToast({ type: 'error', message: 'Gagal memperbarui pembayaran.' });
     } finally {
       setUpdatingPayment(false);
@@ -150,22 +152,22 @@ const OrderDetailPage = () => {
   };
 
   // Delete Payment
-  const handleDeletePayment = async (payment: any) => {
+  const handleDeletePayment = async (payment: PaymentHistory) => {
     const ok = window.confirm('Hapus riwayat pembayaran ini? Tindakan tidak dapat dibatalkan.');
     if (!ok) return;
     try {
       const { error } = await supabase.from('payment_history').delete().eq('id', payment.id);
       if (error) throw error;
       // Optimistic update: hapus dari state lokal
-      setOrder((prev: any) => {
+      setOrder((prev) => {
         if (!prev) return prev;
         const prevList = Array.isArray(prev.payment_history) ? prev.payment_history : [];
-        const nextList = prevList.filter((p: any) => p.id !== payment.id);
-        const nextTotal = nextList.reduce((sum: number, p: any) => sum + (Number(p?.payment_amount) || 0), 0);
+        const nextList = prevList.filter((p) => p.id !== payment.id);
+        const nextTotal = nextList.reduce((sum, p) => sum + (Number(p?.payment_amount) || 0), 0);
         return { ...prev, payment_history: nextList, total_paid: nextTotal };
       });
       setToast({ type: 'success', message: 'Riwayat pembayaran berhasil dihapus.' });
-    } catch (err) {
+    } catch {
       setToast({ type: 'error', message: 'Gagal menghapus pembayaran.' });
     }
   };
@@ -190,7 +192,7 @@ const OrderDetailPage = () => {
       if (error) {
         setError('Gagal memuat detail pesanan.');
       } else {
-        setOrder(data);
+        setOrder(data as Transaction);
         setLastSyncedAt(new Date());
       }
       setLoading(false);
@@ -231,14 +233,14 @@ const OrderDetailPage = () => {
     return <div className="text-center py-10">Pesanan tidak ditemukan.</div>;
   }
 
-  const handleSaveOrder = (updatedOrder: any) => {
-    setOrder((prevOrder: any) => ({ ...prevOrder, ...updatedOrder }));
+  const handleSaveOrder = (updatedOrder: Partial<Transaction>) => {
+    setOrder((prevOrder) => prevOrder ? ({ ...prevOrder, ...updatedOrder }) : null);
   };
 
   // Derived: progress & sisa tagihan
   const est = typeof order?.estimated_price === 'number' ? order.estimated_price : 0;
   const paidFromHistory = Array.isArray(order?.payment_history)
-    ? order.payment_history.reduce((sum: number, p: any) => sum + (Number(p?.payment_amount) || 0), 0)
+    ? order.payment_history.reduce((sum, p) => sum + (Number(p?.payment_amount) || 0), 0)
     : 0;
   // Fallback ke kolom total_paid jika payment_history kosong (untuk kompatibilitas data lama)
   const paid = paidFromHistory > 0 ? paidFromHistory : (typeof order?.total_paid === 'number' ? order.total_paid : 0);
@@ -269,7 +271,7 @@ const OrderDetailPage = () => {
     }
     // Cegah duplikasi status berturut-turut (status terbaru sama dengan yang dipilih)
     if (Array.isArray(order?.project_updates) && order.project_updates.length > 0) {
-      const latest = order.project_updates.reduce((acc: any, cur: any) => {
+      const latest = order.project_updates.reduce((acc, cur) => {
         const tAcc = new Date(acc?.created_at || 0).getTime();
         const tCur = new Date(cur?.created_at || 0).getTime();
         return tCur > tAcc ? cur : acc;
@@ -309,7 +311,7 @@ const OrderDetailPage = () => {
       if (updFile) {
         photo_url = await uploadToStorage('updates', updFile);
       }
-      const payload: any = {
+      const payload = {
         transaction_id: Number(id),
         status: updStatus,
         description: descTrim,
@@ -333,14 +335,14 @@ const OrderDetailPage = () => {
             .eq('id', id);
           if (txErr) throw txErr;
           // Optimistic update status transaksi di state lokal
-          setOrder((prev: any) => prev ? { ...prev, project_status: updStatus } : prev);
+          setOrder((prev) => prev ? { ...prev, project_status: updStatus } : prev);
         } else {
         }
-      } catch (syncErr) {
+      } catch {
         setToast({ type: 'error', message: 'Status transaksi gagal disinkronkan. Silakan refresh.' });
       }
       // Optimistic update ke daftar project_updates di state lokal
-      setOrder((prev: any) => {
+      setOrder((prev) => {
         if (!prev) return prev;
         const prevList = Array.isArray(prev.project_updates) ? prev.project_updates : [];
         const nextList = insertedUpdate ? [insertedUpdate, ...prevList] : prevList;
@@ -351,9 +353,9 @@ const OrderDetailPage = () => {
       setUpdFile(null);
       setIsUpdateModalOpen(false);
       setToast({ type: 'success', message: 'Update proyek berhasil ditambahkan.' });
-    } catch (err: any) {
+    } catch {
       setError('Gagal menambahkan update proyek.');
-      const msg = err?.message || 'Terjadi kesalahan saat menyimpan update proyek.';
+      const msg = 'Terjadi kesalahan saat menyimpan update proyek.';
       setToast({ type: 'error', message: msg });
     } finally {
       setAddingUpdate(false);
@@ -412,7 +414,7 @@ const OrderDetailPage = () => {
       if (payFile) {
         payment_proof = await uploadToStorage('payments', payFile);
       }
-      const payload: any = {
+      const payload = {
         transaction_id: Number(id),
         payment_amount: amount,
         payment_date: payDate ? new Date(payDate).toISOString() : new Date().toISOString(),
@@ -433,7 +435,7 @@ const OrderDetailPage = () => {
       setPayNotes('');
       setPayFile(null);
       // Optimistic update: sinkronkan ke state lokal segera
-      setOrder((prev: any) => {
+      setOrder((prev) => {
         if (!prev) return prev;
         const prevList = Array.isArray(prev.payment_history) ? prev.payment_history : [];
         const nextList = inserted ? [...prevList, inserted] : prevList;
@@ -442,7 +444,7 @@ const OrderDetailPage = () => {
       });
       setToast({ type: 'success', message: 'Pembayaran berhasil ditambahkan.' });
       setIsAddPaymentOpen(false);
-    } catch (err) {
+    } catch {
       setToast({ type: 'error', message: 'Gagal menambahkan pembayaran. Silakan coba lagi.' });
     } finally {
       setAddingPayment(false);
@@ -566,14 +568,21 @@ const OrderDetailPage = () => {
           {/* Form dipindah ke modal. Bagian ini hanya menampilkan riwayat. */}
           <ul className="space-y-3 break-words">
             {Array.isArray(order.project_updates) && order.project_updates.length > 0 ? [...order.project_updates]
-              .sort((a:any,b:any)=> new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-              .map((update: any) => (
+              .sort((a: ProjectUpdate, b: ProjectUpdate) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+              .map((update: ProjectUpdate) => (
               <li key={update.id} className="border-b pb-2">
                 <p><strong>Status:</strong> {update.status}</p>
                 <p>{update.description}</p>
                 <p className="text-sm text-gray-500">{formatTanggal(update.created_at, true)}</p>
                 {update.photo_url && (
-                  <img src={update.photo_url} alt="update" className="mt-2 w-full max-w-full h-auto aspect-video object-cover rounded" />
+                  <Image
+                    src={update.photo_url}
+                    alt="update"
+                    width={1280}
+                    height={720}
+                    sizes="100vw"
+                    className="mt-2 w-full max-w-full h-auto aspect-video object-cover rounded"
+                  />
                 )}
               </li>
             )) : <p>Belum ada update.</p>}
@@ -584,8 +593,8 @@ const OrderDetailPage = () => {
           <h2 className="text-lg font-semibold border-b border-gray-200 pb-3 mb-4">Riwayat Pembayaran</h2>
           <ul className="space-y-3">
             {Array.isArray(order.payment_history) && order.payment_history.length > 0 ? [...order.payment_history]
-              .sort((a:any,b:any)=> new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime())
-              .map((payment: any) => (
+              .sort((a: PaymentHistory, b: PaymentHistory) => new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime())
+              .map((payment: PaymentHistory) => (
               <li key={payment.id} className="border-b pb-3">
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -687,10 +696,10 @@ const OrderDetailPage = () => {
               required
             >
               <option value="" disabled>Pilih Status Proyek</option>
-              <option value="Survey" disabled={order.project_status && ['Design','Production','Installation','Completed'].includes(order.project_status)}>Survey</option>
-              <option value="Design" disabled={order.project_status && ['Production','Installation','Completed'].includes(order.project_status)}>Design</option>
-              <option value="Production" disabled={order.project_status && ['Installation','Completed'].includes(order.project_status)}>Production</option>
-              <option value="Installation" disabled={order.project_status && ['Completed'].includes(order.project_status)}>Installation</option>
+              <option value="Survey" disabled={!!order.project_status && ['Design','Production','Installation','Completed'].includes(order.project_status as string)}>Survey</option>
+              <option value="Design" disabled={!!order.project_status && ['Production','Installation','Completed'].includes(order.project_status as string)}>Design</option>
+              <option value="Production" disabled={!!order.project_status && ['Installation','Completed'].includes(order.project_status as string)}>Production</option>
+              <option value="Installation" disabled={!!order.project_status && ['Completed'].includes(order.project_status as string)}>Installation</option>
               <option value="Completed">Completed</option>
             </select>
             <textarea

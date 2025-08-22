@@ -4,8 +4,16 @@ import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 
+type OrderListItem = {
+  id: number;
+  order_date: string;
+  project_status: string;
+  estimated_price: number;
+  customers: { name: string | null } | null;
+};
+
 const OrdersPage = () => {
-  const [orders, setOrders] = useState<any[]>([]);
+  const [orders, setOrders] = useState<OrderListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -27,7 +35,29 @@ const OrdersPage = () => {
       if (error) {
         setError('Gagal memuat data pesanan.');
       } else {
-        setOrders(data || []);
+        const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null;
+        const normalized: OrderListItem[] = Array.isArray(data)
+          ? data.map((x): OrderListItem => {
+              const o: Record<string, unknown> = isObj(x) ? (x as Record<string, unknown>) : {} as Record<string, unknown>;
+              const rawCust = (o["customers"] as unknown);
+              let cust: { name: string | null } | null = null;
+              if (Array.isArray(rawCust)) {
+                const first = rawCust[0];
+                if (isObj(first)) cust = { name: ((first as Record<string, unknown>)["name"] as string | null) ?? null };
+              } else if (isObj(rawCust)) {
+                const rc = rawCust as Record<string, unknown>;
+                cust = { name: (rc["name"] as string | null) ?? null };
+              }
+              return {
+                id: Number((o["id"] as unknown) ?? 0),
+                order_date: String((o["order_date"] as unknown) ?? ''),
+                project_status: String((o["project_status"] as unknown) ?? ''),
+                estimated_price: Number((o["estimated_price"] as unknown) ?? 0),
+                customers: cust,
+              };
+            })
+          : [];
+        setOrders(normalized);
       }
       setLoading(false);
     };
@@ -36,7 +66,7 @@ const OrdersPage = () => {
 
     const channel = supabase.channel('realtime-orders')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, 
-        (payload) => {
+        () => {
           // Re-fetch data on any change
           fetchOrders();
         }

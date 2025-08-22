@@ -5,6 +5,18 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter, useSearchParams } from "next/navigation";
 
+type MaybeAuthError = { status?: number; name?: string; message?: string };
+const hasStatusName = (e: unknown): e is MaybeAuthError =>
+  typeof e === 'object' && e !== null && ('status' in e || 'name' in e || 'message' in e);
+
+// Validator helpers
+const isValidEmail = (v: string) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test((v || '').trim());
+const isStrongPassword = (v: string) => (v || '').length >= 8 && /[A-Za-z]/.test(v) && /\d/.test(v);
+const normalizePhone = (v: string) => (v || '').replace(/[^\d+]/g, '');
+const isValidPhone = (v: string) => /^(?:\+62|62|0)8\d{7,13}$/.test(normalizePhone(v));
+const isValidRTRW = (v: string) => (v || '').trim() === '' || /^\d{1,3}\/\d{1,3}$/.test((v || '').trim());
+const isValidHouseNumber = (v: string) => /^[-A-Za-z0-9\/]{1,10}$/.test((v || '').trim());
+
 export default function CustomerLoginPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
@@ -34,6 +46,12 @@ export default function CustomerLoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  // HIBP state (client-side UX)
+  const [pwdBreachedCount, setPwdBreachedCount] = useState<number | null>(null);
+  const [pwdCheckLoading, setPwdCheckLoading] = useState(false);
+  const [pwdCheckError, setPwdCheckError] = useState('');
+  const [pwdDebounced, setPwdDebounced] = useState('');
+
   useEffect(() => {
     (async () => {
       const { data } = await supabase.auth.getUser();
@@ -43,11 +61,89 @@ export default function CustomerLoginPage() {
     })();
   }, [router]);
 
+  // Debounce password input for HIBP check
+  useEffect(() => {
+    const t = setTimeout(() => setPwdDebounced(formData.password), 450);
+    return () => clearTimeout(t);
+  }, [formData.password]);
+
+  // Check HIBP when password is reasonably strong length-wise to avoid noisy calls
+  useEffect(() => {
+    const shouldCheck = (pwdDebounced || '').length >= 8;
+    if (!shouldCheck) {
+      setPwdBreachedCount(null);
+      setPwdCheckError('');
+      return;
+    }
+    let aborted = false;
+    (async () => {
+      try {
+        setPwdCheckLoading(true);
+        setPwdCheckError('');
+        const res = await fetch('/api/password/hibp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: pwdDebounced })
+        });
+        if (!res.ok) {
+          const txt = await res.text();
+          throw new Error(txt || `HIBP api error: ${res.status}`);
+        }
+        const json = await res.json();
+        if (!aborted) setPwdBreachedCount(typeof json.breachedCount === 'number' ? json.breachedCount : 0);
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : 'Gagal memeriksa kebocoran password';
+        if (!aborted) setPwdCheckError(msg);
+      } finally {
+        if (!aborted) setPwdCheckLoading(false);
+      }
+    })();
+    return () => { aborted = true; };
+  }, [pwdDebounced]);
+
+  // Helper untuk cek HIBP on-demand saat submit
+  const checkPasswordLeaked = async (password: string): Promise<number> => {
+    try {
+      const res = await fetch('/api/password/hibp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password })
+      });
+      if (!res.ok) throw new Error(`HIBP api error: ${res.status}`);
+      const json = await res.json();
+      const cnt = typeof json.breachedCount === 'number' ? json.breachedCount : 0;
+      return cnt;
+    } catch {
+      return 0; // soft-fail: jangan blokir jika API bermasalah
+    }
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    const { name, value } = e.target;
+    // Default: biarkan spasi untuk field teks umum (name, street, dsb.)
+    let nextVal: string = typeof value === 'string' ? value : String(value ?? '');
+
+    if (name === 'email') {
+      // Email: trim penuh untuk mencegah spasi tak sengaja
+      nextVal = nextVal.trim();
+    } else if (name === 'phone') {
+      // Phone: normalisasi — hapus spasi/simbol, izinkan '+' hanya di awal
+      const original = nextVal;
+      nextVal = nextVal.replace(/\s+/g, '');
+      nextVal = nextVal.replace(/\+/g, '');
+      if (original.startsWith('+')) nextVal = `+${nextVal}`;
+      nextVal = nextVal.replace(/(?!^)[^\d]/g, '');
+    } else if (name === 'rt_rw') {
+      // RT/RW: normalisasi ke format NN/RR (hapus spasi, karakter non-digit/non-slash, kompres slash)
+      nextVal = nextVal.replace(/\s+/g, '');
+      nextVal = nextVal.replace(/[^\d\/]/g, '');
+      nextVal = nextVal.replace(/\/+/g, '/');
+    } else if (name === 'house_number') {
+      // No. Rumah: trim tepi saja
+      nextVal = nextVal.trim();
+    }
+
+    setFormData(prev => ({ ...prev, [name]: nextVal }));
     setError('');
     setSuccess('');
   };
@@ -70,8 +166,9 @@ export default function CustomerLoginPage() {
         return;
       }
       setResetInfo('Tautan reset password sudah dikirim ke email Anda. Periksa inbox/spam.');
-    } catch (err: any) {
-      setResetInfo(err?.message || 'Terjadi kesalahan saat reset password.');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Terjadi kesalahan saat reset password.';
+      setResetInfo(msg);
     } finally {
       setResetLoading(false);
     }
@@ -87,6 +184,14 @@ export default function CustomerLoginPage() {
       if (isLogin) {
         if (!formData.email || !formData.password) {
           setError('Email dan password harus diisi');
+          return;
+        }
+        if (!isValidEmail(formData.email)) {
+          setError('Format email tidak valid');
+          return;
+        }
+        if (!isStrongPassword(formData.password)) {
+          setError('Password minimal 8 karakter dan kombinasi huruf & angka');
           return;
         }
 
@@ -111,6 +216,33 @@ export default function CustomerLoginPage() {
         // Validasi minimal untuk alamat terstruktur
         if (!formData.province || !formData.city || !formData.district || !formData.subdistrict || !formData.street || !formData.house_number) {
           setError('Mohon lengkapi alamat: Provinsi, Kota/Kabupaten, Kecamatan, Kelurahan, Nama Jalan, dan No. Rumah wajib diisi');
+          return;
+        }
+        // Validasi format tambahan
+        if (!isValidEmail(formData.email)) {
+          setError('Format email tidak valid');
+          return;
+        }
+        if (!isStrongPassword(formData.password)) {
+          setError('Password minimal 8 karakter dan kombinasi huruf & angka');
+          return;
+        }
+        // Cek password bocor via HIBP (blocking sebelum sign up)
+        const leakedCount = await checkPasswordLeaked(formData.password);
+        if (leakedCount > 0) {
+          setError('Password ini telah muncul dalam kebocoran data. Mohon gunakan password lain yang lebih kuat dan unik.');
+          return;
+        }
+        if (!isValidPhone(formData.phone)) {
+          setError('Nomor telepon tidak valid (gunakan format 08xxxx / 62xxxx / +62xxxx)');
+          return;
+        }
+        if (!isValidRTRW(formData.rt_rw)) {
+          setError('Format RT/RW harus NN/RR, contoh 03/07');
+          return;
+        }
+        if (!isValidHouseNumber(formData.house_number)) {
+          setError('Nomor rumah tidak valid');
           return;
         }
         // Susun alamat gabungan sesuai pola:
@@ -178,8 +310,8 @@ export default function CustomerLoginPage() {
 
         if (signUpError) {
           const msg = (signUpError.message || '').toLowerCase();
-          const status = (signUpError as any)?.status;
-          const name = (signUpError as any)?.name || '';
+          const status = hasStatusName(signUpError) ? signUpError.status : undefined;
+          const name = hasStatusName(signUpError) ? (signUpError.name || '') : '';
           // Tangani email sudah terdaftar (berbagai kemungkinan pesan/status)
           if (
             msg.includes('registered') ||
@@ -189,7 +321,7 @@ export default function CustomerLoginPage() {
             msg.includes('email address is already registered') ||
             status === 400 || status === 422 || name === 'AuthApiError'
           ) {
-            setError('Email sudah terdaftar. Silakan login atau reset password jika lupa.');
+            setError('Email sudah terdaftar. Silakan cek email, login atau reset password jika lupa.');
           } else {
             setError(signUpError.message || 'Registrasi gagal');
           }
@@ -197,9 +329,12 @@ export default function CustomerLoginPage() {
         }
 
         // Supabase behavior: terkadang email sudah terdaftar -> tidak error, tetapi identities kosong
-        if (signUpData?.user && Array.isArray((signUpData.user as any).identities) && (signUpData.user as any).identities.length === 0) {
-          setError('Email sudah terdaftar. Silakan login atau reset password jika lupa.');
-          return;
+        if (signUpData?.user) {
+          const identities = (signUpData.user as { identities?: unknown[] } | undefined)?.identities;
+          if (Array.isArray(identities) && identities.length === 0) {
+            setError('Email sudah terdaftar. Silakan cek email, login atau reset password jika lupa.');
+            return;
+          }
         }
 
         // Kasus langka: tidak ada error tapi user/session tidak ada (misal throttling/konfigurasi)
@@ -225,8 +360,9 @@ export default function CustomerLoginPage() {
           house_number: ''
         });
       }
-    } catch (err: any) {
-      setError(err?.message || 'Terjadi kesalahan tak terduga');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Terjadi kesalahan tak terduga';
+      setError(msg);
     } finally {
       setIsLoading(false);
     }
@@ -337,6 +473,8 @@ export default function CustomerLoginPage() {
                     onChange={handleChange}
                     className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all pl-10 bg-white text-gray-900 placeholder-gray-500 font-medium"
                     autoComplete="tel"
+                    inputMode="tel"
+                    maxLength={16}
                     placeholder="Masukkan nomor telepon"
                     style={{
                       color: '#111827',
@@ -463,6 +601,8 @@ export default function CustomerLoginPage() {
                       className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all pl-10 bg-white text-gray-900 placeholder-gray-500 font-medium"
                       placeholder="No. Rumah"
                       inputMode="numeric"
+                      pattern="^[-A-Za-z0-9\\/]{1,10}$"
+                      title="Maks 10 karakter, huruf/angka/tanda - atau /"
                     />
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔢</span>
                   </div>
@@ -508,6 +648,7 @@ export default function CustomerLoginPage() {
                   name="password"
                   type={showPassword ? 'text' : 'password'}
                   required
+                  minLength={8}
                   value={formData.password}
                   onChange={handleChange}
                   className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all pl-10 pr-12 bg-white text-gray-900 placeholder-gray-500 font-medium"
@@ -530,6 +671,39 @@ export default function CustomerLoginPage() {
                 >
                   {showPassword ? '🙈' : '👁️'}
                 </button>
+              </div>
+              {/* Password helper: strength + leak indicator */}
+              <div className="mt-2 space-y-2">
+                {/* Strength bar */}
+                <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div
+                    className={`h-2 transition-all duration-500 ${
+                      formData.password.length >= 12 && /[A-Z]/.test(formData.password) && /[^A-Za-z0-9]/.test(formData.password) && /\d/.test(formData.password) && /[a-z]/.test(formData.password)
+                        ? 'w-full bg-green-500'
+                        : isStrongPassword(formData.password)
+                        ? 'w-2/3 bg-yellow-500'
+                        : formData.password
+                        ? 'w-1/3 bg-red-500'
+                        : 'w-0'
+                    }`}
+                  />
+                </div>
+                {/* Leak status */}
+                {!isLogin && (
+                  <div className="text-xs flex items-center gap-2">
+                    {pwdCheckLoading ? (
+                      <span className="text-gray-500 animate-pulse">Memeriksa kebocoran password…</span>
+                    ) : pwdCheckError ? (
+                      <span className="text-gray-500">Tidak dapat memeriksa kebocoran saat ini</span>
+                    ) : typeof pwdBreachedCount === 'number' ? (
+                      pwdBreachedCount > 0 ? (
+                        <span className="text-red-600 font-medium">⚠️ Password terdeteksi dalam {pwdBreachedCount.toLocaleString()} kebocoran</span>
+                      ) : (
+                        formData.password ? <span className="text-green-600 font-medium">✅ Password tidak ditemukan dalam kebocoran publik</span> : null
+                      )
+                    ) : null}
+                  </div>
+                )}
               </div>
             </div>
             {/* Lupa Password (Login only) */}

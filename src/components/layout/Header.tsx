@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
@@ -41,14 +42,7 @@ export default function Header() {
     };
   }, []);
 
-  const logout = async () => {
-    await supabase.auth.signOut();
-    setUserEmail(null);
-    setIsAdmin(false);
-    if (typeof window !== 'undefined') {
-      window.location.href = '/';
-    }
-  };
+  // removed unused logout function to satisfy lint
 
   const isActive = (href: string) => {
     if (href === '/') return pathname === '/';
@@ -67,10 +61,15 @@ export default function Header() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-4">
           {/* Logo dan Nama Bengkel sebagai Link ke / */}
-          <Link href="/" className="flex items-center space-x-2 group">
-            <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-              <span className="text-white font-bold text-xl">A</span>
-            </div>
+          <Link href="/" className="flex items-center space-x-2 group" aria-label="Abadi Jaya - Beranda">
+            <Image
+              src="/icons/icon-192x192.png"
+              alt="Logo Abadi Jaya"
+              width={40}
+              height={40}
+              priority
+              className="rounded-lg group-hover:scale-110 transition-transform shadow-sm"
+            />
             <span className="text-2xl font-bold text-gray-800 group-hover:text-orange-600 transition-colors">Abadi Jaya</span>
           </Link>
           

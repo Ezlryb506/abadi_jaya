@@ -40,8 +40,9 @@ export default function AuthCallback() {
         // default: verification / sign-in redirect
         setMode('done');
         router.replace('/');
-      } catch (e: any) {
-        setError(e?.message || 'Terjadi kesalahan saat memproses tautan.');
+      } catch (e: unknown) {
+        const msg = (e && typeof e === 'object' && 'message' in e) ? String((e as { message?: unknown }).message) : undefined;
+        setError(msg || 'Terjadi kesalahan saat memproses tautan.');
       }
     })();
   }, [router, searchParams]);
@@ -69,8 +70,9 @@ export default function AuthCallback() {
       setTimeout(() => {
         router.replace('/customer-login');
       }, 1200);
-    } catch (e: any) {
-      setError(e?.message || 'Terjadi kesalahan saat memperbarui password.');
+    } catch (e: unknown) {
+      const msg = (e && typeof e === 'object' && 'message' in e) ? String((e as { message?: unknown }).message) : undefined;
+      setError(msg || 'Terjadi kesalahan saat memperbarui password.');
     } finally {
       setSubmitting(false);
     }

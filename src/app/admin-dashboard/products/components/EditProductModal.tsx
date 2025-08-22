@@ -1,6 +1,7 @@
 'use client';
 
-import { ChangeEvent, FormEvent, useMemo, useRef, useState } from 'react';
+import { ChangeEvent, FormEvent, useRef, useState } from 'react';
+import Image from 'next/image';
 import { CategoryRow, ProductFormData } from '../types';
 
 interface EditProductModalProps {
@@ -16,8 +17,6 @@ interface EditProductModalProps {
 }
 
 export default function EditProductModal({ open, form, categories, submitting, onChange, onSubmit, onClose, onFileChange, currentImageUrl }: EditProductModalProps) {
-  if (!open) return null;
-
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const objectUrlRef = useRef<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -37,6 +36,9 @@ export default function EditProductModal({ open, form, categories, submitting, o
     }
     onFileChange(e);
   };
+  
+  // Conditional rendering dipindahkan ke sini
+  if (!open) return null;
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-start sm:items-center justify-center p-4 sm:p-6 z-50 overflow-y-auto" role="dialog" aria-modal="true" aria-label="Edit Produk">
@@ -73,7 +75,13 @@ export default function EditProductModal({ open, form, categories, submitting, o
               <div className="border rounded-xl p-3 bg-gray-50">
                 <div className="text-xs text-gray-500 mb-2">Saat ini</div>
                 {currentImageUrl ? (
-                  <img src={currentImageUrl} alt="Current" loading="lazy" className="w-full h-40 object-cover rounded-lg border" />
+                  <Image
+                    src={currentImageUrl}
+                    alt="Current"
+                    width={640}
+                    height={360}
+                    className="w-full h-40 object-cover rounded-lg border"
+                  />
                 ) : (
                   <div className="w-full h-40 flex items-center justify-center text-gray-400 border rounded-lg bg-white">Tidak ada gambar</div>
                 )}
@@ -81,7 +89,13 @@ export default function EditProductModal({ open, form, categories, submitting, o
               <div className="border rounded-xl p-3 bg-gray-50">
                 <div className="text-xs text-gray-500 mb-2">Preview baru</div>
                 {previewUrl ? (
-                  <img src={previewUrl} alt="Preview" loading="lazy" className="w-full h-40 object-cover rounded-lg border" />
+                  <Image
+                    src={previewUrl}
+                    alt="Preview"
+                    width={640}
+                    height={360}
+                    className="w-full h-40 object-cover rounded-lg border"
+                  />
                 ) : (
                   <div className="w-full h-40 flex items-center justify-center text-gray-400 border rounded-lg bg-white">Belum dipilih</div>
                 )}

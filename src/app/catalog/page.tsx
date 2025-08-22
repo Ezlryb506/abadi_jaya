@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
 import { supabase } from '@/lib/supabaseClient';
 import { User } from '@supabase/supabase-js';
 import { toast } from 'sonner';
@@ -16,6 +17,19 @@ interface ProductUI {
   specifications: Record<string, string>;
 }
 
+type CategoryRow = { name: string };
+type ProductRow = {
+  id: number;
+  name: string;
+  description: string | null;
+  price: number | null;
+  image_url: string | null;
+  // Supabase join bisa mengembalikan objek tunggal atau array tergantung relasi
+  product_categories: { name?: string } | { name?: string }[] | null;
+};
+
+type MaybeWithMessage = { message?: string };
+
 // Data diambil dari Supabase, tidak lagi dari sample statis
 
 export default function CatalogPage() {
@@ -24,8 +38,8 @@ export default function CatalogPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<ProductUI | null>(null);
   const [products, setProducts] = useState<ProductUI[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [, setLoading] = useState(false);
+  const [, setError] = useState('');
   const [user, setUser] = useState<User | null>(null);
   const [orderLoading, setOrderLoading] = useState(false);
 
@@ -50,7 +64,7 @@ export default function CatalogPage() {
         setLoading(false);
         return;
       }
-      const allCategories = ['Semua', ...((catData || []).map((c: any) => c.name))];
+      const allCategories = ['Semua', ...((catData || []).map((c: CategoryRow) => c.name))];
       setCategories(allCategories);
 
       // Fetch products
@@ -78,16 +92,21 @@ export default function CatalogPage() {
           default: return '🧰';
         }
       };
-      const mapped: ProductUI[] = (data || []).map((p: any) => ({
-        id: p.id,
-        name: p.name,
-        category: p.product_categories?.name || 'Lainnya',
-        description: p.description || '',
-        priceText: typeof p.price === 'number' ? `Rp ${p.price.toLocaleString('id-ID')}` : '-',
-        image: p.image_url || categoryIcon(p.product_categories?.name),
-        features: [],
-        specifications: {},
-      }));
+      const mapped: ProductUI[] = (data || []).map((p: ProductRow) => {
+        const catName = Array.isArray(p.product_categories)
+          ? (p.product_categories[0]?.name || 'Lainnya')
+          : (p.product_categories?.name || 'Lainnya');
+        return {
+          id: Number(p.id),
+          name: String(p.name),
+          category: catName,
+          description: p.description || '',
+          priceText: typeof p.price === 'number' ? `Rp ${p.price.toLocaleString('id-ID')}` : '-',
+          image: p.image_url || categoryIcon(catName),
+          features: [],
+          specifications: {},
+        };
+      });
       setProducts(mapped);
       setLoading(false);
     };
@@ -143,7 +162,7 @@ export default function CatalogPage() {
         throw new Error('Kategori produk tidak ditemukan.');
       }
 
-      const { data: transactionData, error: transactionError } = await supabase
+      const { error: transactionError } = await supabase
         .from('transactions')
         .insert({
           customer_id: customerData.id,
@@ -155,9 +174,7 @@ export default function CatalogPage() {
             ? parseFloat(product.priceText.replace(/[^0-9]/g, '')) 
             : 0,
           payment_method: 'DP',
-        })
-        .select()
-        .single();
+        });
 
       if (transactionError) {
         throw new Error(`Gagal membuat pesanan: ${transactionError.message}`);
@@ -168,9 +185,12 @@ export default function CatalogPage() {
         duration: 5000,
       });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const msg = (error && typeof error === 'object' && 'message' in error)
+        ? String((error as MaybeWithMessage).message || 'Terjadi kesalahan yang tidak diketahui.')
+        : 'Terjadi kesalahan yang tidak diketahui.';
       toast.error('Gagal membuat pesanan.', {
-        description: error.message || 'Terjadi kesalahan yang tidak diketahui.',
+        description: msg,
       });
     } finally {
       setOrderLoading(false);
@@ -251,7 +271,7 @@ export default function CatalogPage() {
 
         {/* Products Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredProducts.map((product) => (
+          {filteredProducts.map((product, idx) => (
             <div
               key={product.id}
               className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer flex flex-col"
@@ -260,11 +280,16 @@ export default function CatalogPage() {
               {/* Product Image */}
               <div className="h-48 bg-gradient-to-br from-orange-100 to-orange-200 flex items-center justify-center">
                 {product.image.startsWith('http') ? (
-                  <img
+                  <Image
                     src={product.image}
                     alt={product.name}
+                    width={800}
+                    height={400}
                     className="object-contain h-40 w-full"
-                    loading="lazy"
+                    priority={idx === 0}
+                    fetchPriority={idx === 0 ? 'high' : 'auto'}
+                    loading={idx === 0 ? 'eager' : 'lazy'}
+                    sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
                   />
                 ) : (
                   <span className="text-6xl">{product.image}</span>
@@ -289,7 +314,7 @@ export default function CatalogPage() {
 
                 <div className="mb-4">
                   <span className="text-2xl font-bold text-orange-600">
-                    {(product as any).priceText || '-'}
+                    {product.priceText || '-'}
                   </span>
                 </div>
 
@@ -388,11 +413,12 @@ export default function CatalogPage() {
                 {/* Product Image */}
                 <div className="h-64 bg-gradient-to-br from-orange-100 to-orange-200 rounded-xl flex items-center justify-center">
                   {selectedProduct.image.startsWith('http') ? (
-                    <img
+                    <Image
                       src={selectedProduct.image}
                       alt={selectedProduct.name}
+                      width={1000}
+                      height={600}
                       className="object-contain h-56 w-full"
-                      loading="lazy"
                     />
                   ) : (
                     <span className="text-8xl">{selectedProduct.image}</span>

@@ -1,6 +1,7 @@
 'use client';
 
 import { ChangeEvent, FormEvent, useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
 import { CategoryRow, ProductFormData } from '../types';
 
 interface ProductFormProps {
@@ -178,9 +179,28 @@ export default function ProductForm({
         <p className="mt-2 text-xs text-gray-500">Format: JPG/PNG, disarankan &lt; 1MB. Preview akan muncul jika file dipilih.</p>
         <div className="mt-4">
           {previewUrl ? (
-            <img src={previewUrl} alt="Preview" className="w-full max-w-sm h-40 object-cover rounded-lg border" />
+            <Image
+              src={previewUrl}
+              alt="Preview"
+              width={640}
+              height={160}
+              className="w-full max-w-sm h-40 object-cover rounded-lg border"
+              unoptimized
+              sizes="(min-width: 640px) 640px, 100vw"
+              loading="eager"
+              decoding="async"
+            />
           ) : selectedExistingUrl ? (
-            <img src={selectedExistingUrl} alt="Selected from storage" className="w-full max-w-sm h-40 object-cover rounded-lg border" />
+            <Image
+              src={selectedExistingUrl}
+              alt="Selected from storage"
+              width={640}
+              height={160}
+              className="w-full max-w-sm h-40 object-cover rounded-lg border"
+              sizes="(min-width: 640px) 640px, 100vw"
+              loading="lazy"
+              decoding="async"
+            />
           ) : (
             file && (
               <p className="text-sm text-gray-500">File dipilih: {file.name} ({(file.size / 1024).toFixed(2)} KB)</p>
@@ -221,7 +241,16 @@ export default function ProductForm({
                       title={img.name}
                     >
                       <div className="relative w-full max-w-[170px] sm:max-w-full">
-                        <img src={img.url} alt={img.name} className="w-full h-28 sm:h-24 md:h-24 object-cover group-hover:scale-[1.02] transition-transform mx-auto rounded-md" />
+                        <Image
+                          src={img.url}
+                          alt={img.name}
+                          width={300}
+                          height={112}
+                          className="w-full h-28 sm:h-24 md:h-24 object-cover group-hover:scale-[1.02] transition-transform mx-auto rounded-md"
+                          sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
+                          loading="lazy"
+                          decoding="async"
+                        />
                         <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/50 to-transparent p-2 rounded-b-md">
                           <p className="text-[11px] text-white truncate">{img.name}</p>
                         </div>

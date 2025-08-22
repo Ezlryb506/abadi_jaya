@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { Dialog } from "@headlessui/react";
 import dynamic from 'next/dynamic';
+import type { User } from '@supabase/supabase-js';
 
 // Lazy load FaqSection
 const FaqSection = dynamic(() => import("@/app/user-dashboard/components/FaqSection"), {
@@ -21,7 +22,7 @@ const menuItems = [
 
 export default function UserDashboardPage() {
 	const [activeMenu, setActiveMenu] = useState("profile");
-	const [user, setUser] = useState<any>(null);
+	const [user, setUser] = useState<User | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [showLogoutModal, setShowLogoutModal] = useState(false);
 	const [sidebarOpen, setSidebarOpen] = useState(false); // State untuk mobile sidebar
@@ -171,7 +172,8 @@ export default function UserDashboardPage() {
 	}, [user]);
 
 	const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-		const { name, value } = e.target as any;
+		const target = e.target as HTMLInputElement | HTMLTextAreaElement;
+		const { name, value } = target;
 		setProfileForm(prev => ({ ...prev, [name]: value }));
 	};
 
@@ -229,9 +231,9 @@ export default function UserDashboardPage() {
 			} else {
 				setProfileMsg("Profil berhasil diperbarui");
 			}
-		} catch (err) {
-			setProfileErr("Terjadi kesalahan sistem");
-		}
+		        } catch {
+            setProfileErr("Terjadi kesalahan sistem");
+        }
 		setProfileSaving(false);
 	};
 

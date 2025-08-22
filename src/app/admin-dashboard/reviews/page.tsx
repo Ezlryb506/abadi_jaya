@@ -34,20 +34,19 @@ const ReadMoreClamp = ({ text, lines = 5 }: { text: string; lines?: number }) =>
   const [expanded, setExpanded] = useState(false);
   const [showToggle, setShowToggle] = useState(false);
   const pRef = useRef<HTMLParagraphElement | null>(null);
-
-  if (!text) return <span className="text-gray-400 italic">- tidak ada komentar -</span>;
-  const cleanText = text.replace(/<br\s*\/?>(?=\n|\r|$)/gi, '').replace(/<br\s*\/?>(?!\n|\r|$)/gi, '');
+  const cleanText = text ? text.replace(/<br\s*\/?>/gi, '') : '';
 
   useEffect(() => {
     const el = pRef.current;
-    if (!el) return;
-    if (!expanded) {
+    if (el && !expanded) {
       const need = el.scrollHeight > el.clientHeight + 2;
       setShowToggle(need);
-    } else {
+    } else if (el) {
       setShowToggle(true);
     }
-  }, [cleanText, expanded]);
+  }, [cleanText, expanded, lines]);
+
+  if (!text) return <span className="text-gray-400 italic">- tidak ada komentar -</span>;
 
   return (
     <div>
@@ -101,7 +100,7 @@ export default function AdminReviewsPage() {
       setError("Gagal memuat ulasan. Coba lagi nanti.");
       toast.error('Gagal memuat ulasan.');
     } else {
-      setItems((data as any) || []);
+      setItems(Array.isArray(data) ? (data as ReviewRow[]) : []);
     }
     setLoading(false);
   };
@@ -203,7 +202,11 @@ export default function AdminReviewsPage() {
             <div className="flex flex-1 gap-3">
               <select
                 value={filter}
-                onChange={(e) => { setPage(0); setFilter(e.target.value as any); }}
+                onChange={(e) => {
+                  setPage(0);
+                  const v = e.target.value as 'all' | 'published' | 'unpublished';
+                  setFilter(v);
+                }}
                 className="px-4 py-2 border border-gray-300 rounded-lg bg-white shadow-sm transition-all duration-200 hover:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-opacity-50"
               >
                 <option value="all">Semua Ulasan</option>
@@ -440,7 +443,7 @@ const EditModal = ({ editing, setEditing, onSave, saving }: { editing: ReviewRow
   </Transition>
 );
 
-const ConfirmationModal = ({ action, setAction }: { action: { type: 'delete' | 'publish', data: ReviewRow, onConfirm: () => void } | null, setAction: (a: any) => void }) => {
+const ConfirmationModal = ({ action, setAction }: { action: { type: 'delete' | 'publish', data: ReviewRow, onConfirm: () => void } | null, setAction: (a: { type: 'delete' | 'publish', data: ReviewRow, onConfirm: () => void } | null) => void }) => {
   const isOpen = !!action;
   const isDelete = action?.type === 'delete';
   const title = isDelete ? 'Hapus Ulasan?' : `Ubah Status Publikasi?`;

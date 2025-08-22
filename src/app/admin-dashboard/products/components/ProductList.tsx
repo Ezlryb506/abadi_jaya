@@ -1,8 +1,28 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
 import { ProductRow } from '../types';
 import ProductRowComponent from './ProductRow';
+
+// Hindari mismatch SSR vs Client untuk pemformatan locale
+function PriceText({ value }: { value: number | null }) {
+  const [text, setText] = useState<string>(value != null ? `Rp ${value}` : '-');
+  useEffect(() => {
+    if (value == null) {
+      setText('-');
+    } else {
+      try {
+        setText(`Rp ${new Intl.NumberFormat('id-ID').format(value)}`);
+      } catch {
+        setText(`Rp ${value}`);
+      }
+    }
+  }, [value]);
+  return (
+    <span suppressHydrationWarning>{text}</span>
+  );
+}
 
 interface ProductListProps {
   products: ProductRow[];
@@ -71,7 +91,16 @@ export default function ProductList({ products, onEdit, onToggleStatus, onDelete
               <div key={p.id} className="p-4 flex gap-3">
                 <div className="shrink-0">
                   {p.image_url ? (
-                    <img src={p.image_url} alt={p.name} loading="lazy" className="w-20 h-20 object-cover rounded-lg border" />
+                    <Image
+                      src={p.image_url}
+                      alt={p.name}
+                      width={80}
+                      height={80}
+                      className="w-20 h-20 object-cover rounded-lg border"
+                      sizes="80px"
+                      loading="lazy"
+                      decoding="async"
+                    />
                   ) : (
                     <div className="w-20 h-20 rounded-lg bg-gray-100 border flex items-center justify-center text-gray-400 text-xs">No Image</div>
                   )}
@@ -84,7 +113,7 @@ export default function ProductList({ products, onEdit, onToggleStatus, onDelete
                     </div>
                     <span className={`px-2 py-0.5 text-[10px] rounded-full whitespace-nowrap ${p.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{p.is_active ? 'Aktif' : 'Nonaktif'}</span>
                   </div>
-                  <div className="mt-2 text-sm text-gray-700">{p.price ? `Rp ${p.price.toLocaleString('id-ID')}` : '-'}</div>
+                  <div className="mt-2 text-sm text-gray-700"><PriceText value={p.price} /></div>
                   <div className="mt-3 flex flex-wrap gap-2">
                     <button
                       onClick={() => onEdit(p)}

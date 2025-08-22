@@ -4,18 +4,73 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { ReactNode, useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { User } from "@supabase/supabase-js";
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
+  const [authorized, setAuthorized] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase.auth.getUser();
-      setUser(data?.user);
+      try {
+        const { data } = await supabase.auth.getUser();
+        const u = data?.user ?? null;
+        setUser(u);
+
+        // 1) Cek membership admin via tabel admin_users (lebih akurat sesuai skema DB)
+        let isAdminByTable = false;
+        if (u?.id) {
+          const { count, error } = await supabase
+            .from('admin_users')
+            .select('auth_user_id', { count: 'exact', head: true })
+            .eq('auth_user_id', u.id);
+          if (error) {
+            // optional: handle silently, fallback checks below will run
+          }
+          isAdminByTable = (count ?? 0) > 0;
+        }
+
+        // 2) Fallback: cek metadata dengan type guard aman (tanpa any)
+        const userMeta = ((): Record<string, unknown> | null => {
+          const m = u?.user_metadata as unknown;
+          return typeof m === 'object' && m !== null ? (m as Record<string, unknown>) : null;
+        })();
+        const appMeta = ((): Record<string, unknown> | null => {
+          const m = u?.app_metadata as unknown;
+          return typeof m === 'object' && m !== null ? (m as Record<string, unknown>) : null;
+        })();
+
+        const userMetaRole = userMeta && 'role' in userMeta && typeof userMeta.role === 'string' ? (userMeta.role as string) : undefined;
+        const appMetaRoles = appMeta && 'roles' in appMeta && Array.isArray(appMeta.roles) ? (appMeta.roles as unknown as string[]) : undefined;
+        const appMetaRole = appMeta && 'role' in appMeta && typeof appMeta.role === 'string' ? (appMeta.role as string) : undefined;
+
+        const isAdminMeta = userMetaRole === 'admin';
+        const isAdminAppRoles = Array.isArray(appMetaRoles) && appMetaRoles.includes('admin');
+        const isAdminAppRole = appMetaRole === 'admin';
+
+        const isAdmin = !!u && (isAdminByTable || isAdminMeta || isAdminAppRoles || isAdminAppRole);
+
+        if (!u) {
+          setAuthorized(false);
+          router.replace("/login?next=" + encodeURIComponent(pathname || "/admin-dashboard"));
+        } else if (!isAdmin) {
+          setAuthorized(false);
+          router.replace("/login?next=" + encodeURIComponent(pathname || "/admin-dashboard"));
+        } else {
+          setAuthorized(true);
+        }
+      } catch {
+        setAuthorized(false);
+        router.replace("/login?next=" + encodeURIComponent(pathname || "/admin-dashboard"));
+      } finally {
+        setAuthChecked(true);
+      }
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleLogout = async () => {
@@ -24,7 +79,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       if (error) throw error;
       // redirect to login page
       router.replace("/login");
-    } catch (err) {
+    } catch {
       alert("Gagal logout. Coba lagi.");
     }
   };
@@ -54,6 +109,29 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       </Link>
     );
   };
+
+  // Loading / Guard state: cegah flash konten admin sebelum otorisasi
+  if (!authChecked) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-orange-50 to-white">
+        <div className="text-center">
+          <div className="mx-auto h-10 w-10 border-2 border-orange-300 border-t-transparent rounded-full animate-spin mb-3" />
+          <p className="text-sm text-gray-600">Memeriksa akses admin...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!authorized) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 via-orange-50 to-white">
+        <div className="bg-white border border-gray-100 rounded-2xl p-6 text-center shadow">
+          <h2 className="text-lg font-semibold text-gray-800 mb-1">Mengalihkan...</h2>
+          <p className="text-sm text-gray-600">Anda tidak memiliki akses. Mengarahkan ke halaman login.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex bg-gradient-to-br from-gray-50 via-orange-50 to-white overflow-x-hidden">

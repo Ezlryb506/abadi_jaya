@@ -1,16 +1,54 @@
 import { useState } from 'react';
+import Image from 'next/image';
 import { supabase } from '@/lib/supabaseClient';
 import LocalTime from './LocalTime';
 import { formatRupiah, formatTanggal, hitungPembayaran, getStatusClass } from '@/lib/format';
 
+type ProjectUpdate = {
+  id: number;
+  status: string;
+  description: string | null;
+  created_at: string;
+  photo_url: string | null;
+};
+
+type PaymentHistory = {
+  id: number;
+  payment_amount: number;
+  payment_date: string;
+  payment_notes: string | null;
+  payment_proof: string | null;
+};
+
+type ReviewRow = {
+  id: number;
+  rating: number;
+  comment: string | null;
+  show_name: boolean;
+  display_name: string | null;
+};
+
+type Order = {
+  id: number;
+  created_at: string;
+  estimated_completion: string | null;
+  estimated_price: number | null;
+  project_status: string | null;
+  products: { name: string; product_categories: { name: string } | null } | null;
+  customers: { name: string } | null;
+  payment_history: PaymentHistory[];
+  project_updates: ProjectUpdate[];
+  reviews: ReviewRow[];
+};
+
 interface OrdersSectionProps {
-  orders: any[];
+  orders: Order[];
   loading: boolean;
   error: string;
   customerId: number | null;
 }
 
-function OrderCard({ order, customerId, onChanged }: { order: any; customerId: number | null; onChanged?: () => void }) {
+function OrderCard({ order, customerId, onChanged }: { order: Order; customerId: number | null; onChanged?: () => void }) {
   const [tab, setTab] = useState<'updates' | 'payments'>('updates');
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [rating, setRating] = useState<number>(5);
@@ -94,11 +132,15 @@ function OrderCard({ order, customerId, onChanged }: { order: any; customerId: n
             product_name: order?.products?.name || null,
             product_description: order?.products?.product_categories?.name || null,
           });
-        if (error) throw error;
+        if (error) {
+          throw error;
+        }
       }
       setReviewModalOpen(false);
-      onChanged && onChanged();
-    } catch (e) {
+      if (onChanged) {
+        onChanged();
+      }
+    } catch {
       // minimal guard; bisa ditingkatkan dengan toast
     } finally {
       setSubmitting(false);
@@ -115,8 +157,8 @@ function OrderCard({ order, customerId, onChanged }: { order: any; customerId: n
         .eq('id', existingReview.id)
         .eq('customer_id', customerId);
       if (error) throw error;
-      onChanged && onChanged();
-    } catch (e) {
+      if (onChanged) onChanged();
+    } catch {
     } finally {
       setSubmitting(false);
       setReviewModalOpen(false);
@@ -141,7 +183,7 @@ function OrderCard({ order, customerId, onChanged }: { order: any; customerId: n
             )}
           </div>
         </div>
-        <span className={`px-3 py-1 text-xs font-semibold rounded-full ${getStatusClass(order.project_status)}`}>
+        <span className={`px-3 py-1 text-xs font-semibold rounded-full ${getStatusClass(order.project_status ?? undefined)}`}>
           {order.project_status}
         </span>
       </div>
@@ -236,20 +278,28 @@ function OrderCard({ order, customerId, onChanged }: { order: any; customerId: n
         <div className="mt-4">
           {tab === 'updates' ? (
             <ul className="space-y-3">
-              {updates.length > 0 ? updates.map((u: any) => (
+              {updates.length > 0 ? updates.map((u: ProjectUpdate) => (
                 <li key={u.id} className="border-b border-gray-100 pb-2">
                   <p className="text-sm"><strong>Status:</strong> {u.status}</p>
                   {u.description && <p className="text-sm text-gray-700">{u.description}</p>}
                   <p className="text-xs text-gray-500 mt-1">{formatTanggal(u.created_at, true)}</p>
                   {u.photo_url && (
-                    <img src={u.photo_url} alt="update" className="mt-2 w-full h-auto rounded-md object-cover" />
+                    <div className="mt-2 relative w-full h-48 sm:h-56 md:h-64">
+                      <Image
+                        src={u.photo_url}
+                        alt="update"
+                        fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 800px"
+                        className="rounded-md object-cover"
+                      />
+                    </div>
                   )}
                 </li>
               )) : <p className="text-sm text-gray-500">Belum ada update proyek.</p>}
             </ul>
           ) : (
             <ul className="space-y-3">
-              {payments.length > 0 ? payments.map((p: any) => (
+              {payments.length > 0 ? payments.map((p: PaymentHistory) => (
                 <li key={p.id} className="border-b border-gray-100 pb-2">
                   <div className="flex items-start justify-between gap-3">
                     <div>

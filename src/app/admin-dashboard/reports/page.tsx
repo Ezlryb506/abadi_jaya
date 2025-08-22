@@ -14,12 +14,6 @@ const DownloadIcon = ({ className = "" }: { className?: string }) => (
 const CalendarIcon = ({ className = "" }: { className?: string }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
 );
-const AlertTriangleIcon = ({ className = "" }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-);
-const InfoIcon = ({ className = "" }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-);
 
 // Types (subset sesuai kebutuhan)
 interface TransactionRow {
@@ -101,10 +95,56 @@ export default function AdminReportsPage() {
       if (pErr) toast.error("Gagal memuat pembayaran.");
       if (rErr) toast.error("Gagal memuat ulasan.");
 
-      setTransactions((tData as any) || []);
-      setPayments((pData as any) || []);
-      setReviews((rData as any) || []);
-    } catch (e) {
+      // Guards & normalizers to avoid any
+      const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null;
+      const normTransactions = (arr: unknown): TransactionRow[] => {
+        if (!Array.isArray(arr)) return [];
+        return arr.map((x): TransactionRow => {
+          const o = isObj(x) ? x : {};
+          return {
+            id: Number((o.id as unknown) ?? 0),
+            order_date: String((o.order_date as unknown) ?? ''),
+            project_status: o.project_status == null ? null : String(o.project_status as unknown),
+            estimated_price: ((): number | string => {
+              const v = (o.estimated_price as unknown);
+              const n = Number(v as number);
+              return Number.isFinite(n) ? n : (v as string | number | undefined) ?? 0;
+            })(),
+          };
+        });
+      };
+      const normPayments = (arr: unknown): PaymentRow[] => {
+        if (!Array.isArray(arr)) return [];
+        return arr.map((x): PaymentRow => {
+          const o = isObj(x) ? x : {};
+          return {
+            id: Number((o.id as unknown) ?? 0),
+            transaction_id: Number((o.transaction_id as unknown) ?? 0),
+            payment_amount: ((): number | string => {
+              const v = (o.payment_amount as unknown);
+              const n = Number(v as number);
+              return Number.isFinite(n) ? n : (v as string | number | undefined) ?? 0;
+            })(),
+            payment_date: String((o.payment_date as unknown) ?? ''),
+          };
+        });
+      };
+      const normReviews = (arr: unknown): ReviewRow[] => {
+        if (!Array.isArray(arr)) return [];
+        return arr.map((x): ReviewRow => {
+          const o = isObj(x) ? x : {};
+          return {
+            id: Number((o.id as unknown) ?? 0),
+            is_published: o.is_published == null ? null : Boolean(o.is_published as unknown),
+            created_at: String((o.created_at as unknown) ?? ''),
+          };
+        });
+      };
+
+      setTransactions(normTransactions(tData));
+      setPayments(normPayments(pData));
+      setReviews(normReviews(rData));
+    } catch {
       toast.error("Terjadi kesalahan saat memuat data.");
     } finally {
       setLoading(false);
@@ -228,7 +268,7 @@ export default function AdminReportsPage() {
       a.click();
       URL.revokeObjectURL(url);
       toast.success("Export CSV berhasil.");
-    } catch (e) {
+    } catch {
       toast.error("Export CSV gagal.");
     } finally {
       setConfirmExport(false);

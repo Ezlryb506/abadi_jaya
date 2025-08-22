@@ -39,6 +39,9 @@ export default function useProductsAdmin() {
     }
   };
 
+  // Helper guard object
+  const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null;
+
   // State untuk memilih gambar yang sudah ada di Storage
   const [existingImages, setExistingImages] = useState<Array<{ name: string; url: string; path: string }>>([]);
   const [loadingImages, setLoadingImages] = useState(false);
@@ -72,7 +75,7 @@ export default function useProductsAdmin() {
         }
       }
       setExistingImages(files);
-    } catch (e) {
+    } catch {
       // silent fail: biarkan grid kosong jika gagal
     } finally {
       setLoadingImages(false);
@@ -99,7 +102,7 @@ export default function useProductsAdmin() {
       }
       try {
         await Promise.all([fetchProducts(), fetchCategories()]);
-      } catch (e) {
+      } catch {
         setError('Gagal memuat data.');
       } finally {
         setLoading(false);
@@ -114,18 +117,35 @@ export default function useProductsAdmin() {
       .order('id', { ascending: false });
     if (error) throw error;
 
-    // Normalisasi shape relasi category (array vs object)
-    const normalized: ProductRow[] = (data || []).map((p: any) => ({
-      id: Number(p.id),
-      name: String(p.name),
-      description: p.description === null ? null : String(p.description),
-      price: p.price === null ? null : Number(p.price),
-      is_active: p.is_active === null ? null : Boolean(p.is_active),
-      image_url: p.image_url ?? null,
-      product_categories: Array.isArray(p.product_categories)
-        ? (p.product_categories[0] ? { name: String(p.product_categories[0].name) } : null)
-        : (p.product_categories ? { name: String(p.product_categories.name) } : null),
-    }));
+    // Normalisasi shape relasi category (array vs object) dengan pengetikan aman
+    type Raw = Record<string, unknown> & { product_categories?: unknown };
+    const src: unknown[] = Array.isArray(data) ? data : [];
+    const normalized: ProductRow[] = src.map((v): ProductRow => {
+      const p = v as Raw;
+      const catRaw = p.product_categories;
+      let cat: { name: string } | null = null;
+      if (Array.isArray(catRaw)) {
+        const first = catRaw[0];
+        if (isObj(first) && 'name' in first) {
+          cat = { name: String((first as Record<string, unknown>).name) };
+        }
+      } else if (isObj(catRaw) && 'name' in catRaw) {
+        cat = { name: String((catRaw as Record<string, unknown>).name) };
+      }
+      const desc = p.description === null ? null : (p.description === undefined ? null : String(p.description as unknown as string));
+      const price = p.price === null ? null : (p.price === undefined ? null : Number(p.price as unknown as number));
+      const active = p.is_active === null ? null : (p.is_active === undefined ? null : Boolean(p.is_active));
+      const img = (p.image_url ?? null) as string | null;
+      return {
+        id: Number(p.id as unknown as number),
+        name: String(p.name as unknown as string),
+        description: desc,
+        price: price,
+        is_active: active,
+        image_url: img,
+        product_categories: cat,
+      };
+    });
     setProducts(normalized);
   };
 
@@ -196,7 +216,7 @@ export default function useProductsAdmin() {
       setForm({ name: '', category_id: '', price: '', description: '' });
       setFile(null);
       setSelectedExistingUrl(null);
-    } catch (e) {
+    } catch {
       setError('Gagal menambahkan produk.');
     } finally {
       setSubmitting(false);
@@ -224,7 +244,14 @@ export default function useProductsAdmin() {
       if (editFile) {
         imageUrl = await uploadImage(editFile);
       }
-      const payload: any = {};
+      type UpdatePayload = Partial<{
+        name: string;
+        description: string | null;
+        price: number;
+        category_id: number;
+        image_url: string;
+      }>;
+      const payload: UpdatePayload = {};
       if (form.name) payload.name = form.name;
       if (form.description !== undefined) payload.description = form.description;
       if (form.price) payload.price = Number(form.price);
@@ -245,7 +272,7 @@ export default function useProductsAdmin() {
       await fetchProducts();
       setEditing(null);
       setEditFile(null);
-    } catch (e) {
+    } catch {
       setError('Gagal memperbarui produk.');
     } finally {
       setSubmitting(false);
@@ -257,7 +284,7 @@ export default function useProductsAdmin() {
       const { error } = await supabase.from('products').update({ is_active: newStatus }).eq('id', id);
       if (error) throw error;
       setProducts(prev => prev.map(p => (p.id === id ? { ...p, is_active: newStatus } : p)));
-    } catch (e) {
+    } catch {
       setError('Gagal mengubah status produk.');
     }
   };
@@ -286,7 +313,7 @@ export default function useProductsAdmin() {
       if (delErr) throw delErr;
 
       setProducts(prev => prev.filter(p => p.id !== id));
-    } catch (e) {
+    } catch {
       setError('Gagal menghapus produk.');
     }
   };
