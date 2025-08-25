@@ -1,5 +1,7 @@
 -- =====================================================
--- QUERY DATABASE UNTUK DASHBOARD ADMIN
+-- QUERY DATABASE UNTUK DASHBOARD ADMIN (PostgreSQL / Supabase)
+-- Source: dokumen/02_database_queries.sql (diselaraskan untuk Postgres)
+-- Perubahan: CURDATE() -> CURRENT_DATE
 -- =====================================================
 
 -- =====================================================
@@ -57,7 +59,7 @@ SELECT
 FROM transactions t
 JOIN customers c ON t.customer_id = c.id
 JOIN product_categories pc ON t.category_id = pc.id
-WHERE DATE(t.created_at) = CURDATE()
+WHERE DATE(t.created_at) = CURRENT_DATE
 ORDER BY t.created_at DESC;
 
 -- =====================================================
@@ -71,7 +73,7 @@ SELECT
     SUM(estimated_price) as total_value,
     SUM(total_paid) as total_received,
     SUM(estimated_price - total_paid) as total_outstanding,
-    ROUND((SUM(total_paid) / SUM(estimated_price)) * 100, 2) as payment_percentage
+    ROUND((SUM(total_paid) / NULLIF(SUM(estimated_price),0)) * 100, 2) as payment_percentage
 FROM transactions 
 GROUP BY payment_method;
 
@@ -136,6 +138,7 @@ ORDER BY
 -- =====================================================
 
 -- Semua pembayaran untuk transaksi tertentu
+-- Param: $1 = transaction_id
 SELECT 
     ph.payment_date,
     ph.payment_amount,
@@ -162,7 +165,7 @@ SELECT
 FROM payment_history ph
 JOIN transactions t ON ph.transaction_id = t.id
 JOIN customers c ON t.customer_id = c.id
-WHERE DATE(ph.payment_date) = CURDATE()
+WHERE DATE(ph.payment_date) = CURRENT_DATE
 ORDER BY ph.payment_date DESC;
 
 -- =====================================================
@@ -220,7 +223,7 @@ SELECT
 FROM project_updates pu
 JOIN transactions t ON pu.transaction_id = t.id
 JOIN customers c ON t.customer_id = c.id
-WHERE DATE(pu.created_at) = CURDATE()
+WHERE DATE(pu.created_at) = CURRENT_DATE
 ORDER BY pu.created_at DESC;
 
 -- =====================================================
@@ -228,6 +231,7 @@ ORDER BY pu.created_at DESC;
 -- =====================================================
 
 -- Pencarian transaksi berdasarkan keyword
+-- Param: $1 = keyword (text)
 SELECT 
     t.id,
     t.description,
@@ -247,6 +251,7 @@ WHERE
 ORDER BY t.created_at DESC;
 
 -- Filter transaksi berdasarkan status dan tanggal
+-- Params: $1 = status (nullable), $2 = start_date (nullable, date), $3 = end_date (nullable, date)
 SELECT 
     t.id,
     t.description,

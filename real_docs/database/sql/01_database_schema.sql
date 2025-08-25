@@ -1,5 +1,8 @@
 -- =====================================================
--- SCHEMA DATABASE BENGKEL LAS ABADI JAYA
+-- MIGRATED COPY: SCHEMA DATABASE BENGKEL LAS ABADI JAYA
+-- Source: dokumen/01_database_schema.sql (kept as authoritative SQL copy)
+-- Note: Tambahkan di migrasi berikutnya jika ada fungsi/trigger/indeks tambahan
+--       yang sudah terdokumentasi di real_docs (mis. recalculation payment triggers)
 -- =====================================================
 
 -- Definisi tipe ENUM PostgreSQL
@@ -273,12 +276,8 @@ CREATE POLICY "User can delete own transactions"
         (SELECT auth_user_id FROM public.customers WHERE id = customer_id) = auth.uid()
     );
 
-
--- =====================================================
--- SAMPLE DATA UNTUK TESTING
--- =====================================================
-
--- Insert sample categories
+-- SAMPLE DATA UNTUK TESTING (opsional)
+-- (Dapat dipindahkan ke seed terpisah jika perlu)
 INSERT INTO product_categories (name, description, base_price_range) VALUES
 ('Pagar', 'Pagar besi, stainless, minimalis', '500k - 3jt'),
 ('Kanopi', 'Kanopi carport, teras, garasi', '1jt - 5jt'),
@@ -290,7 +289,6 @@ INSERT INTO product_categories (name, description, base_price_range) VALUES
 ('Minimalis', 'Produk dengan desain minimalis', '500k - 5jt'),
 ('Stainless', 'Produk stainless steel premium', '1jt - 15jt');
 
--- Insert sample products
 INSERT INTO products (category_id, name, description, price, image_url) VALUES
 (1, 'Pagar Besi Minimalis', 'Pagar besi dengan desain minimalis, finishing cat duco.', 2500000, 'https://placehold.co/400x300?text=Pagar+Besi'),
 (2, 'Kanopi Baja Ringan', 'Kanopi carport baja ringan, atap spandek, ukuran 6x4m.', 3500000, 'https://placehold.co/400x300?text=Kanopi'),
@@ -301,13 +299,11 @@ INSERT INTO products (category_id, name, description, price, image_url) VALUES
 (7, 'Tangga Putar Spiral', 'Tangga putar model spiral, bahan besi hollow.', 6500000, 'https://placehold.co/400x300?text=Tangga+Putar'),
 (9, 'Pagar Stainless Premium', 'Pagar stainless steel premium, desain mewah dan tahan karat.', 8000000, 'https://placehold.co/400x300?text=Stainless');
 
--- Insert sample customers
 INSERT INTO customers (name, phone, address, email) VALUES
 ('John Doe', '+628123456789', 'Jl. Contoh No. 123, Jakarta', 'john@email.com'),
 ('Jane Smith', '+628987654321', 'Jl. Sample No. 456, Bandung', 'jane@email.com'),
 ('Bob Wilson', '+628555666777', 'Jl. Test No. 789, Surabaya', 'bob@email.com');
 
--- Insert sample transactions
 INSERT INTO transactions (customer_id, category_id, product_id, description, estimated_price, payment_method, project_status) VALUES
 (1, 1, 1, 'Pagar besi minimalis tinggi 1.5m, panjang 10m', 2500000, 'Cicil', 'Survey'),
 (2, 2, 2, 'Kanopi carport stainless 6x4m', 3500000, 'DP', 'Design'),
