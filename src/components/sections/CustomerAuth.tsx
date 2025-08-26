@@ -8,14 +8,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 // Types & helpers
 type MaybeAuthError = { status?: number; name?: string; message?: string };
 const hasStatusName = (e: unknown): e is MaybeAuthError =>
-  typeof e === "object" && e !== null && ("status" in e || "name" in e || "message" in e);
+  typeof e === 'object' && e !== null && ('status' in e || 'name' in e || 'message' in e);
 
 const isValidEmail = (v: string) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test((v || '').trim());
 const isStrongPassword = (v: string) => (v || '').length >= 8 && /[A-Za-z]/.test(v) && /\d/.test(v);
-const normalizePhone = (v: string) => (v || '').replace(/[^\d+]/g, '');
 const isValidPhone = (v: string) => /^(?:\+62|62|0)8\d{7,13}$/.test((v || '').replace(/[^\d+]/g, ''));
-const isValidRTRW = (v: string) => (v || '').trim() === '' || /^\d{1,3}\/\d{1,3}$/.test((v || '').trim());
-const isValidHouseNumber = (v: string) => /^[-A-Za-z0-9\/]{1,10}$/.test((v || '').trim());
 
 function CustomerAuthInner() {
   const [isLogin, setIsLogin] = useState(true);
