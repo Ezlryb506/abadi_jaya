@@ -1,12 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
+import CustomerAuth from '@/components/sections/CustomerAuth';
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const [activeTab, setActiveTab] = useState<'admin' | 'customer'>('admin');
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -14,6 +17,11 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  // Init tab via query (?tab=customer)
+  useEffect(() => {
+    const tab = (searchParams?.get('tab') || '').toLowerCase();
+    if (tab === 'customer') setActiveTab('customer');
+  }, [searchParams]);
   // Reset password state (admin)
   const [showReset, setShowReset] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
@@ -108,22 +116,39 @@ export default function LoginPage() {
         <div className="absolute bottom-0 right-0 w-80 h-80 bg-gradient-to-r from-blue-200/20 to-cyan-200/20 rounded-full mix-blend-multiply filter blur-3xl animate-float-medium"></div>
       </div>
 
-      <div className="max-w-md w-full space-y-8 relative z-10">
-        {/* Header */}
-        <div className="text-center">
-          <div className="mx-auto w-20 h-20 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mb-6">
-            <span className="text-3xl text-white">🔐</span>
+      <div className="max-w-2xl w-full space-y-8 relative z-10">
+        {/* Tabs */}
+        <div className="w-full bg-white/70 backdrop-blur border border-gray-200 rounded-2xl p-2 shadow-sm">
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => { setActiveTab('admin'); setError(''); }}
+              className={`py-3 rounded-xl font-semibold transition-all ${activeTab === 'admin' ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+            >
+              🔐 Admin
+            </button>
+            <button
+              type="button"
+              onClick={() => { setActiveTab('customer'); setError(''); }}
+              className={`py-3 rounded-xl font-semibold transition-all ${activeTab === 'customer' ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+            >
+              👤 Customer
+            </button>
           </div>
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">
-            Admin Login
-          </h2>
-          <p className="text-gray-600">
-            Masuk ke dashboard admin Bengkel Las Abadi Jaya
-          </p>
         </div>
 
-        {/* Login Form */}
+        {/* Panels */}
+        {activeTab === 'admin' ? (
         <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+          {/* Header */}
+          <div className="text-center mb-6">
+            <div className="mx-auto w-20 h-20 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mb-4">
+              <span className="text-3xl text-white">🔐</span>
+            </div>
+            <h2 className="text-3xl font-bold text-gray-900 mb-1">Admin Login</h2>
+            <p className="text-gray-600">Masuk ke dashboard admin Bengkel Las Abadi Jaya</p>
+          </div>
+          {/* Login Form */}
           <form className="space-y-6" onSubmit={handleSubmit}>
             {/* Email Field */}
             <div>
@@ -247,11 +272,11 @@ export default function LoginPage() {
             </Link>
           </div>
         </div>
-
-        {/* Footer Info */}
-        <div className="text-center text-gray-500 text-sm">
-          <p>© 2024 Bengkel Las Abadi Jaya. Admin Access Only.</p>
-        </div>
+        ) : (
+          <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
+            <CustomerAuth />
+          </div>
+        )}
       </div>
 
       {/* Floating Elements */}

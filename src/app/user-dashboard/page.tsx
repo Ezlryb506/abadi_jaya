@@ -84,7 +84,7 @@ export default function UserDashboardPage() {
 		(async () => {
 			const { data } = await supabase.auth.getUser();
 			if (!data?.user) {
-				router.replace("/customer-login");
+				router.replace("/login?tab=customer");
 				return;
 			}
 			setUser(data.user);
@@ -284,6 +284,12 @@ export default function UserDashboardPage() {
 			.join(", ");
 
 		try {
+			// DEBUG LOG: payload update profil (akan dihapus setelah uji coba berhasil)
+			console.log('[ProfileSave] customerId=', customerId, {
+				name: profileForm.name,
+				phone: profileForm.phone || null,
+				address: fullAddress || null,
+			});
 			const { error } = await supabase
 				.from("customers")
 				.update({ name: profileForm.name, phone: profileForm.phone || null, address: fullAddress || null })
@@ -292,6 +298,8 @@ export default function UserDashboardPage() {
 				setProfileErr(error.message || "Gagal menyimpan profil");
 			} else {
 				setProfileMsg("Profil berhasil diperbarui");
+				// DEBUG LOG: sukses update
+				console.log('[ProfileSave] sukses update profil');
 			}
 		} catch {
 			setProfileErr("Terjadi kesalahan sistem");
@@ -302,7 +310,7 @@ export default function UserDashboardPage() {
 	const handleLogout = async () => {
 		setShowLogoutModal(false);
 		await supabase.auth.signOut();
-		router.replace("/customer-login");
+		router.replace("/login?tab=customer");
 	};
 
 	if (loading) {

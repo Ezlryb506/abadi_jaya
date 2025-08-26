@@ -34,6 +34,12 @@ function AuthCallbackInner() {
         if (access_token && refresh_token) {
           await supabase.auth.setSession({ access_token, refresh_token });
         }
+        // Bersihkan hash dari URL setelah token diproses (keamanan & UX)
+        if (typeof window !== 'undefined' && window.location.hash) {
+          try {
+            window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+          } catch {}
+        }
         const finalType = hashType || qsType;
         if (finalType === 'recovery') {
           setMode('recovery');
@@ -70,7 +76,7 @@ function AuthCallbackInner() {
       }
       setSuccess('Password berhasil diperbarui.');
       setTimeout(() => {
-        router.replace('/customer-login');
+        router.replace('/login?tab=customer');
       }, 1200);
     } catch (e: unknown) {
       const msg = (e && typeof e === 'object' && 'message' in e) ? String((e as { message?: unknown }).message) : undefined;
@@ -119,7 +125,7 @@ function AuthCallbackInner() {
               <button
                 type="button"
                 className="px-4 py-2 rounded-xl border hover:bg-gray-50"
-                onClick={() => router.replace('/customer-login')}
+                onClick={() => router.replace('/login?tab=customer')}
               >
                 Batal
               </button>

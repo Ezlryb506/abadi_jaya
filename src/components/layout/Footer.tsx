@@ -63,10 +63,6 @@ export default function Footer() {
                 <span>+62 896-5375-4317</span>
               </div>
               <div className="flex items-center space-x-2">
-                <span>✉️</span>
-                <span>info@abadi-jaya.com</span>
-              </div>
-              <div className="flex items-center space-x-2">
                 <span>🕒</span>
                 <span>Senin - Sabtu: 08:00 - 17:00</span>
               </div>
@@ -74,8 +70,8 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-gray-700 mt-8 pt-8 text-center text-gray-300">
-          <p>&copy; 2024 Bengkel Las Abadi Jaya. All rights reserved.</p>
+        <div className="border-t border-gray-700 mt-8 pt-2 text-center text-gray-300">
+          <p>&copy; 2025 Bengkel Las Abadi Jaya. All rights reserved.</p>
         </div>
       </div>
     </footer>

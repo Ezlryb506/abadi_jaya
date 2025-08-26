@@ -36,6 +36,7 @@ export default function ProfileSection({
   profileErr 
 }: ProfileSectionProps) {
   const isEmailVerified = Boolean(user?.email_confirmed_at);
+  const isAddressEmpty = !profileForm.provinsi && !profileForm.kota && !profileForm.kecamatan && !profileForm.kelurahan && !profileForm.namaJalan && !profileForm.noRumah;
 
   return (
     <div className="space-y-6">
@@ -46,6 +47,20 @@ export default function ProfileSection({
             {isEmailVerified ? "Terverifikasi" : "Belum Verifikasi"}
           </span>
         </div>
+
+        {!isEmailVerified && (
+          <div className="mb-6 p-4 rounded-xl border border-yellow-200 bg-yellow-50 text-yellow-800">
+            <div className="font-semibold mb-1">Verifikasi email Anda terlebih dahulu</div>
+            <div className="text-sm">Alamat hanya dapat diisi setelah email terverifikasi. Cek inbox/spam untuk email verifikasi.</div>
+          </div>
+        )}
+
+        {isEmailVerified && isAddressEmpty && (
+          <div className="mb-6 p-4 rounded-xl border border-blue-200 bg-blue-50 text-blue-700">
+            <div className="font-semibold mb-1">Lengkapi alamat Anda</div>
+            <div className="text-sm">Isi alamat lengkap agar memudahkan pengiriman/penawaran dan mempercepat proses order Anda.</div>
+          </div>
+        )}
         
         <div className="mb-6">
           <div className="text-sm text-gray-500 mb-1">Email</div>
@@ -63,43 +78,43 @@ export default function ProfileSection({
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Provinsi</label>
-            <input name="provinsi" value={profileForm.provinsi} onChange={handleProfileChange} className="w-full px-4 py-3 border rounded-xl cursor-text" placeholder="Provinsi" />
+            <input name="provinsi" value={profileForm.provinsi} onChange={handleProfileChange} className={`w-full px-4 py-3 border rounded-xl ${!isEmailVerified ? 'bg-gray-50 text-gray-500 cursor-not-allowed' : 'cursor-text'}`} placeholder="Provinsi" disabled={!isEmailVerified} />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Kota/Kabupaten</label>
-            <input name="kota" value={profileForm.kota} onChange={handleProfileChange} className="w-full px-4 py-3 border rounded-xl cursor-text" placeholder="contoh: Kab. Bekasi" />
+            <input name="kota" value={profileForm.kota} onChange={handleProfileChange} className={`w-full px-4 py-3 border rounded-xl ${!isEmailVerified ? 'bg-gray-50 text-gray-500 cursor-not-allowed' : 'cursor-text'}`} placeholder="contoh: Kab. Bekasi" disabled={!isEmailVerified} />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Kecamatan</label>
-            <input name="kecamatan" value={profileForm.kecamatan} onChange={handleProfileChange} className="w-full px-4 py-3 border rounded-xl cursor-text" placeholder="contoh: Cibitung" />
+            <input name="kecamatan" value={profileForm.kecamatan} onChange={handleProfileChange} className={`w-full px-4 py-3 border rounded-xl ${!isEmailVerified ? 'bg-gray-50 text-gray-500 cursor-not-allowed' : 'cursor-text'}`} placeholder="contoh: Cibitung" disabled={!isEmailVerified} />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Kelurahan</label>
-            <input name="kelurahan" value={profileForm.kelurahan} onChange={handleProfileChange} className="w-full px-4 py-3 border rounded-xl cursor-text" placeholder="contoh: Wanasari" />
+            <input name="kelurahan" value={profileForm.kelurahan} onChange={handleProfileChange} className={`w-full px-4 py-3 border rounded-xl ${!isEmailVerified ? 'bg-gray-50 text-gray-500 cursor-not-allowed' : 'cursor-text'}`} placeholder="contoh: Wanasari" disabled={!isEmailVerified} />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Nama Jalan</label>
-            <input name="namaJalan" value={profileForm.namaJalan} onChange={handleProfileChange} className="w-full px-4 py-3 border rounded-xl cursor-text" placeholder="contoh: Jl. Bosih Raya" />
+            <input name="namaJalan" value={profileForm.namaJalan} onChange={handleProfileChange} className={`w-full px-4 py-3 border rounded-xl ${!isEmailVerified ? 'bg-gray-50 text-gray-500 cursor-not-allowed' : 'cursor-text'}`} placeholder="contoh: Jl. Bosih Raya" disabled={!isEmailVerified} />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Gang</label>
-            <input name="gang" value={profileForm.gang} onChange={handleProfileChange} className="w-full px-4 py-3 border rounded-xl cursor-text" placeholder="contoh: Gang Bunga" />
+            <input name="gang" value={profileForm.gang} onChange={handleProfileChange} className={`w-full px-4 py-3 border rounded-xl ${!isEmailVerified ? 'bg-gray-50 text-gray-500 cursor-not-allowed' : 'cursor-text'}`} placeholder="contoh: Gang Bunga" disabled={!isEmailVerified} />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">RT/RW</label>
-            <input name="rtRw" value={profileForm.rtRw} onChange={handleProfileChange} className="w-full px-4 py-3 border rounded-xl cursor-text" placeholder="contoh: 001/015" />
+            <input name="rtRw" value={profileForm.rtRw} onChange={handleProfileChange} className={`w-full px-4 py-3 border rounded-xl ${!isEmailVerified ? 'bg-gray-50 text-gray-500 cursor-not-allowed' : 'cursor-text'}`} placeholder="contoh: 001/015" disabled={!isEmailVerified} />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">No. Rumah</label>
-            <input name="noRumah" value={profileForm.noRumah} onChange={handleProfileChange} className="w-full px-4 py-3 border rounded-xl cursor-text" placeholder="contoh: 5" />
+            <input name="noRumah" value={profileForm.noRumah} onChange={handleProfileChange} className={`w-full px-4 py-3 border rounded-xl ${!isEmailVerified ? 'bg-gray-50 text-gray-500 cursor-not-allowed' : 'cursor-text'}`} placeholder="contoh: 5" disabled={!isEmailVerified} />
           </div>
           <div className="md:col-span-2 flex justify-end gap-2">
             {profileErr && <div className="px-3 py-2 bg-red-50 text-red-700 border border-red-200 rounded-xl text-sm">{profileErr}</div>}
             {profileMsg && <div className="px-3 py-2 bg-green-50 text-green-700 border border-green-200 rounded-xl text-sm">{profileMsg}</div>}
             <button 
               type="submit"
-              disabled={profileSaving} 
-              className="bg-orange-600 text-white px-6 py-3 rounded-xl hover:bg-orange-700 transition disabled:opacity-60 cursor-pointer"
+              disabled={profileSaving || !isEmailVerified} 
+              className={`px-6 py-3 rounded-xl transition ${profileSaving || !isEmailVerified ? 'bg-gray-300 text-gray-600 cursor-not-allowed' : 'bg-orange-600 text-white hover:bg-orange-700 cursor-pointer'}`}
             >
               {profileSaving ? "Menyimpan..." : "Simpan Perubahan"}
             </button>

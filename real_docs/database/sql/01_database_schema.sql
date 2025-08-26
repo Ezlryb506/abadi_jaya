@@ -276,7 +276,7 @@ CREATE POLICY "User can delete own transactions"
         (SELECT auth_user_id FROM public.customers WHERE id = customer_id) = auth.uid()
     );
 
--- SAMPLE DATA UNTUK TESTING (opsional)
+-- SAMPLE DATA UNTUK TESTING (opsional) -> sudah tidak digunakan
 -- (Dapat dipindahkan ke seed terpisah jika perlu)
 INSERT INTO product_categories (name, description, base_price_range) VALUES
 ('Pagar', 'Pagar besi, stainless, minimalis', '500k - 3jt'),

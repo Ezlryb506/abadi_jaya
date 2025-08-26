@@ -21,6 +21,15 @@ const nextConfig: NextConfig = {
         ]
       : [],
   },
+  async redirects() {
+    return [
+      {
+        source: '/customer-login',
+        destination: '/login?tab=customer',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;
