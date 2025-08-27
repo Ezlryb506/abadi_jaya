@@ -3,6 +3,7 @@
 import { ChangeEvent, FormEvent, useRef, useState } from 'react';
 import Image from 'next/image';
 import { CategoryRow, ProductFormData } from '../types';
+import { toast } from 'sonner';
 
 interface EditProductModalProps {
   open: boolean;
@@ -14,10 +15,14 @@ interface EditProductModalProps {
   onClose: () => void;
   onFileChange: (e: ChangeEvent<HTMLInputElement>) => void;
   currentImageUrl?: string | null;
+  addTag: (raw: string) => void;
+  removeTag: (tag: string) => void;
 }
 
-export default function EditProductModal({ open, form, categories, submitting, onChange, onSubmit, onClose, onFileChange, currentImageUrl }: EditProductModalProps) {
+export default function EditProductModal({ open, form, categories, submitting, onChange, onSubmit, onClose, onFileChange, currentImageUrl, addTag, removeTag }: EditProductModalProps) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [tagInput, setTagInput] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
   const objectUrlRef = useRef<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -68,6 +73,77 @@ export default function EditProductModal({ open, form, categories, submitting, o
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Deskripsi</label>
             <textarea name="description" rows={3} value={form.description} onChange={onChange} className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500" />
+          </div>
+          {/* Tags */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Tags (maks 8)</label>
+            <div className="flex flex-wrap items-center gap-2 rounded-xl border p-2">
+              {(form.tags || []).map((t) => (
+                <span key={t} className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-orange-50 text-orange-700 border border-orange-200 text-xs">
+                  #{t}
+                  <button type="button" onClick={() => removeTag(t)} className="p-0.5 rounded hover:bg-orange-100" aria-label={`Hapus tag ${t}`}>
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
+                  </button>
+                </span>
+              ))}
+              <input
+                type="text"
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ',') {
+                    e.preventDefault();
+                    if (tagInput.trim()) { addTag(tagInput.trim()); setTagInput(''); }
+                  }
+                  if (e.key === 'Backspace' && !tagInput && (form.tags?.length || 0) > 0) {
+                    const last = (form.tags || [])[ (form.tags || []).length - 1 ];
+                    if (last) removeTag(last);
+                  }
+                }}
+                placeholder="ketik lalu Enter atau koma"
+                className="flex-1 min-w-[160px] px-3 py-1.5 focus:outline-none"
+              />
+              <button type="button" onClick={() => { if (tagInput.trim()) { addTag(tagInput.trim()); setTagInput(''); } }} className="px-2.5 py-1.5 text-xs rounded-lg bg-sky-600 text-white hover:bg-sky-700">Tambah</button>
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    setAiLoading(true);
+                    const res = await fetch('/api/ai/product-suggest', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        hintName: form.name,
+                        hintDescription: form.description,
+                        categoryOptions: categories.map((c) => c.name),
+                        model: 'gemini-1.5-flash',
+                      }),
+                    });
+                    if (!res.ok) {
+                      const j = await res.json().catch(() => ({}));
+                      console.error('[AI Tags Edit] Gagal', j);
+                      toast.error('Gagal mendapatkan saran tag AI');
+                      return;
+                    }
+                    const data = (await res.json()) as { tags?: string[] };
+                    if (Array.isArray(data.tags) && data.tags.length) {
+                      data.tags.forEach(t => addTag(t));
+                      toast.success('Tags AI ditambahkan');
+                    } else {
+                      toast.message('AI tidak mengembalikan tags yang relevan');
+                    }
+                  } catch (e) {
+                    console.error('[AI Tags Edit] Error', e);
+                    toast.error('Terjadi kesalahan saat meminta saran tag');
+                  } finally {
+                    setAiLoading(false);
+                  }
+                }}
+                disabled={aiLoading || submitting}
+                className="px-2.5 py-1.5 text-xs rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-60"
+              >Sarankan Tag (AI)</button>
+            </div>
+            <p className="mt-1 text-xs text-gray-500">Aturan: huruf kecil, otomatis normalisasi, panjang 1-20, duplikat diabaikan.</p>
           </div>
           <div className="space-y-3">
             <label className="block text-sm font-medium text-gray-700">Gambar Produk</label>

@@ -6,6 +6,7 @@ export interface ProductRow {
   is_active: boolean | null;
   image_url: string | null;
   product_categories: { name: string } | null;
+  tags?: string[];
 }
 
 export interface CategoryRow {
@@ -18,4 +19,5 @@ export interface ProductFormData {
   category_id: string;
   price: string;
   description: string;
+  tags?: string[];
 }

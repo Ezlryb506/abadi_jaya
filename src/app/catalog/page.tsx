@@ -9,7 +9,7 @@ import { slugify } from '@/lib/slug';
 // Enable Incremental Static Regeneration for the catalog page
 export const revalidate = 86400; // 1 day
 
-type CategoryRow = { name: string };
+type CategoryRow = { name: string; description?: string | null };
 type ProductRow = {
   id: number;
   name: string;
@@ -20,6 +20,24 @@ type ProductRow = {
 };
 
 const PAGE_SIZE = 12;
+
+// Cached helper to fetch a single category's description for metadata usage
+async function getCategoryDescriptionCached(name: string): Promise<string | undefined> {
+  if (!name) return undefined;
+  const fetcher = unstable_cache(
+    async () => {
+      const { data: cat } = await supabaseServer
+        .from('product_categories')
+        .select('name, description')
+        .eq('name', name)
+        .maybeSingle();
+      return (cat?.description || undefined) as string | undefined;
+    },
+    ['category-meta', name],
+    { revalidate, tags: ['catalog', 'categories'] }
+  );
+  return fetcher();
+}
 
 export async function generateMetadata({ searchParams }: { searchParams: Promise<{ page?: string; category?: string; q?: string }> }): Promise<Metadata> {
   const qs = await searchParams;
@@ -32,8 +50,34 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
   const canonical = `/catalog${tail}` || '/catalog';
   const prev = page > 2 ? `/catalog?page=${page - 1}${category}${q}` : page === 2 ? `/catalog${category || q ? `?${[category.replace(/^&/, ''), q.replace(/^&/, '')].filter(Boolean).join('&')}` : ''}` : undefined;
   const next = `/catalog?page=${page + 1}${category}${q}`; // hint
+  // Build meta description based on category description (if any)
+  let metaDescription: string | undefined = undefined;
+  const categoryName = qs?.category && qs.category !== 'Semua' ? String(qs.category) : '';
+  if (categoryName) {
+    try {
+      const baseRaw = await getCategoryDescriptionCached(categoryName);
+      const base = (baseRaw || '').toString().trim();
+      if (base) {
+        const truncated = base.length > 165 ? `${base.slice(0, 160).replace(/\s+\S*$/, '')}…` : base;
+        metaDescription = truncated;
+      }
+    } catch {
+      // noop, fallback below
+    }
+  }
+  if (!metaDescription) {
+    metaDescription = 'Jelajahi katalog produk las dan fabrikasi besi: pagar, kanopi, railing, teralis, dan lainnya. Pilih kategori untuk menemukan produk yang Anda butuhkan.';
+  }
   return {
     alternates: { canonical },
+    title: categoryName ? `Katalog: ${categoryName} | Abadi Jaya` : undefined,
+    description: metaDescription,
+    openGraph: {
+      description: metaDescription,
+    },
+    twitter: {
+      description: metaDescription,
+    },
     other: {
       'link:rel:prev': prev || '',
       'link:rel:next': next,
@@ -49,32 +93,59 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
   const from = (page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
 
-  // Fetch categories (server-side)
+  // Fetch categories (server-side), include description for SEO/UI
   const { data: catData } = await supabaseServer
     .from('product_categories')
-    .select('name')
+    .select('name, description')
     .order('name');
   const categories = ['Semua', ...((catData || []).map((c: CategoryRow) => c.name))];
+  const activeCategoryDesc = (catData || []).find((c) => c.name === (categoryParam || ''))?.description || '';
 
   // Build queries with optional inner join when filtering by category
   const filteringByCategory = !!(categoryParam && categoryParam !== 'Semua');
 
-  // List query
-  let listQuery = supabaseServer.from('products')
-    .select(
-      filteringByCategory
-        ? 'id,name,description,price,image_url,product_categories!inner(name)'
-        : 'id,name,description,price,image_url,product_categories(name)'
-      , { count: 'exact' }
-    )
-    .eq('is_active', true);
-
+  // List data fetch
+  // Saat filter kategori aktif, hindari duplikasi row dari inner join yang bisa memotong hasil unik.
+  // Strategi: ambil daftar ID unik terlebih dahulu (dengan join + range), lalu fetch detail berdasarkan ID tersebut.
+  let prodData: ProductRow[] | null = null;
   if (filteringByCategory) {
-    listQuery = listQuery.eq('product_categories.name', categoryParam);
-  }
-  if (qParam) {
-    const like = `%${qParam}%`;
-    listQuery = listQuery.or(`name.ilike.${like},description.ilike.${like}`);
+    // Step 1: fetch IDs (unique) with the same filters and pagination
+    let idQuery = supabaseServer
+      .from('products')
+      .select('id,product_categories!inner(name)', { count: 'exact' })
+      .eq('is_active', true)
+      .eq('product_categories.name', categoryParam);
+    if (qParam) {
+      const like = `%${qParam}%`;
+      idQuery = idQuery.or(`name.ilike.${like},description.ilike.${like}`);
+    }
+    const idRes = await idQuery.order('id', { ascending: false }).range(from, to);
+    const ids = Array.from(
+      new Set(((idRes.data || []) as Array<{ id: number | string }>).map(r => Number(r.id)))
+    ).slice(0, PAGE_SIZE);
+
+    // Step 2: fetch product details for those IDs (no join to avoid duplicates)
+    const detailQuery = supabaseServer
+      .from('products')
+      .select('id,name,description,price,image_url,product_categories(name)')
+      .in('id', ids)
+      .eq('is_active', true);
+    // keep output order by id desc similar to list
+    const listRes = await detailQuery.order('id', { ascending: false });
+    prodData = listRes.data as ProductRow[] | null;
+  } else {
+    // Tanpa filter kategori, gunakan query biasa dengan range
+    let listQuery = supabaseServer.from('products')
+      .select('id,name,description,price,image_url,product_categories(name)', { count: 'exact' })
+      .eq('is_active', true);
+    if (qParam) {
+      const like = `%${qParam}%`;
+      listQuery = listQuery.or(`name.ilike.${like},description.ilike.${like}`);
+    }
+    const listRes = await listQuery
+      .order('id', { ascending: false })
+      .range(from, to);
+    prodData = listRes.data as ProductRow[] | null;
   }
 
   // Prepare count query
@@ -97,16 +168,12 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
 
   // Cache DB result per (page, category, q) using unstable_cache
   const fetchCatalogCached = unstable_cache(async () => {
-    const listResPromise = listQuery
-      .order('id', { ascending: false })
-      .range(from, to);
-    const [listRes, countRes] = await Promise.all([listResPromise, countQuery]);
-    const prodDataInner = listRes.data;
-    const totalInner = countRes.count || (prodDataInner?.length || 0);
-    return { prodData: prodDataInner, total: totalInner };
+    const [countRes] = await Promise.all([countQuery]);
+    const totalInner = countRes.count || (prodData?.length || 0);
+    return { prodData, total: totalInner };
   }, ['catalog', String(page), categoryParam || 'Semua', qParam || ''], { revalidate, tags: ['catalog'] });
 
-  const { prodData, total } = await fetchCatalogCached();
+  const { prodData: prodDataCached, total } = await fetchCatalogCached();
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   const categoryIcon = (name?: string) => {
@@ -124,7 +191,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
     }
   };
 
-  const initialProducts: ProductUI[] = (prodData || []).map((p: ProductRow) => {
+  const initialProducts: ProductUI[] = (prodDataCached || []).map((p: ProductRow) => {
     const catName = Array.isArray(p.product_categories)
       ? (p.product_categories[0]?.name || 'Lainnya')
       : (p.product_categories?.name || 'Lainnya');
@@ -164,6 +231,16 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
           ]
         })}
       </Script>
+      {/* JSON-LD: CollectionPage with category description for SEO context */}
+      <Script id="collectionpage-catalog" type="application/ld+json">
+        {JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'CollectionPage',
+          'name': categoryParam && categoryParam !== 'Semua' ? `Katalog: ${categoryParam}` : 'Katalog Produk',
+          'description': (activeCategoryDesc || 'Katalog produk las dan fabrikasi besi.'),
+          'url': `/catalog${qParam || page > 1 || (categoryParam && categoryParam !== 'Semua') ? '' : ''}`
+        })}
+      </Script>
       {/* JSON-LD: ItemList untuk daftar produk */}
       <Script id="itemlist-catalog" type="application/ld+json">
         {JSON.stringify({
@@ -184,6 +261,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
         pageSize={PAGE_SIZE}
         initialCategory={categoryParam}
         initialQuery={qParam}
+        categoryDescription={activeCategoryDesc || ''}
       />
     </>
   );

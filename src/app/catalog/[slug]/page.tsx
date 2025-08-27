@@ -16,12 +16,13 @@ type ProductRow = {
   price: number | null;
   image_url: string | null;
   product_categories: { name?: string } | { name?: string }[] | null;
+  tags?: string[] | null;
 };
 
 async function getProduct(id: number) {
   const { data, error } = await supabaseServer
     .from('products')
-    .select('id,name,description,price,image_url,product_categories(name)')
+    .select('id,name,description,price,image_url,tags,product_categories(name)')
     .eq('id', id)
     .single();
   if (error || !data) return null;
@@ -37,6 +38,7 @@ async function getProduct(id: number) {
     price: typeof data.price === 'number' ? data.price : null,
     image: data.image_url as string | null,
     category: catName as string,
+    tags: Array.isArray(row.tags) ? row.tags : [],
   };
 }
 
@@ -85,16 +87,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   let metaDesc: string | undefined;
   let metaName: string | undefined;
   let metaPrice: number | undefined;
+  let metaTagsLocal: string[] = [];
 
-  // Try to use product image if valid and host matches Supabase; also derive meta description and price
+  // Try to use product image if valid and host matches Supabase; also derive meta description, price, and tags
   try {
     if (Number.isFinite(idNum as number) && (idNum as number) > 0) {
       const { data, error } = await supabaseServer
         .from('products')
-        .select('image_url,name,description,price')
+        .select('image_url,name,description,price,tags')
         .eq('id', idNum as number)
         .single();
-      type ProductMetaRow = { image_url: string | null; name: string | null; description: string | null; price: number | null };
+      type ProductMetaRow = { image_url: string | null; name: string | null; description: string | null; price: number | null; tags?: string[] | null };
       const row = (data || null) as ProductMetaRow | null;
       if (!error && row && row.image_url) {
         const imgUrl = String(row.image_url);
@@ -114,6 +117,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       metaName = typeof row?.name === 'string' ? (row?.name as string) : undefined;
       // capture price if numeric
       metaPrice = typeof row?.price === 'number' ? (row.price as number) : undefined;
+      // collect tags locally to be merged into keywords
+      if (Array.isArray(row?.tags)) {
+        try {
+          const tset = new Set<string>(row!.tags!.map(t => String(t).toLowerCase().trim()).filter(Boolean));
+          metaTagsLocal = Array.from(tset);
+        } catch {}
+      }
     }
   } catch {
     // swallow errors and keep fallback
@@ -126,6 +136,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     if (metaName) metaName.split(/\s+/g).forEach(w => { const t = w.trim().toLowerCase(); if (t.length > 2) tokens.add(t); });
     if (safeSlug) safeSlug.split(/[-\s]+/g).forEach(w => { const t = w.trim().toLowerCase(); if (t.length > 2) tokens.add(t); });
     ['abadi', 'jaya', 'produk', 'katalog'].forEach(w => tokens.add(w));
+    metaTagsLocal.forEach(t => { if (t && t.length > 1) tokens.add(t); });
     metaKeywords = Array.from(tokens);
   } catch { metaKeywords = undefined; }
 
@@ -208,6 +219,7 @@ export default async function ProductDetailPage({ params, searchParams }: Props)
     description: product.description,
     image: isHttpUrl(product.image) ? product.image : undefined,
     category: product.category,
+    keywords: Array.isArray(product.tags) && product.tags.length ? product.tags.join(', ') : undefined,
     offers: product.price ? {
       '@type': 'Offer',
       priceCurrency: 'IDR',
@@ -272,7 +284,8 @@ export default async function ProductDetailPage({ params, searchParams }: Props)
                 priority
                 unoptimized={useUnoptimized}
                 quality={95}
-                className="max-h-[75vh]"
+                containerClassName="w-full max-h-[75vh]"
+                imageClassName="object-contain"
               />
             ) : (
               <div className="relative rounded-xl overflow-hidden aspect-[3/2] max-h-[75vh] flex items-center justify-center text-8xl">🧰</div>

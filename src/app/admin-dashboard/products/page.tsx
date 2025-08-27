@@ -6,6 +6,7 @@ import ProductForm from './components/ProductForm';
 import EditProductModal from './components/EditProductModal';
 import useProductsAdmin from './hooks/useProductsAdmin';
 import { revalidateCatalogAction } from '../actions';
+import ConfirmDialog from './components/ConfirmDialog';
 
 export default function AdminPage() {
   const {
@@ -13,6 +14,10 @@ export default function AdminPage() {
     error,
     products,
     categories,
+    page,
+    pageSize,
+    total,
+    listLoading,
     form,
     submitting,
     editing,
@@ -36,6 +41,11 @@ export default function AdminPage() {
     closeImagePicker,
     selectExistingImage,
     clearSelectedExisting,
+    addTag,
+    removeTag,
+    // pagination setters
+    setPage,
+    setPageSize,
   } = useProductsAdmin();
 
   // state and effects dikelola di hook useProductsAdmin
@@ -64,6 +74,46 @@ export default function AdminPage() {
         setTimeout(() => setRefreshMsg(null), 3000);
       }
     });
+  };
+
+  // Konfirmasi aksi: hapus / nonaktifkan
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmMeta, setConfirmMeta] = useState<
+    | { type: 'delete'; id: number; name?: string }
+    | { type: 'deactivate'; id: number; name?: string }
+    | null
+  >(null);
+
+  const requestDelete = (id: number, name?: string) => {
+    setConfirmMeta({ type: 'delete', id, name });
+    setConfirmOpen(true);
+  };
+
+  const requestToggle = (id: number, current: boolean | null, name?: string) => {
+    // Konfirmasi hanya saat menonaktifkan
+    if (current === true) {
+      setConfirmMeta({ type: 'deactivate', id, name });
+      setConfirmOpen(true);
+      return;
+    }
+    // Jika mengaktifkan, langsung eksekusi
+    toggleActive(id, true);
+  };
+
+  const handleConfirm = () => {
+    if (!confirmMeta) return;
+    if (confirmMeta.type === 'delete') {
+      handleDelete(confirmMeta.id);
+    } else if (confirmMeta.type === 'deactivate') {
+      toggleActive(confirmMeta.id, false);
+    }
+    setConfirmOpen(false);
+    setConfirmMeta(null);
+  };
+
+  const handleCancelConfirm = () => {
+    setConfirmOpen(false);
+    setConfirmMeta(null);
   };
 
   if (loading) {
@@ -148,15 +198,15 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen px-4 py-6 overflow-x-hidden">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="min-h-screen w-full max-w-full px-3 md:px-4 lg:px-6 py-4 md:py-6 overflow-x-hidden [overflow-x:clip]">
+      <div className="space-y-5 md:space-y-6 min-w-0">
         {/* Toolbar Admin */}
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
-          <div>
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-3 min-w-0">
+          <div className="min-w-0">
             <h1 className="text-xl font-semibold text-gray-800">Manajemen Produk</h1>
             <p className="text-sm text-gray-500">Tambah, ubah, dan kelola katalog produk Anda.</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
             {refreshMsg && (
               <span className="text-sm text-gray-600 bg-gray-100 border border-gray-200 px-3 py-1.5 rounded-lg">{refreshMsg}</span>
             )}
@@ -182,7 +232,7 @@ export default function AdminPage() {
         </div>
 
       {/* Form tambah produk */}
-      <section id="add-product" aria-label="Tambah Produk">
+      <section id="add-product" aria-label="Tambah Produk" className="overflow-x-hidden">
       <ProductForm
         form={form}
         categories={categories}
@@ -202,16 +252,24 @@ export default function AdminPage() {
         onCloseImagePicker={closeImagePicker}
         onSelectExistingImage={selectExistingImage}
         onClearSelectedExisting={clearSelectedExisting}
+        addTag={addTag}
+        removeTag={removeTag}
       />
       </section>
 
       {/* Tabel produk */}
-      <section aria-label="Daftar Produk">
+      <section aria-label="Daftar Produk" className="overflow-x-hidden">
       <ProductList
         products={products}
+        total={total}
+        page={page}
+        pageSize={pageSize}
+        listLoading={listLoading}
         onEdit={handleStartEdit}
-        onToggleStatus={(id, current) => toggleActive(id, !current)}
-        onDelete={handleDelete}
+        onToggleStatus={(id, current) => requestToggle(id, current, products.find(p => p.id === id)?.name)}
+        onDelete={(id) => requestDelete(id, products.find(p => p.id === id)?.name)}
+        onPageChange={(p) => setPage(p)}
+        onPageSizeChange={(s) => { setPageSize(s); setPage(1); }}
       />
       </section>
 
@@ -226,6 +284,23 @@ export default function AdminPage() {
         onClose={() => setEditing(null)}
         onFileChange={handleEditFileChange}
         currentImageUrl={editing?.image_url ?? null}
+        addTag={addTag}
+        removeTag={removeTag}
+      />
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        open={confirmOpen}
+        title={confirmMeta?.type === 'delete' ? 'Hapus Produk' : 'Nonaktifkan Produk'}
+        description={
+          confirmMeta?.type === 'delete'
+            ? `Produk ${confirmMeta?.name ? '"' + confirmMeta.name + '" ' : ''}akan dihapus permanen beserta file gambarnya. Lanjutkan?`
+            : `Produk ${confirmMeta?.name ? '"' + confirmMeta.name + '" ' : ''}akan dinonaktifkan dan tidak tampil ke pelanggan. Lanjutkan?`
+        }
+        confirmText={confirmMeta?.type === 'delete' ? 'Ya, hapus' : 'Ya, nonaktifkan'}
+        cancelText="Batal"
+        variant={confirmMeta?.type === 'delete' ? 'danger' : 'default'}
+        onConfirm={handleConfirm}
+        onCancel={handleCancelConfirm}
       />
       </div>
     </div>

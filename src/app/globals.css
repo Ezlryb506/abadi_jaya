@@ -4,6 +4,44 @@
 @tailwind utilities;
 
 /* Custom Animations */
+/* Prevent accidental horizontal scroll on mobile */
+html, body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+html {
+  /* Stabilize layout when vertical scrollbar shows to avoid width shift creating phantom space */
+  scrollbar-gutter: stable;
+  /* Ensure root width does not exceed viewport */
+  width: 100%;
+}
+body {
+  /* Prevent horizontal overscroll/bounce that can reveal blank area on some mobile browsers */
+  overscroll-behavior-x: none;
+  width: 100%;
+  position: relative;
+}
+
+/* Clamp Next.js root containers to viewport and hide horizontal overflow */
+#__next, main {
+  max-width: 100%;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+/* Media should not exceed container width */
+img, svg, video, canvas {
+  max-width: 100%;
+}
+
+/* Clamp toaster/portal containers (e.g., Sonner) so they never expand page width */
+#sonner-root,
+[data-sonner-toaster] {
+  max-width: 100% !important;
+  width: 100% !important;
+  overflow-x: clip !important;
+}
+
 @keyframes fadeInUp {
   from {
     opacity: 0;

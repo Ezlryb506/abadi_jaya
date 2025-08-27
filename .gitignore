@@ -12,7 +12,6 @@
 
 # testing
 /coverage
-/real_docs/Light House
 # next.js
 /.next/
 /out/
@@ -42,3 +41,6 @@ next-env.d.ts
 
 # project docs (ignore Light House folder)
 real_docs/Light\ House/
+
+# local debug utilities (not for commit)
+debug\ utility/

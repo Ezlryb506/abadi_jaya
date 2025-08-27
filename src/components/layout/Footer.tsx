@@ -2,10 +2,15 @@ import Image from 'next/image';
 
 export default function Footer() {
   return (
-    <footer id="kontak" className="bg-gray-800 text-white py-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div>
+    // kontainer footer
+    <footer id="kontak" className="bg-gray-800 text-white py-7 overflow-x-hidden [overflow-x:clip]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full overflow-x-hidden [overflow-x:clip]">
+
+        {/* {3 grid konten} */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 min-w-0 md:divide-x md:divide-gray-700">
+
+          {/* grid ke 1 */}
+          <div className="md:pr-6">
             <div className="flex items-center space-x-2 mb-4">
               <Image
                 src="/icons/icon-192x192.png"
@@ -36,10 +41,11 @@ export default function Footer() {
               </a>
             </div>
           </div>
-
-          <div>
+          
+          {/* grid ke 2 */}
+          <div className="min-w-0 md:px-6">
             <h4 className="text-lg font-semibold mb-4">Layanan kustom</h4>
-            <ul className="space-y-2 text-gray-300">
+            <ul className="grid grid-cols-2 gap-x-4 gap-y-2 text-gray-300 min-w-0">
               <li>Pagar Besi</li>
               <li>Kanopi</li>
               <li>Railing Tangga</li>
@@ -51,20 +57,21 @@ export default function Footer() {
             </ul>
           </div>
 
-          <div>
+          {/* grid ke 3 */}
+          <div className="min-w-0 md:pl-6">
             <h4 className="text-lg font-semibold mb-4">Kontak</h4>
             <div className="space-y-2 text-gray-300">
               <div className="flex items-center space-x-2">
                 <span>📍</span>
-                <span>Gg. Bunga, Wanasari, Kec. Cibitung, Kabupaten Bekasi, Jawa Barat 17520</span>
+                <span className="break-words">Gg. Bunga, Wanasari, Kec. Cibitung, Kabupaten Bekasi, Jawa Barat 17520</span>
               </div>
               <div className="flex items-center space-x-2">
                 <span>📞</span>
-                <span>+62 896-5375-4317</span>
+                <span className="break-words">+62 896-5375-4317</span>
               </div>
               <div className="flex items-center space-x-2">
                 <span>🕒</span>
-                <span>Senin - Sabtu: 08:00 - 17:00</span>
+                <span className="break-words">Senin - Sabtu: 08:00 - 17:00</span>
               </div>
             </div>
           </div>

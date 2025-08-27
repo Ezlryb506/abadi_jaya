@@ -47,7 +47,8 @@ export default function Header() {
   const isActive = (href: string) => {
     if (href === '/') return pathname === '/';
     if (href === '/contact') return pathname === '/contact';
-    if (href === '/catalog') return pathname === '/catalog';
+    // Treat /catalog and any sub-route (/catalog/...)
+    if (href === '/catalog') return pathname === '/catalog' || pathname.startsWith('/catalog/');
     if (href === '/login') return pathname === '/login';
     if (href === '/testimoni') return pathname === '/testimoni';
     return false;

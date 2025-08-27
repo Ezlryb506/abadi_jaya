@@ -28,6 +28,7 @@ export default function CatalogClient({
   pageSize,
   initialCategory,
   initialQuery,
+  categoryDescription,
 }: {
   initialProducts: ProductUI[];
   categories: string[];
@@ -36,10 +37,14 @@ export default function CatalogClient({
   pageSize: number;
   initialCategory: string;
   initialQuery: string;
+  categoryDescription?: string;
 }) {
   const [categories] = useState<string[]>(['Semua', ...initialCategories.filter((c) => c !== 'Semua')]);
   const [selectedCategory, setSelectedCategory] = useState(initialCategory || 'Semua');
+  // applied query (used for fetching/navigation)
   const [searchQuery, setSearchQuery] = useState(initialQuery || '');
+  // input buffer so fast typing won't navigate
+  const [inputQuery, setInputQuery] = useState(initialQuery || '');
   // Gunakan data produk dari server langsung dari props agar berubah saat URL/props berubah
   const products: ProductUI[] = initialProducts;
   const [user, setUser] = useState<User | null>(null);
@@ -81,6 +86,7 @@ export default function CatalogClient({
     }
     if ((initialQuery || '') !== (initialQueryRef.current || '')) {
       setSearchQuery(initialQuery || '');
+      setInputQuery(initialQuery || '');
       initialQueryRef.current = initialQuery || '';
     }
     // Navigasi selesai ketika data server (initialProducts) dan filter props sudah berubah
@@ -122,10 +128,11 @@ export default function CatalogClient({
 
   // Handler util untuk reset/hapus filter
   const handleRemoveCategory = () => setSelectedCategory('Semua');
-  const handleRemoveQuery = () => setSearchQuery('');
+  const handleRemoveQuery = () => { setSearchQuery(''); setInputQuery(''); };
   const resetFilters = () => {
     setSelectedCategory('Semua');
     setSearchQuery('');
+    setInputQuery('');
     // focus kembali ke select kategori
     setTimeout(() => {
       if (categorySelectRef.current) categorySelectRef.current.focus();
@@ -133,7 +140,15 @@ export default function CatalogClient({
     }, 0);
   };
 
-  // Sinkronkan filter ke URL (debounced) agar SSR mengambil data terfilter
+  // Apply search when user submits the form or presses Enter
+  const applySearch = () => {
+    // Only apply if value changed
+    if ((inputQuery || '') !== (initialQueryRef.current || '') || (inputQuery || '') !== (searchQuery || '')) {
+      setSearchQuery(inputQuery || '');
+    }
+  };
+
+  // Sinkronkan filter ke URL; hanya berubah ketika kategori berubah atau pencarian diaplikasikan
   useEffect(() => {
     let mounted = true;
     const t = setTimeout(() => {
@@ -141,7 +156,6 @@ export default function CatalogClient({
       const params = new URLSearchParams();
       if (selectedCategory && selectedCategory !== 'Semua') params.set('category', selectedCategory);
       if (searchQuery) params.set('q', searchQuery);
-      // reset ke halaman 1 hanya jika filter BERUBAH dari nilai awal
       const categoryChanged = (selectedCategory || 'Semua') !== (initialCategoryRef.current || 'Semua');
       const queryChanged = (searchQuery || '') !== (initialQueryRef.current || '');
       if (categoryChanged || queryChanged) {
@@ -151,13 +165,12 @@ export default function CatalogClient({
       }
       const qs = params.toString();
       const href = qs ? `/catalog?${qs}` : '/catalog';
-      // Hindari push URL yang sama
       const current = typeof window !== 'undefined' ? `${window.location.pathname}${window.location.search}` : '';
       if (current !== href) {
         setIsNavigating(true);
         router.push(href, { scroll: false });
       }
-    }, 180);
+    }, 120);
     return () => { mounted = false; clearTimeout(t); };
   }, [selectedCategory, searchQuery, page, router]);
 
@@ -272,6 +285,12 @@ export default function CatalogClient({
         <div className="max-w-6xl mx-auto px-4 text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">Katalog Produk</h1>
           <p className="text-xl text-orange-100">Temukan produk las dan fabrikasi besi berkualitas tinggi untuk kebutuhan Anda.</p>
+          {/* Category description (SEO + UX copy) */}
+          {initialCategory && initialCategory !== 'Semua' && (categoryDescription || '').trim() && (
+            <p className="mt-3 max-w-3xl mx-auto text-orange-50/95 text-base md:text-lg leading-relaxed">
+              {categoryDescription}
+            </p>
+          )}
         </div>
       </div>
 
@@ -281,21 +300,35 @@ export default function CatalogClient({
         <div ref={filterSectionRef} className="bg-white rounded-2xl shadow-lg p-6 mb-8 border border-gray-100">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Search Bar */}
+            <form
+              onSubmit={(e) => { e.preventDefault(); applySearch(); }}
+              className="contents"
+            >
             <div>
               <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-2">Cari Produk</label>
-              <div className="relative">
-                <input
-                  type="text"
-                  id="search"
-                  placeholder="Cari nama atau deskripsi produk..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  ref={searchInputRef}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
-                />
-                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">🔍</span>
+              <div className="relative flex items-stretch gap-2">
+                <div className="relative flex-1">
+                  <input
+                    type="text"
+                    id="search"
+                    placeholder="Cari nama atau deskripsi produk..."
+                    value={inputQuery}
+                    onChange={(e) => setInputQuery(e.target.value)}
+                    ref={searchInputRef}
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                  />
+                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">🔍</span>
+                </div>
+                <button
+                  type="submit"
+                  aria-label="Terapkan pencarian"
+                  className="inline-flex items-center whitespace-nowrap gap-2 px-4 py-3 rounded-xl bg-orange-500 text-white hover:bg-orange-600 transition shadow-sm"
+                >
+                  Terapkan Pencarian
+                </button>
               </div>
             </div>
+            </form>
 
             {/* Category Filter */}
             <div>

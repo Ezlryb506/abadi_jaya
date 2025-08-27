@@ -22,7 +22,8 @@ const nextConfig: NextConfig = {
           {
             protocol: "https",
             hostname: supabaseHost,
-            pathname: "/storage/v1/object/public/**",
+            // Allow both public and signed/object URLs
+            pathname: "/storage/v1/object/**",
           },
         ]
       : [],

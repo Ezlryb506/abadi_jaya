@@ -15,6 +15,8 @@ type Props = {
   placeholder?: ImageProps['placeholder'];
   blurDataURL?: string;
   className?: string;
+  containerClassName?: string;
+  imageClassName?: string;
 };
 
 export default function ImageZoomLightbox({
@@ -27,6 +29,8 @@ export default function ImageZoomLightbox({
   placeholder,
   blurDataURL,
   className,
+  containerClassName,
+  imageClassName,
 }: Props) {
   const [open, setOpen] = useState(false);
   const [zoom, setZoom] = useState(1);
@@ -312,7 +316,7 @@ export default function ImageZoomLightbox({
         type="button"
         aria-label="Perbesar gambar"
         onClick={openLightbox}
-        className="absolute z-10 right-3 bottom-3 rounded-full bg-black/50 text-white text-xs px-3 py-1.5 opacity-0 group-hover:opacity-100 transition focus:opacity-100"
+        className="absolute z-30 right-3 bottom-3 rounded-full bg-black/50 text-white text-xs px-3 py-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition focus:opacity-100"
       >
         <span className="mr-1">🔍</span> Perbesar
       </button>
@@ -327,7 +331,8 @@ export default function ImageZoomLightbox({
         quality={quality}
         placeholder={placeholder}
         blurDataURL={blurDataURL}
-        containerClassName="rounded-xl"
+        containerClassName={clsx("rounded-xl z-0", containerClassName)}
+        imageClassName={clsx("pointer-events-none", imageClassName)}
       />
 
       {/* Lightbox */}

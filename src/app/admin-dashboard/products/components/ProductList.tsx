@@ -26,12 +26,18 @@ function PriceText({ value }: { value: number | null }) {
 
 interface ProductListProps {
   products: ProductRow[];
+  total?: number;
+  page?: number;
+  pageSize?: number;
+  listLoading?: boolean;
+  onPageChange?: (page: number) => void;
+  onPageSizeChange?: (size: number) => void;
   onEdit: (product: ProductRow) => void;
   onToggleStatus: (id: number, currentStatus: boolean | null) => void;
   onDelete: (id: number) => void;
 }
 
-export default function ProductList({ products, onEdit, onToggleStatus, onDelete }: ProductListProps) {
+export default function ProductList({ products, total = 0, page = 1, pageSize = 10, listLoading = false, onPageChange, onPageSizeChange, onEdit, onToggleStatus, onDelete }: ProductListProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [debounced, setDebounced] = useState('');
 
@@ -50,6 +56,8 @@ export default function ProductList({ products, onEdit, onToggleStatus, onDelete
       return nameMatch || catMatch;
     });
   }, [debounced, products]);
+
+  const totalPages = Math.max(1, Math.ceil((total || 0) / (pageSize || 1)));
 
   return (
     <div className="bg-white rounded-2xl shadow border border-gray-100 overflow-hidden">
@@ -78,17 +86,43 @@ export default function ProductList({ products, onEdit, onToggleStatus, onDelete
                 </button>
               )}
             </div>
-            <span className="text-sm text-gray-500 whitespace-nowrap">{filteredProducts.length} hasil</span>
+            <span className="text-sm text-gray-500 whitespace-nowrap">
+              {listLoading ? 'Memuat...' : `${filteredProducts.length} dari ${total} hasil`}
+            </span>
+            <div className="hidden sm:flex items-center gap-2">
+              <label htmlFor="page-size" className="text-sm text-gray-600">Per halaman</label>
+              <select
+                id="page-size"
+                value={pageSize}
+                onChange={(e) => onPageSizeChange?.(Number(e.target.value))}
+                className="px-2 py-1.5 rounded-lg border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-300"
+              >
+                {[5,10,20,50].map(s => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Mobile Card List */}
-      <div className="md:hidden">
+      <div className="md:hidden overflow-x-hidden">
         <div className="divide-y divide-gray-100">
-          {filteredProducts.length > 0 ? (
+          {listLoading ? (
+            [1,2,3,4].map(i => (
+              <div key={i} className="p-4 flex gap-3 animate-pulse">
+                <div className="w-20 h-20 rounded-lg bg-gray-200" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 bg-gray-200 rounded w-2/3" />
+                  <div className="h-3 bg-gray-200 rounded w-1/2" />
+                  <div className="h-3 bg-gray-200 rounded w-1/3" />
+                </div>
+              </div>
+            ))
+          ) : filteredProducts.length > 0 ? (
             filteredProducts.map((p) => (
-              <div key={p.id} className="p-4 flex gap-3">
+              <div key={p.id} className="p-4 flex gap-3 overflow-hidden">
                 <div className="shrink-0">
                   {p.image_url ? (
                     <Image
@@ -107,13 +141,15 @@ export default function ProductList({ products, onEdit, onToggleStatus, onDelete
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <div className="font-semibold text-gray-800 truncate break-words">{p.name}</div>
-                      <div className="text-sm text-gray-500 truncate break-words">{p.product_categories?.name || '-'}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-gray-800 break-words">{p.name}</div>
+                      <div className="text-sm text-gray-500 break-words">{p.product_categories?.name || '-'}</div>
+                      <div className="mt-2 flex items-center gap-2">
+                        <span className={`px-2 py-0.5 text-xs rounded-full ${p.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>{p.is_active ? 'Aktif' : 'Nonaktif'}</span>
+                        <span className="text-sm font-semibold text-gray-900"><PriceText value={p.price} /></span>
+                      </div>
                     </div>
-                    <span className={`px-2 py-0.5 text-[10px] rounded-full whitespace-nowrap ${p.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{p.is_active ? 'Aktif' : 'Nonaktif'}</span>
                   </div>
-                  <div className="mt-2 text-sm text-gray-700"><PriceText value={p.price} /></div>
                   <div className="mt-3 flex flex-wrap gap-2">
                     <button
                       onClick={() => onEdit(p)}
@@ -159,11 +195,37 @@ export default function ProductList({ products, onEdit, onToggleStatus, onDelete
             </div>
           )}
         </div>
+        {/* Pagination controls mobile */}
+        <div className="flex items-center justify-between px-4 py-3 border-t">
+          <button
+            className="px-3 py-2 rounded-lg border hover:bg-gray-50 disabled:opacity-50"
+            onClick={() => onPageChange?.(Math.max(1, page - 1))}
+            disabled={page <= 1}
+          >
+            Sebelumnya
+          </button>
+          <div className="text-sm text-gray-600">Hal {page} / {totalPages}</div>
+          <button
+            className="px-3 py-2 rounded-lg border hover:bg-gray-50 disabled:opacity-50"
+            onClick={() => onPageChange?.(Math.min(totalPages, page + 1))}
+            disabled={page >= totalPages}
+          >
+            Berikutnya
+          </button>
+        </div>
       </div>
 
       {/* Table for md+ */}
       <div className="hidden md:block overflow-x-auto">
-        <div className="max-h-96 overflow-y-auto">
+        <div className="max-h-96 overflow-y-auto relative">
+          {listLoading && (
+            <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px] flex items-center justify-center z-10">
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 4v2m0 12v2m8-8h-2M6 12H4m12.728 6.728-1.414-1.414M8.686 8.686 7.272 7.272m9.9 0-1.414 1.414M8.686 15.314l-1.414 1.414" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                Memuat data...
+              </div>
+            </div>
+          )}
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50 sticky top-0 z-10">
             <tr>
@@ -204,6 +266,53 @@ export default function ProductList({ products, onEdit, onToggleStatus, onDelete
               )}
             </tbody>
           </table>
+        </div>
+        {/* Pagination controls desktop */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 border-t">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600">Menampilkan</span>
+            <select
+              value={pageSize}
+              onChange={(e) => onPageSizeChange?.(Number(e.target.value))}
+              className="px-2 py-1.5 rounded-lg border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-300"
+            >
+              {[5,10,20,50].map(s => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+            <span className="text-sm text-gray-600">per halaman</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              className="px-3 py-2 rounded-lg border hover:bg-gray-50 disabled:opacity-50"
+              onClick={() => onPageChange?.(1)}
+              disabled={page <= 1}
+              aria-label="Halaman pertama"
+              title="Halaman pertama"
+            >«</button>
+            <button
+              className="px-3 py-2 rounded-lg border hover:bg-gray-50 disabled:opacity-50"
+              onClick={() => onPageChange?.(Math.max(1, page - 1))}
+              disabled={page <= 1}
+              aria-label="Sebelumnya"
+              title="Sebelumnya"
+            >‹</button>
+            <span className="text-sm text-gray-700">Hal {page} dari {totalPages}</span>
+            <button
+              className="px-3 py-2 rounded-lg border hover:bg-gray-50 disabled:opacity-50"
+              onClick={() => onPageChange?.(Math.min(totalPages, page + 1))}
+              disabled={page >= totalPages}
+              aria-label="Berikutnya"
+              title="Berikutnya"
+            >›</button>
+            <button
+              className="px-3 py-2 rounded-lg border hover:bg-gray-50 disabled:opacity-50"
+              onClick={() => onPageChange?.(totalPages)}
+              disabled={page >= totalPages}
+              aria-label="Halaman terakhir"
+              title="Halaman terakhir"
+            >»</button>
+          </div>
         </div>
       </div>
     </div>

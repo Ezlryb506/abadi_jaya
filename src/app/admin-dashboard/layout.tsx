@@ -134,7 +134,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen flex bg-gradient-to-br from-gray-50 via-orange-50 to-white overflow-x-hidden">
+    <div className="min-h-screen flex bg-gradient-to-br from-gray-50 via-orange-50 to-white overflow-x-hidden [overflow-x:clip]">
       {/* Mobile Header Bar */}
       <div className="xl:hidden fixed top-20 left-4 z-50">
         <button
@@ -155,7 +155,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       </div>
 
       {/* Sidebar */}
-      <aside className={`${open ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed lg:static top-16 lg:top-auto bottom-0 left-0 z-40 w-64 bg-white border-r border-gray-100 shadow-lg flex flex-col py-8 px-4 transition-transform duration-300 ease-in-out h-[calc(100vh-4rem)] lg:h-auto`}>
+      <aside className={`${open ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed lg:static top-16 lg:top-auto bottom-0 left-0 z-40 w-64 bg-white border-r border-gray-100 shadow-lg flex flex-col py-8 px-4 transition-transform duration-300 ease-in-out h-[calc(100vh-4rem)] lg:h-auto [contain:paint]`}>
         {/* Profile Section */}
         <div className="mb-8 text-center">
           <div className="w-16 h-16 mx-auto rounded-full bg-orange-100 flex items-center justify-center text-3xl text-orange-600 font-bold mb-2">
@@ -217,7 +217,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       )}
 
       {/* Main Content */}
-      <main className="flex-1 p-4 lg:p-8 pt-16 lg:pt-8 overflow-x-hidden">
+      <main className="flex-1 min-w-0 p-4 lg:p-8 pt-16 lg:pt-8 overflow-x-hidden">
         {children}
       </main>
     </div>

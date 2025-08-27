@@ -12,8 +12,13 @@ export default function useProductsAdmin() {
   const [error, setError] = useState('');
   const [products, setProducts] = useState<ProductRow[]>([]);
   const [categories, setCategories] = useState<CategoryRow[]>([]);
+  // Pagination state
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [total, setTotal] = useState(0);
+  const [listLoading, setListLoading] = useState(false);
 
-  const [form, setForm] = useState<ProductFormData>({ name: '', category_id: '', price: '', description: '' });
+  const [form, setForm] = useState<ProductFormData>({ name: '', category_id: '', price: '', description: '', tags: [] });
   const [submitting, setSubmitting] = useState(false);
   const [editing, setEditing] = useState<null | ProductRow>(null);
   const [file, setFile] = useState<File | null>(null);
@@ -37,6 +42,30 @@ export default function useProductsAdmin() {
     } catch {
       return null;
     }
+  };
+
+  // Normalisasi dan validasi tag
+  const normalizeTag = (raw: string): string => {
+    const t = raw.toLowerCase().trim().replace(/\s+/g, '-');
+    return t.slice(0, 20);
+  };
+
+  const addTag = (raw: string) => {
+    const t = normalizeTag(raw);
+    if (!t) return;
+    setForm(prev => {
+      const current = Array.isArray(prev.tags) ? prev.tags : [];
+      if (current.includes(t)) return prev; // dedupe
+      if (current.length >= 8) return prev; // limit
+      return { ...prev, tags: [...current, t] };
+    });
+  };
+
+  const removeTag = (tag: string) => {
+    setForm(prev => {
+      const current = Array.isArray(prev.tags) ? prev.tags : [];
+      return { ...prev, tags: current.filter(t => t !== tag) };
+    });
   };
 
   // Helper guard object
@@ -110,15 +139,28 @@ export default function useProductsAdmin() {
     })();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const fetchProducts = async () => {
-    const { data, error } = await supabase
-      .from('products')
-      .select('id, name, description, price, is_active, image_url, product_categories ( name )')
-      .order('id', { ascending: false });
-    if (error) throw error;
+  // Refetch ketika pagination berubah
+  useEffect(() => {
+    if (!loading) {
+      fetchProducts();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, pageSize]);
 
-    // Normalisasi shape relasi category (array vs object) dengan pengetikan aman
-    type Raw = Record<string, unknown> & { product_categories?: unknown };
+  const fetchProducts = async () => {
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
+    setListLoading(true);
+    const { data, error, count } = await supabase
+      .from('products')
+      .select('id, name, description, price, is_active, image_url, tags, product_categories ( name )', { count: 'exact' })
+      .order('id', { ascending: false })
+      .range(from, to);
+    if (error) throw error;
+    setTotal(typeof count === 'number' ? count : 0);
+
+    // Normalisasi shape relasi category (array vs object) dan tags dengan pengetikan aman
+    type Raw = Record<string, unknown> & { product_categories?: unknown; tags?: unknown };
     const src: unknown[] = Array.isArray(data) ? data : [];
     const normalized: ProductRow[] = src.map((v): ProductRow => {
       const p = v as Raw;
@@ -136,6 +178,8 @@ export default function useProductsAdmin() {
       const price = p.price === null ? null : (p.price === undefined ? null : Number(p.price as unknown as number));
       const active = p.is_active === null ? null : (p.is_active === undefined ? null : Boolean(p.is_active));
       const img = (p.image_url ?? null) as string | null;
+      const rawTags = p.tags;
+      const safeTags = Array.isArray(rawTags) ? rawTags.map(t => String(t)) : [];
       return {
         id: Number(p.id as unknown as number),
         name: String(p.name as unknown as string),
@@ -144,9 +188,11 @@ export default function useProductsAdmin() {
         is_active: active,
         image_url: img,
         product_categories: cat,
+        tags: safeTags,
       };
     });
     setProducts(normalized);
+    setListLoading(false);
   };
 
   const fetchCategories = async () => {
@@ -170,7 +216,7 @@ export default function useProductsAdmin() {
   };
 
   const handleCancelForm = () => {
-    setForm({ name: '', category_id: '', price: '', description: '' });
+    setForm({ name: '', category_id: '', price: '', description: '', tags: [] });
     setFile(null);
   };
 
@@ -210,10 +256,11 @@ export default function useProductsAdmin() {
         category_id: Number(form.category_id),
         image_url: imageUrl,
         is_active: true,
+        tags: (form.tags || []).slice(0, 8),
       });
       if (error) throw error;
       await fetchProducts();
-      setForm({ name: '', category_id: '', price: '', description: '' });
+      setForm({ name: '', category_id: '', price: '', description: '', tags: [] });
       setFile(null);
       setSelectedExistingUrl(null);
     } catch {
@@ -230,6 +277,7 @@ export default function useProductsAdmin() {
       category_id: '', // biarkan kosong = tidak diubah kecuali dipilih
       price: product.price !== null ? String(product.price) : '',
       description: product.description || '',
+      tags: Array.isArray(product.tags) ? product.tags : [],
     });
     setEditFile(null);
   };
@@ -250,6 +298,7 @@ export default function useProductsAdmin() {
         price: number;
         category_id: number;
         image_url: string;
+        tags: string[];
       }>;
       const payload: UpdatePayload = {};
       if (form.name) payload.name = form.name;
@@ -257,6 +306,7 @@ export default function useProductsAdmin() {
       if (form.price) payload.price = Number(form.price);
       if (form.category_id) payload.category_id = Number(form.category_id);
       if (imageUrl !== undefined) payload.image_url = imageUrl;
+      if (Array.isArray(form.tags)) payload.tags = form.tags.slice(0, 8);
 
       const { error } = await supabase.from('products').update(payload).eq('id', editing.id);
       if (error) throw error;
@@ -290,7 +340,6 @@ export default function useProductsAdmin() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Hapus produk ini?')) return;
     try {
       // Ambil image_url terlebih dahulu untuk menghapus file storage
       const { data: prod, error: selErr } = await supabase
@@ -324,6 +373,10 @@ export default function useProductsAdmin() {
     error,
     products,
     categories,
+    page,
+    pageSize,
+    total,
+    listLoading,
     form,
     submitting,
     editing,
@@ -335,6 +388,8 @@ export default function useProductsAdmin() {
     selectedExistingUrl,
     // setters
     setEditing,
+    setPage,
+    setPageSize,
     // handlers
     handleChange,
     handleFileChange,
@@ -350,5 +405,7 @@ export default function useProductsAdmin() {
     fetchExistingImages,
     selectExistingImage,
     clearSelectedExisting,
+    addTag,
+    removeTag,
   };
 }
