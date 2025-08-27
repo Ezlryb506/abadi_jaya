@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from 'sonner';
+import Script from 'next/script';
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { Analytics } from "@vercel/analytics/next";
@@ -103,6 +104,19 @@ export default function RootLayout({
             <link rel="dns-prefetch" href={`https://${supabaseHost}`} />
           </>
         )}
+        {/* JSON-LD: WebSite dengan SearchAction untuk membantu mesin pencari memahami fitur pencarian */}
+        <Script id="website-searchaction" type="application/ld+json">
+          {JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'WebSite',
+            url: siteUrl,
+            potentialAction: {
+              '@type': 'SearchAction',
+              target: `${siteUrl}/catalog?q={search_term_string}`,
+              'query-input': 'required name=search_term_string'
+            }
+          })}
+        </Script>
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}

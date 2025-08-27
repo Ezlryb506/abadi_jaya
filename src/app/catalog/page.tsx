@@ -6,8 +6,10 @@ import PrevNextHead from './PrevNextHead';
 import Script from 'next/script';
 import { slugify } from '@/lib/slug';
 
-// Enable Incremental Static Regeneration for the catalog page
-export const revalidate = 86400; // 1 day
+// Enable Incremental Static Regeneration for the catalog page (refresh every 5 minutes)
+export const revalidate = 300; // 5 minutes
+// Pastikan selalu render dinamis agar data katalog terbaru tidak tertahan cache
+export const dynamic = 'force-dynamic';
 
 type CategoryRow = { name: string; description?: string | null };
 type ProductRow = {
@@ -16,7 +18,7 @@ type ProductRow = {
   description: string | null;
   price: number | null;
   image_url: string | null;
-  product_categories: { name?: string } | { name?: string }[] | null;
+  category_id: number | null;
 };
 
 const PAGE_SIZE = 12;
@@ -68,14 +70,20 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
   if (!metaDescription) {
     metaDescription = 'Jelajahi katalog produk las dan fabrikasi besi: pagar, kanopi, railing, teralis, dan lainnya. Pilih kategori untuk menemukan produk yang Anda butuhkan.';
   }
+  const baseTitle = 'Katalog Produk | Abadi Jaya';
+  const title = categoryName ? `Katalog: ${categoryName} | Abadi Jaya` : baseTitle;
+  const robots = qs?.q ? { index: false, follow: true } : { index: true, follow: true };
   return {
     alternates: { canonical },
-    title: categoryName ? `Katalog: ${categoryName} | Abadi Jaya` : undefined,
+    title,
     description: metaDescription,
+    robots,
     openGraph: {
+      title,
       description: metaDescription,
     },
     twitter: {
+      title,
       description: metaDescription,
     },
     other: {
@@ -114,7 +122,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
     let idQuery = supabaseServer
       .from('products')
       .select('id,product_categories!inner(name)', { count: 'exact' })
-      .eq('is_active', true)
+      .or('is_active.eq.true,is_active.is.null')
       .eq('product_categories.name', categoryParam);
     if (qParam) {
       const like = `%${qParam}%`;
@@ -129,17 +137,17 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
     // Step 2: fetch product details for those IDs (no join to avoid duplicates)
     const detailQuery = supabaseServer
       .from('products')
-      .select('id,name,description,price,image_url,product_categories(name)')
+      .select('id,name,description,price,image_url,category_id')
       .in('id', ids)
-      .eq('is_active', true);
+      .or('is_active.eq.true,is_active.is.null');
     // keep output order by id desc similar to list
     const listRes = await detailQuery.order('id', { ascending: false });
     prodData = listRes.data as ProductRow[] | null;
   } else {
     // Tanpa filter kategori, gunakan query biasa dengan range
     let listQuery = supabaseServer.from('products')
-      .select('id,name,description,price,image_url,product_categories(name)', { count: 'exact' })
-      .eq('is_active', true);
+      .select('id,name,description,price,image_url,category_id', { count: 'exact' })
+      .or('is_active.eq.true,is_active.is.null');
     if (qParam) {
       const like = `%${qParam}%`;
       listQuery = listQuery.or(`name.ilike.${like},description.ilike.${like}`);
@@ -151,10 +159,26 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
     totalCount = listRes.count || (prodData?.length || 0);
   }
 
-  // Cache wrapper ringan untuk menyatukan hasil (menghindari extra roundtrip)
-  const fetchCatalogCached = unstable_cache(async () => ({ prodData, total: totalCount }), ['catalog', String(page), categoryParam || 'Semua', qParam || ''], { revalidate, tags: ['catalog'] });
-  const { prodData: prodDataCached, total } = await fetchCatalogCached();
-  const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  // Gunakan hasil langsung tanpa cache agar selalu up-to-date
+  const prodDataCached = prodData;
+  const total = totalCount;
+  const pageCount = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+
+  // Fetch category names for the listed products to avoid inner join side-effects
+  const categoryIdSet = new Set<number>();
+  for (const p of prodDataCached || []) {
+    if (typeof p.category_id === 'number') categoryIdSet.add(p.category_id);
+  }
+  const categoryMap = new Map<number, string>();
+  if (categoryIdSet.size > 0) {
+    const { data: catRows } = await supabaseServer
+      .from('product_categories')
+      .select('id, name')
+      .in('id', Array.from(categoryIdSet));
+    for (const c of (catRows || []) as Array<{ id: number; name: string }>) {
+      categoryMap.set(c.id, c.name);
+    }
+  }
 
   const categoryIcon = (name?: string) => {
     switch ((name || '').toLowerCase()) {
@@ -172,9 +196,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
   };
 
   const initialProducts: ProductUI[] = (prodDataCached || []).map((p: ProductRow) => {
-    const catName = Array.isArray(p.product_categories)
-      ? (p.product_categories[0]?.name || 'Lainnya')
-      : (p.product_categories?.name || 'Lainnya');
+    const catName = (typeof p.category_id === 'number' && categoryMap.get(p.category_id)) || 'Lainnya';
     return {
       id: Number(p.id),
       name: String(p.name),
@@ -213,13 +235,20 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
       </Script>
       {/* JSON-LD: CollectionPage with category description for SEO context */}
       <Script id="collectionpage-catalog" type="application/ld+json">
-        {JSON.stringify({
-          '@context': 'https://schema.org',
-          '@type': 'CollectionPage',
-          'name': categoryParam && categoryParam !== 'Semua' ? `Katalog: ${categoryParam}` : 'Katalog Produk',
-          'description': (activeCategoryDesc || 'Katalog produk las dan fabrikasi besi.'),
-          'url': `/catalog${qParam || page > 1 || (categoryParam && categoryParam !== 'Semua') ? '' : ''}`
-        })}
+        {(() => {
+          const parts: string[] = [];
+          if (page > 1) parts.push(`page=${page}`);
+          if (categoryParam && categoryParam !== 'Semua') parts.push(`category=${encodeURIComponent(categoryParam)}`);
+          if (qParam) parts.push(`q=${encodeURIComponent(qParam)}`);
+          const urlPath = parts.length ? `/catalog?${parts.join('&')}` : '/catalog';
+          return JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'CollectionPage',
+            'name': categoryParam && categoryParam !== 'Semua' ? `Katalog: ${categoryParam}` : 'Katalog Produk',
+            'description': (activeCategoryDesc || 'Katalog produk las dan fabrikasi besi.'),
+            'url': urlPath
+          });
+        })()}
       </Script>
       {/* JSON-LD: ItemList untuk daftar produk */}
       <Script id="itemlist-catalog" type="application/ld+json">

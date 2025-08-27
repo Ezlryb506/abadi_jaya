@@ -25,9 +25,8 @@ async function loadInterBold(): Promise<ArrayBuffer | null> {
     }
 
     try {
-      // 2) Fallback CDN (TTF)
-      // Menggunakan release Inter dari GitHub (direct content)
-      const cdnUrl = 'https://github.com/rsms/inter/releases/download/v4.0/Inter-Bold.ttf';
+      // 2) Fallback CDN (TTF) via jsDelivr (lebih stabil daripada GitHub release URL langsung)
+      const cdnUrl = 'https://cdn.jsdelivr.net/gh/rsms/inter@4.0/ttf/Inter-Bold.ttf';
       const res2 = await fetch(cdnUrl);
       if (res2.ok) {
         const buf2 = await res2.arrayBuffer();

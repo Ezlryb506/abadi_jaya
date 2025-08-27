@@ -34,7 +34,7 @@ const services: ServiceCard[] = [
     icon: '🪜',
     image: '/images/layanan/Railing Tangga - Logam - 9.jpg',
     title: 'Railing Tangga',
-    description: 'Railing besi/stainless untuk rumah & komersial, aman, ergonomis, dan estetik',
+    description: 'Railing tangga besi/stainless untuk rumah & komersial, aman, ergonomis, dan estetik',
     category: 'Railing'
   },
   {

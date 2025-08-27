@@ -3,6 +3,7 @@ import ImageZoomLightbox from '@/components/ui/ImageZoomLightbox';
 import Link from 'next/link';
 import Script from 'next/script';
 import ShareButtons from '@/components/ui/ShareButtons';
+import { notFound } from 'next/navigation';
 import ProductDetailActions from '@/components/sections/ProductDetailActions';
 import { supabaseServer } from '@/lib/supabaseServer';
 import { formatRupiah } from '@/lib/format';
@@ -140,8 +141,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     metaKeywords = Array.from(tokens);
   } catch { metaKeywords = undefined; }
 
+  const effectiveTitle = `${(metaName || safeSlug.replace(/-/g, ' '))} | Abadi Jaya`;
   return {
-    title: `${safeSlug.replace(/-/g, ' ')} | Abadi Jaya`,
+    title: effectiveTitle,
     description: metaDesc || 'Jelajahi katalog produk las dan fabrikasi besi Abadi Jaya. Kualitas tinggi, harga transparan, layanan profesional.',
     keywords: metaKeywords,
     alternates: { canonical: canonicalAbs || relativeUrl },
@@ -157,7 +159,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       },
     },
     openGraph: {
-      title: `${safeSlug.replace(/-/g, ' ')} | Abadi Jaya`,
+      title: effectiveTitle,
       type: 'website',
       url: canonicalAbs || relativeUrl,
       images: ogImageAbs ? [{ url: ogImageAbs }] : undefined,
@@ -169,7 +171,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     } : undefined,
     twitter: {
       card: 'summary_large_image',
-      title: `${safeSlug.replace(/-/g, ' ')} | Abadi Jaya`,
+      title: effectiveTitle,
       images: ogImageAbs ? [ogImageAbs] : undefined,
       description: metaDesc,
     },
@@ -191,23 +193,7 @@ export default async function ProductDetailPage({ params, searchParams }: Props)
   const product = await getProduct(Number(idNum));
 
   if (!product) {
-    return (
-      <div className="max-w-5xl mx-auto px-4 py-16">
-        <Script id="breadcrumblist-product" type="application/ld+json">
-          {JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': 'BreadcrumbList',
-            'itemListElement': [
-              { '@type': 'ListItem', position: 1, name: 'Beranda', item: '/' },
-              { '@type': 'ListItem', position: 2, name: 'Katalog', item: '/catalog' }
-            ]
-          })}
-        </Script>
-        <h1 className="text-2xl font-bold mb-2">Produk tidak ditemukan</h1>
-        <p className="text-gray-600 mb-6">Produk yang Anda cari mungkin sudah tidak tersedia.</p>
-        <Link href={backHref} className="text-orange-600 hover:underline">← Kembali ke Katalog</Link>
-      </div>
-    );
+    return notFound();
   }
 
   const isHttpUrl = (u?: string | null) => !!u && /^https?:\/\//i.test(u);
@@ -227,6 +213,15 @@ export default async function ProductDetailPage({ params, searchParams }: Props)
       availability: 'https://schema.org/InStock',
     } : undefined,
   };
+
+  // Prepare unique tags for UI rendering
+  const uniqueTags = Array.from(
+    new Set(
+      Array.isArray(product.tags)
+        ? product.tags.map((t) => String(t || '').trim()).filter(Boolean)
+        : []
+    )
+  );
 
   // BreadcrumbList JSON-LD
   const site = process.env.NEXT_PUBLIC_SITE_URL;
@@ -299,6 +294,25 @@ export default async function ProductDetailPage({ params, searchParams }: Props)
                 {product.price ? formatRupiah(product.price) : 'Hubungi Kami'}
               </div>
               <p className="text-gray-700 leading-relaxed">{product.description || 'Deskripsi belum tersedia.'}</p>
+              {uniqueTags.length > 0 && (
+                <div className="mt-5" aria-label="Tag produk">
+                  <div className="text-sm text-gray-500 mb-2">Tag:</div>
+                  <ul className="flex flex-wrap gap-2" role="list">
+                    {uniqueTags.map((tag) => (
+                      <li key={tag} role="listitem">
+                        <Link
+                          href={`/catalog?q=${encodeURIComponent(tag)}`}
+                          className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-orange-50 text-orange-700 border border-orange-200 text-sm hover:bg-orange-100 hover:border-orange-300 transition-colors"
+                          prefetch={false}
+                        >
+                          <span className="text-orange-500">#</span>
+                          <span>{tag}</span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
               <div className="mt-6">
                 <ProductDetailActions
                   name={product.name}

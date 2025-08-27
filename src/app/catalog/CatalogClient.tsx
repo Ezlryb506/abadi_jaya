@@ -605,7 +605,16 @@ export default function CatalogClient({
         <div className="mt-8 grid grid-cols-1 md:grid-cols-3 items-center text-gray-600 gap-3 md:gap-0">
           <div className="text-md text-center justify-self-center md:col-start-2" aria-live="polite">
             {total > 0 ? (
-              <>Menampilkan {startNumber}-{endNumber} dari {total} produk</>
+              <>
+                Menampilkan {startNumber}-{endNumber} dari {total} produk{' '}
+                di kategori <span className="font-medium text-gray-800">{selectedCategory || 'Semua'}</span>
+                {searchQuery && (
+                  <>
+                    {' '}untuk kata kunci ‘{searchQuery}’
+                  </>
+                )}
+                {' '}(<span className="whitespace-nowrap">Halaman {page} dari {pageCount}</span>)
+              </>
             ) : (
               <>Menampilkan 0 dari 0 produk</>
             )}
