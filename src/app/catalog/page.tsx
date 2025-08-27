@@ -1,7 +1,13 @@
 import type { Metadata } from 'next';
+import { unstable_cache } from 'next/cache';
 import CatalogClient, { type ProductUI } from './CatalogClient';
 import { supabaseServer } from '@/lib/supabaseServer';
 import PrevNextHead from './PrevNextHead';
+import Script from 'next/script';
+import { slugify } from '@/lib/slug';
+
+// Enable Incremental Static Regeneration for the catalog page
+export const revalidate = 86400; // 1 day
 
 type CategoryRow = { name: string };
 type ProductRow = {
@@ -71,11 +77,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
     listQuery = listQuery.or(`name.ilike.${like},description.ilike.${like}`);
   }
 
-  const { data: prodData } = await listQuery
-    .order('id', { ascending: false })
-    .range(from, to);
-
-  // Count query
+  // Prepare count query
   let countQuery = supabaseServer.from('products')
     .select(
       filteringByCategory
@@ -92,8 +94,19 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
     const like = `%${qParam}%`;
     countQuery = countQuery.or(`name.ilike.${like},description.ilike.${like}`);
   }
-  const countRes = await countQuery;
-  const total = countRes.count || (prodData?.length || 0);
+
+  // Cache DB result per (page, category, q) using unstable_cache
+  const fetchCatalogCached = unstable_cache(async () => {
+    const listResPromise = listQuery
+      .order('id', { ascending: false })
+      .range(from, to);
+    const [listRes, countRes] = await Promise.all([listResPromise, countQuery]);
+    const prodDataInner = listRes.data;
+    const totalInner = countRes.count || (prodDataInner?.length || 0);
+    return { prodData: prodDataInner, total: totalInner };
+  }, ['catalog', String(page), categoryParam || 'Semua', qParam || ''], { revalidate, tags: ['catalog'] });
+
+  const { prodData, total } = await fetchCatalogCached();
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   const categoryIcon = (name?: string) => {
@@ -130,6 +143,39 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
   return (
     <>
       <PrevNextHead page={page} pageCount={pageCount} category={categoryParam} q={qParam} />
+      {/* JSON-LD: BreadcrumbList (Home > Katalog) */}
+      <Script id="breadcrumblist-catalog" type="application/ld+json">
+        {JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'BreadcrumbList',
+          'itemListElement': [
+            {
+              '@type': 'ListItem',
+              'position': 1,
+              'name': 'Beranda',
+              'item': '/'
+            },
+            {
+              '@type': 'ListItem',
+              'position': 2,
+              'name': 'Katalog',
+              'item': '/catalog'
+            }
+          ]
+        })}
+      </Script>
+      {/* JSON-LD: ItemList untuk daftar produk */}
+      <Script id="itemlist-catalog" type="application/ld+json">
+        {JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'ItemList',
+          'itemListElement': initialProducts.map((p, idx) => ({
+            '@type': 'ListItem',
+            'position': (from + idx + 1),
+            'url': `/catalog/${p.id}-${slugify(p.name)}`
+          }))
+        })}
+      </Script>
       <CatalogClient
         initialProducts={initialProducts}
         categories={categories}

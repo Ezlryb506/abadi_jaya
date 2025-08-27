@@ -428,6 +428,7 @@ export default function CatalogClient({
                       priority={idx === 0}
                       fetchPriority={idx === 0 ? 'high' : 'auto'}
                       loading={idx === 0 ? 'eager' : 'lazy'}
+                      quality={70}
                       sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
                     />
                   ) : (

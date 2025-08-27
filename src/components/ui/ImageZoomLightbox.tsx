@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import clsx from "clsx";
 import ResponsiveImageBox from "@/components/ui/ResponsiveImageBox";
+import type { ImageProps } from "next/image";
 
 type Props = {
   src: string;
@@ -10,6 +11,9 @@ type Props = {
   sizes?: string;
   priority?: boolean;
   unoptimized?: boolean;
+  quality?: number;
+  placeholder?: ImageProps['placeholder'];
+  blurDataURL?: string;
   className?: string;
 };
 
@@ -19,6 +23,9 @@ export default function ImageZoomLightbox({
   sizes,
   priority,
   unoptimized,
+  quality,
+  placeholder,
+  blurDataURL,
   className,
 }: Props) {
   const [open, setOpen] = useState(false);
@@ -317,6 +324,9 @@ export default function ImageZoomLightbox({
         sizes={sizes}
         priority={priority}
         unoptimized={unoptimized}
+        quality={quality}
+        placeholder={placeholder}
+        blurDataURL={blurDataURL}
         containerClassName="rounded-xl"
       />
 

@@ -11,6 +11,12 @@ const supabaseHost = (() => {
 
 const nextConfig: NextConfig = {
   images: {
+    // Enable modern output formats and fine-tune responsive sizes & cache TTL
+    formats: ['image/avif', 'image/webp'],
+    // Reasonable device sizes for our layout breakpoints
+    deviceSizes: [360, 640, 768, 1024, 1280],
+    // Keep optimized images cached longer on the CDN (in seconds)
+    minimumCacheTTL: 60 * 60 * 24 * 7, // 7 days
     remotePatterns: supabaseHost
       ? [
           {

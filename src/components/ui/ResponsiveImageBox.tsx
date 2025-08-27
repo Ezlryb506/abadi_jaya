@@ -7,7 +7,7 @@ import clsx from "clsx";
 export type ResponsiveImageBoxProps = {
   containerClassName?: string;
   imageClassName?: string;
-} & Pick<ImageProps, "src" | "alt" | "sizes" | "priority" | "unoptimized" | "placeholder" | "blurDataURL">;
+} & Pick<ImageProps, "src" | "alt" | "sizes" | "priority" | "unoptimized" | "placeholder" | "blurDataURL" | "quality">;
 
 export default function ResponsiveImageBox({
   src,
@@ -15,6 +15,7 @@ export default function ResponsiveImageBox({
   sizes,
   priority,
   unoptimized,
+  quality,
   placeholder,
   blurDataURL,
   containerClassName,
@@ -62,6 +63,7 @@ export default function ResponsiveImageBox({
         alt={alt}
         fill
         sizes={sizes}
+        quality={quality}
         className={clsx(
           "object-contain opacity-0 transition-opacity duration-500 ease-out",
           loaded && "opacity-100",

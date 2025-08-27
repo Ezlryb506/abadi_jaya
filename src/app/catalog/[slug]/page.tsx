@@ -182,6 +182,16 @@ export default async function ProductDetailPage({ params, searchParams }: Props)
   if (!product) {
     return (
       <div className="max-w-5xl mx-auto px-4 py-16">
+        <Script id="breadcrumblist-product" type="application/ld+json">
+          {JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'BreadcrumbList',
+            'itemListElement': [
+              { '@type': 'ListItem', position: 1, name: 'Beranda', item: '/' },
+              { '@type': 'ListItem', position: 2, name: 'Katalog', item: '/catalog' }
+            ]
+          })}
+        </Script>
         <h1 className="text-2xl font-bold mb-2">Produk tidak ditemukan</h1>
         <p className="text-gray-600 mb-6">Produk yang Anda cari mungkin sudah tidak tersedia.</p>
         <Link href={backHref} className="text-orange-600 hover:underline">← Kembali ke Katalog</Link>
@@ -261,6 +271,7 @@ export default async function ProductDetailPage({ params, searchParams }: Props)
                 sizes="(min-width: 1280px) 100vw, (min-width: 1024px) 100vw, 100vw"
                 priority
                 unoptimized={useUnoptimized}
+                quality={95}
                 className="max-h-[75vh]"
               />
             ) : (

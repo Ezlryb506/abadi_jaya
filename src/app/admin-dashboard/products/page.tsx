@@ -1,9 +1,11 @@
 'use client';
 
+import { useState, useTransition } from 'react';
 import ProductList from './components/ProductList';
 import ProductForm from './components/ProductForm';
 import EditProductModal from './components/EditProductModal';
 import useProductsAdmin from './hooks/useProductsAdmin';
+import { revalidateCatalogAction } from '../actions';
 
 export default function AdminPage() {
   const {
@@ -39,6 +41,30 @@ export default function AdminPage() {
   // state and effects dikelola di hook useProductsAdmin
 
   // handler dan CRUD dipindah ke hook
+
+  // Refresh catalog UI state (must be declared before any conditional returns)
+  const [isRefreshing, startRefreshing] = useTransition();
+  const [refreshMsg, setRefreshMsg] = useState<string | null>(null);
+
+  const handleRefreshCatalog = () => {
+    startRefreshing(async () => {
+      try {
+        setRefreshMsg('Merefresh cache katalog...');
+        const res = await revalidateCatalogAction();
+        if (res.ok) {
+          setRefreshMsg('Cache katalog berhasil direfresh.');
+        } else {
+          setRefreshMsg(res.error || 'Gagal merefresh cache katalog.');
+        }
+      } catch (e) {
+        // Log detail untuk developer, tampilkan pesan umum ke pengguna
+        console.error('[AdminPage] refresh katalog gagal', e);
+        setRefreshMsg('Terjadi kesalahan saat merefresh.');
+      } finally {
+        setTimeout(() => setRefreshMsg(null), 3000);
+      }
+    });
+  };
 
   if (loading) {
     return (
@@ -124,6 +150,36 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen px-4 py-6 overflow-x-hidden">
       <div className="max-w-7xl mx-auto space-y-6">
+        {/* Toolbar Admin */}
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+          <div>
+            <h1 className="text-xl font-semibold text-gray-800">Manajemen Produk</h1>
+            <p className="text-sm text-gray-500">Tambah, ubah, dan kelola katalog produk Anda.</p>
+          </div>
+          <div className="flex items-center gap-3">
+            {refreshMsg && (
+              <span className="text-sm text-gray-600 bg-gray-100 border border-gray-200 px-3 py-1.5 rounded-lg">{refreshMsg}</span>
+            )}
+            <button
+              type="button"
+              onClick={handleRefreshCatalog}
+              disabled={isRefreshing}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700 transition disabled:opacity-60"
+            >
+              {isRefreshing ? (
+                <>
+                  <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 4v2m0 12v2m8-8h-2M6 12H4m12.728 6.728-1.414-1.414M8.686 8.686 7.272 7.272m9.9 0-1.414 1.414M8.686 15.314l-1.414 1.414" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  <span>Merefresh...</span>
+                </>
+              ) : (
+                <>
+                  <span>↻</span>
+                  <span>Refresh Katalog</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
 
       {/* Form tambah produk */}
       <section id="add-product" aria-label="Tambah Produk">

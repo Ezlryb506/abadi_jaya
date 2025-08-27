@@ -85,8 +85,24 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Derive Supabase storage host for preconnect/dns-prefetch
+  let supabaseHost: string | undefined;
+  try {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    supabaseHost = url ? new URL(url).hostname : undefined;
+  } catch {
+    supabaseHost = undefined;
+  }
   return (
     <html lang="id" suppressHydrationWarning data-scroll-behavior="smooth">
+      <head>
+        {supabaseHost && (
+          <>
+            <link rel="preconnect" href={`https://${supabaseHost}`} crossOrigin="anonymous" />
+            <link rel="dns-prefetch" href={`https://${supabaseHost}`} />
+          </>
+        )}
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
