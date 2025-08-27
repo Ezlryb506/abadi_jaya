@@ -282,8 +282,17 @@ export default function CatalogClient({
     if (isNavigating || skeletonVisible) return;
     const nextPage = Math.min(pageCount, page + 1);
     const prevPage = Math.max(1, page - 1);
-    const nextHref = buildCatalogHref(nextPage);
-    const prevHref = buildCatalogHref(prevPage);
+    // Build href inline agar tidak bergantung pada fungsi luar (menghindari missing dependency)
+    const buildHref = (targetPage: number) => {
+      const params = new URLSearchParams();
+      if (selectedCategory && selectedCategory !== 'Semua') params.set('category', selectedCategory);
+      if (searchQuery) params.set('q', searchQuery);
+      if (targetPage > 1) params.set('page', String(targetPage));
+      const qs = params.toString();
+      return qs ? `/catalog?${qs}` : '/catalog';
+    };
+    const nextHref = buildHref(nextPage);
+    const prevHref = buildHref(prevPage);
     try {
       if (nextPage !== page) {
         console.debug('[prefetch] catalog next page:', nextHref);
@@ -293,7 +302,7 @@ export default function CatalogClient({
         console.debug('[prefetch] catalog prev page:', prevHref);
         router.prefetch?.(prevHref);
       }
-    } catch (_) { /* noop */ }
+    } catch { /* noop */ }
   }, [page, pageCount, selectedCategory, searchQuery, isNavigating, skeletonVisible, router]);
 
   // Idle prefetch: detail 3-4 produk teratas (ringan) untuk perceived speed
@@ -314,12 +323,14 @@ export default function CatalogClient({
         try {
           console.debug('[prefetch] product detail:', href);
           router.prefetch?.(href);
-        } catch (_) { /* noop */ }
+        } catch { /* noop */ }
       }
     };
     if ('requestIdleCallback' in window) {
-      const id = (window as any).requestIdleCallback(run, { timeout: 1200 });
-      return () => (window as any).cancelIdleCallback?.(id);
+      const ric = (window as unknown as { requestIdleCallback: (cb: IdleRequestCallback, options?: { timeout?: number }) => number }).requestIdleCallback;
+      const cic = (window as unknown as { cancelIdleCallback?: (handle: number) => void }).cancelIdleCallback;
+      const id = ric(run, { timeout: 1200 });
+      return () => cic?.(id);
     } else {
       const t = setTimeout(run, 350);
       return () => clearTimeout(t);

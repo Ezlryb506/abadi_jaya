@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from 'react';
 
 export default function ContactPage() {
   
-  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
   // Tinggi dinamis untuk map agar menyamai tinggi total kartu di sidebar kiri
@@ -72,9 +71,8 @@ export default function ContactPage() {
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
-        setUserLocation({ lat: latitude, lng: longitude });
         setIsLoadingLocation(false);
-        
+
         // Otomatis buka Google Maps dengan rute dari lokasi pengguna
         openRouteFromUserLocation(latitude, longitude);
       },
@@ -113,17 +111,7 @@ export default function ContactPage() {
     window.open(routeUrl, '_blank');
   };
 
-  // Fungsi untuk membuka Google Maps dengan alamat bengkel
-  const openGoogleMaps = () => {
-    const address = "Gg. Bunga, Wanasari, Kec. Cibitung, Kabupaten Bekasi, Jawa Barat 17520";
-    const encodedAddress = encodeURIComponent(address);
-    window.open(`https://www.google.com/maps/search/${encodedAddress}`, '_blank');
-  };
-
-  // Fungsi untuk membuka link Google Maps yang sudah disediakan
-  const openBengkelLocation = () => {
-    window.open('https://maps.app.goo.gl/B8xNUCjmEC7kEpaS8', '_blank');
-  };
+  // Catatan: tautan Google Maps tersedia di tombol "Buka di Google Maps" pada helper di bawah peta.
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-orange-50 to-white">
@@ -163,6 +151,15 @@ export default function ContactPage() {
                   </a>
                 </div>
               </div>
+              {locationError && (
+                <div
+                  className="mt-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md p-3"
+                  role="status"
+                  aria-live="polite"
+                >
+                  {locationError}
+                </div>
+              )}
             </div>
 
             {/* Address Card: simple info only (no buttons) */}

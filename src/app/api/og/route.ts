@@ -1,5 +1,7 @@
 import React from 'react';
 import { ImageResponse } from 'next/og';
+import fs from 'fs/promises';
+import path from 'path';
 
 // Sementara gunakan Node.js runtime untuk stabilitas di dev (Turbopack kadang bermasalah dengan Edge route)
 export const runtime = 'nodejs';
@@ -12,16 +14,12 @@ async function loadInterBold(): Promise<ArrayBuffer | null> {
   if (fontDataPromise) return fontDataPromise;
   fontDataPromise = (async () => {
     try {
-      // 1) Coba muat dari public/fonts (lokal)
-      // Catatan: path relatif terhadap file ini menggunakan import.meta.url
-      const localUrl = new URL('../../../../public/fonts/Inter-Bold.ttf', import.meta.url);
-      const res = await fetch(localUrl);
-      if (res.ok) {
-        const buf = await res.arrayBuffer();
-        console.log('[OG] Loaded local font Inter-Bold.ttf');
-        return buf;
-      }
-      console.warn('[OG] Local font not found or unreadable, status:', res.status);
+      // 1) Coba muat dari public/fonts (lokal) via filesystem (hindari bundling)
+      const fontPath = path.join(process.cwd(), 'public', 'fonts', 'Inter-Bold.ttf');
+      const buf = await fs.readFile(fontPath);
+      console.log('[OG] Loaded local font Inter-Bold.ttf');
+      const ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) as ArrayBuffer;
+      return ab;
     } catch (e) {
       console.warn('[OG] Failed to load local font Inter-Bold.ttf:', (e as Error)?.message || e);
     }
