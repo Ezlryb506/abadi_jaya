@@ -148,7 +148,7 @@ export default function CatalogClient({
     }
   };
 
-  // Sinkronkan filter ke URL; hanya berubah ketika kategori berubah atau pencarian diaplikasikan
+  // Sinkronkan filter ke URL; hindari push ke URL identik (mis. jangan tambahkan page=1)
   useEffect(() => {
     let mounted = true;
     const t = setTimeout(() => {
@@ -158,11 +158,8 @@ export default function CatalogClient({
       if (searchQuery) params.set('q', searchQuery);
       const categoryChanged = (selectedCategory || 'Semua') !== (initialCategoryRef.current || 'Semua');
       const queryChanged = (searchQuery || '') !== (initialQueryRef.current || '');
-      if (categoryChanged || queryChanged) {
-        params.set('page', '1');
-      } else {
-        params.set('page', String(Math.max(1, page)));
-      }
+      const desiredPage = categoryChanged || queryChanged ? 1 : Math.max(1, page);
+      if (desiredPage > 1) params.set('page', String(desiredPage)); // hindari ?page=1
       const qs = params.toString();
       const href = qs ? `/catalog?${qs}` : '/catalog';
       const current = typeof window !== 'undefined' ? `${window.location.pathname}${window.location.search}` : '';
@@ -277,6 +274,57 @@ export default function CatalogClient({
     return pages;
   };
   const pageList = getPageList(page, pageCount);
+
+  // Prefetch halaman berikutnya/ sebelumnya untuk mempercepat navigasi pagination
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    // Hindari saat sedang navigasi atau skeleton tampil untuk menghemat bandwidth
+    if (isNavigating || skeletonVisible) return;
+    const nextPage = Math.min(pageCount, page + 1);
+    const prevPage = Math.max(1, page - 1);
+    const nextHref = buildCatalogHref(nextPage);
+    const prevHref = buildCatalogHref(prevPage);
+    try {
+      if (nextPage !== page) {
+        console.debug('[prefetch] catalog next page:', nextHref);
+        router.prefetch?.(nextHref);
+      }
+      if (prevPage !== page) {
+        console.debug('[prefetch] catalog prev page:', prevHref);
+        router.prefetch?.(prevHref);
+      }
+    } catch (_) { /* noop */ }
+  }, [page, pageCount, selectedCategory, searchQuery, isNavigating, skeletonVisible, router]);
+
+  // Idle prefetch: detail 3-4 produk teratas (ringan) untuk perceived speed
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!filteredProducts?.length) return;
+    if (isNavigating || skeletonVisible) return;
+    const run = () => {
+      const count = Math.min(4, filteredProducts.length);
+      for (let i = 0; i < count; i++) {
+        const p = filteredProducts[i];
+        const params = new URLSearchParams();
+        if (selectedCategory && selectedCategory !== 'Semua') params.set('category', selectedCategory);
+        if (searchQuery) params.set('q', searchQuery);
+        if (page && page > 1) params.set('page', String(page));
+        const qs = params.toString();
+        const href = `/catalog/${p.id}-${slugify(p.name)}${qs ? `?${qs}` : ''}`;
+        try {
+          console.debug('[prefetch] product detail:', href);
+          router.prefetch?.(href);
+        } catch (_) { /* noop */ }
+      }
+    };
+    if ('requestIdleCallback' in window) {
+      const id = (window as any).requestIdleCallback(run, { timeout: 1200 });
+      return () => (window as any).cancelIdleCallback?.(id);
+    } else {
+      const t = setTimeout(run, 350);
+      return () => clearTimeout(t);
+    }
+  }, [filteredProducts, selectedCategory, searchQuery, page, isNavigating, skeletonVisible, router]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-orange-50 to-white">
@@ -557,6 +605,7 @@ export default function CatalogClient({
               <Link
                 href={buildCatalogHref(Math.max(1, page - 1))}
                 scroll={false}
+                prefetch
                 aria-disabled={page <= 1}
                 className={`px-3 py-2 rounded-lg border ${page <= 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-orange-50 border-orange-200 text-orange-600'}`}
               >
@@ -570,6 +619,7 @@ export default function CatalogClient({
                   key={p}
                   href={buildCatalogHref(p)}
                   scroll={false}
+                  prefetch
                   aria-current={p === page ? 'page' : undefined}
                   className={`px-3 py-2 rounded-lg border ${p === page ? 'bg-orange-500 text-white border-orange-500' : 'hover:bg-orange-50 border-orange-200 text-orange-600'}`}
                 >
@@ -580,6 +630,7 @@ export default function CatalogClient({
               <Link
                 href={buildCatalogHref(Math.min(pageCount, page + 1))}
                 scroll={false}
+                prefetch
                 aria-disabled={page >= pageCount}
                 className={`px-3 py-2 rounded-lg border ${page >= pageCount ? 'opacity-50 cursor-not-allowed' : 'hover:bg-orange-50 border-orange-200 text-orange-600'}`}
               >

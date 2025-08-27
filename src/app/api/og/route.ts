@@ -4,6 +4,49 @@ import { ImageResponse } from 'next/og';
 // Sementara gunakan Node.js runtime untuk stabilitas di dev (Turbopack kadang bermasalah dengan Edge route)
 export const runtime = 'nodejs';
 
+// Preload/cached font data (Inter Bold) untuk stabilitas Satori
+// Prefer lokal: public/fonts/Inter-Bold.ttf
+// Fallback: CDN TTF jika file lokal tidak ditemukan
+let fontDataPromise: Promise<ArrayBuffer | null> | null = null;
+async function loadInterBold(): Promise<ArrayBuffer | null> {
+  if (fontDataPromise) return fontDataPromise;
+  fontDataPromise = (async () => {
+    try {
+      // 1) Coba muat dari public/fonts (lokal)
+      // Catatan: path relatif terhadap file ini menggunakan import.meta.url
+      const localUrl = new URL('../../../../public/fonts/Inter-Bold.ttf', import.meta.url);
+      const res = await fetch(localUrl);
+      if (res.ok) {
+        const buf = await res.arrayBuffer();
+        console.log('[OG] Loaded local font Inter-Bold.ttf');
+        return buf;
+      }
+      console.warn('[OG] Local font not found or unreadable, status:', res.status);
+    } catch (e) {
+      console.warn('[OG] Failed to load local font Inter-Bold.ttf:', (e as Error)?.message || e);
+    }
+
+    try {
+      // 2) Fallback CDN (TTF)
+      // Menggunakan release Inter dari GitHub (direct content)
+      const cdnUrl = 'https://github.com/rsms/inter/releases/download/v4.0/Inter-Bold.ttf';
+      const res2 = await fetch(cdnUrl);
+      if (res2.ok) {
+        const buf2 = await res2.arrayBuffer();
+        console.log('[OG] Loaded fallback font from CDN (Inter-Bold)');
+        return buf2;
+      }
+      console.warn('[OG] CDN font fetch failed, status:', res2.status);
+    } catch (e) {
+      console.warn('[OG] Failed to fetch CDN font:', (e as Error)?.message || e);
+    }
+
+    console.warn('[OG] Proceeding without explicit font. Satori may fail on some environments.');
+    return null;
+  })();
+  return fontDataPromise;
+}
+
 // URL: /api/og?title=Judul
 export async function GET(request: Request) {
   try {
@@ -16,6 +59,9 @@ export async function GET(request: Request) {
 
     // Log untuk debugging sementara (akan dihapus setelah uji berhasil)
     console.log('[OG] Generating image with title:', title);
+
+    // Load font bila tersedia
+    const interBold = await loadInterBold();
 
     return new ImageResponse(
       React.createElement(
@@ -115,6 +161,19 @@ export async function GET(request: Request) {
       {
         width: 1200,
         height: 630,
+        // Pass fonts jika tersedia
+        ...(interBold
+          ? {
+              fonts: [
+                {
+                  name: 'Inter',
+                  data: interBold,
+                  weight: 700,
+                  style: 'normal',
+                },
+              ],
+            }
+          : {}),
       }
     );
   } catch (err) {
@@ -122,4 +181,5 @@ export async function GET(request: Request) {
     return new Response('OG Image generation failed', { status: 500 });
   }
 }
+
 

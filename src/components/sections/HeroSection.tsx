@@ -40,9 +40,9 @@ export default function HeroSection() {
           </div>
           
           <p className="text-xl md:text-2xl text-slate-600 leading-relaxed font-medium">
-            Spesialis jasa las, pagar kustom dan fabrikasi besi berkualitas tinggi. 
+            Spesialis jasa las, pagar besi kustom, kanopi, railing, dan fabrikasi stainless. 
             <span className="block mt-2 text-orange-600 font-semibold">
-              Dari pagar minimalis hingga kanopi stainless, kami siap mewujudkan ide Anda menjadi kenyataan.
+              Wujudkan desain Anda dengan kualitas rapi, presisi, dan tahan lama.
             </span>
           </p>
         </div>
@@ -58,7 +58,7 @@ export default function HeroSection() {
             
             <span className="relative flex items-center gap-3">
               <span className="text-2xl">📞</span>
-              Hubungi Kami Sekarang
+              Konsultasi Gratis via WhatsApp
               <svg className="w-6 h-6 group-hover:translate-x-2 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7l5 5m0 0l-5 5m5-5H6" />
               </svg>
@@ -116,7 +116,7 @@ export default function HeroSection() {
                 96%
               </div>
             </div>
-            <div className="text-slate-600 font-semibold text-lg">Customer Puas</div>
+            <div className="text-slate-600 font-semibold text-lg">Pelanggan Puas</div>
             <div className="w-16 h-1 bg-gradient-to-r from-green-500 to-emerald-500 mx-auto mt-3 rounded-full group-hover:w-20 transition-all duration-500"></div>
           </div>
         </div>
@@ -127,7 +127,8 @@ export default function HeroSection() {
             className="group w-16 h-16 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-full shadow-2xl hover:shadow-orange-500/50 transition-all duration-300 transform hover:scale-110 cursor-pointer"
             onClick={() => window.open('https://wa.me/6289653754317?text=Halo! Saya ingin konsultasi tentang jasa las', '_blank')}
           >
-            <span className="text-2xl">💬</span>
+            <span className="text-3xl" aria-hidden>💬</span>
+            <span className="sr-only">Konsultasi via WhatsApp</span>
           </button>
         </div>
       </div>

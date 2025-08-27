@@ -2,23 +2,23 @@ export default function FaqSection() {
   const faqs = [
     {
       q: 'Apakah bisa konsultasi dan survei dahulu?',
-      a: 'Bisa. Kami menyediakan konsultasi gratis via WhatsApp dan dapat menjadwalkan survei lokasi sesuai kebutuhan Anda.'
+      a: 'Bisa. Konsultasi gratis via WhatsApp. Kami juga dapat menjadwalkan survei lokasi sesuai kebutuhan.'
     },
     {
       q: 'Bagaimana sistem pembayaran (DP/termin)?',
-      a: 'Umumnya menggunakan DP di awal dan pelunasan setelah pekerjaan selesai/terverifikasi. Skema termin bisa disesuaikan proyek.'
+      a: 'Umumnya DP di awal, pelunasan setelah pekerjaan selesai/terverifikasi. Skema termin fleksibel sesuai proyek.'
     },
     {
       q: 'Berapa lama waktu pengerjaan?',
-      a: 'Durasi tergantung jenis dan skala pekerjaan. Setelah survei, kami kirim estimasi waktu yang jelas dan terukur.'
+      a: 'Bergantung jenis dan skala pekerjaan. Setelah survei, kami berikan estimasi waktu yang jelas.'
     },
     {
       q: 'Apakah ada garansi?',
-      a: 'Ada. Kami memberikan garansi pengerjaan sesuai ketentuan pada invoice/kontrak.'
+      a: 'Ada. Garansi pengerjaan dan material sesuai ketentuan pada invoice/kontrak.'
     },
     {
       q: 'Apakah menerima desain custom?',
-      a: 'Tentu. Anda dapat membawa referensi, dan tim kami akan membantu menyesuaikan material, ukuran, serta budget.'
+      a: 'Tentu. Bawa referensi Anda, kami bantu pilih material, ukuran, dan finishing sesuai anggaran.'
     }
   ];
 

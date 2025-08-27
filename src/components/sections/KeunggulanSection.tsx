@@ -29,7 +29,7 @@ export default function KeunggulanSection() {
               <div className="absolute inset-0 w-24 h-24 bg-gradient-to-br from-orange-500/20 via-red-500/20 to-amber-500/20 rounded-2xl blur-xl -z-10 group-hover:blur-2xl transition-all duration-500"></div>
             </div>
             <h3 className="text-2xl font-bold text-slate-800 mb-4 group-hover:text-orange-600 transition-colors duration-300">Kualitas Terjamin</h3>
-            <p className="text-slate-600 text-lg leading-relaxed">Material berkualitas tinggi dengan standar SNI dan pengerjaan presisi</p>
+            <p className="text-slate-600 text-lg leading-relaxed">Material bersertifikasi, standar SNI, finishing rapi, dan presisi.</p>
           </div>
 
           <div className="group text-center transform hover:scale-110 transition-all duration-500">
@@ -41,7 +41,7 @@ export default function KeunggulanSection() {
               <div className="absolute inset-0 w-24 h-24 bg-gradient-to-r from-blue-500/20 via-cyan-500/20 to-teal-500/20 rounded-2xl blur-xl -z-10 group-hover:blur-2xl transition-all duration-500"></div>
             </div>
             <h3 className="text-2xl font-bold text-slate-800 mb-4 group-hover:text-blue-600 transition-colors duration-300">Pengerjaan Cepat</h3>
-            <p className="text-slate-600 text-lg leading-relaxed">Tim berpengalaman dengan pengerjaan tepat waktu dan efisien</p>
+            <p className="text-slate-600 text-lg leading-relaxed">Tim berpengalaman, timeline jelas, dan tepat waktu.</p>
           </div>
 
           <div className="group text-center transform hover:scale-110 transition-all duration-500">
@@ -53,7 +53,7 @@ export default function KeunggulanSection() {
               <div className="absolute inset-0 w-24 h-24 bg-gradient-to-r from-green-500/20 via-emerald-500/20 to-teal-500/20 rounded-2xl blur-xl -z-10 group-hover:blur-2xl transition-all duration-500"></div>
             </div>
             <h3 className="text-2xl font-bold text-slate-800 mb-4 group-hover:text-green-600 transition-colors duration-300">Harga Terjangkau</h3>
-            <p className="text-slate-600 text-lg leading-relaxed">Harga kompetitif dengan kualitas terbaik dan transparan</p>
+            <p className="text-slate-600 text-lg leading-relaxed">Harga transparan, kompetitif, sesuai kebutuhan dan anggaran Anda.</p>
           </div>
 
           <div className="group text-center transform hover:scale-110 transition-all duration-500">
@@ -65,7 +65,7 @@ export default function KeunggulanSection() {
               <div className="absolute inset-0 w-24 h-24 bg-gradient-to-r from-purple-500/20 via-pink-500/20 to-rose-500/20 rounded-2xl blur-xl -z-10 group-hover:blur-2xl transition-all duration-500"></div>
             </div>
             <h3 className="text-2xl font-bold text-slate-800 mb-4 group-hover:text-purple-600 transition-colors duration-300">Garansi Lengkap</h3>
-            <p className="text-slate-600 text-lg leading-relaxed">Garansi pengerjaan dan material dengan layanan purna jual</p>
+            <p className="text-slate-600 text-lg leading-relaxed">Garansi pengerjaan dan material sesuai ketentuan invoice/kontrak.</p>
           </div>
         </div>
       </div>

@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import Image from 'next/image';
 
 interface ServiceCard {
   id: number;
-  icon: string;
+  icon: string; // legacy, kept as fallback
+  image: string; // path under /public/images/layanan
   title: string;
   description: string;
   category: string;
@@ -14,97 +16,153 @@ const services: ServiceCard[] = [
   {
     id: 1,
     icon: '🏗️',
+    image: '/images/layanan/pagar besi - modern 1.jpg',
     title: 'Pagar Besi',
-    description: 'Pagar minimalis, pagar klasik, pagar modern dengan berbagai desain dan ukuran',
+    description: 'Pagar besi minimalis/modern, kuat dan tahan cuaca, kustom ukuran & motif',
     category: 'Pagar'
   },
   {
     id: 2,
     icon: '🏠',
+    image: '/images/layanan/Modern Carport - Kanopi - 2.jpg',
     title: 'Kanopi & Carport',
-    description: 'Kanopi teras, carport mobil, kanopi garasi dengan material berkualitas',
+    description: 'Kanopi teras/garasi, material berkualitas (spandek, polycarbonate, hollow), rapi & presisi',
     category: 'Kanopi'
   },
   {
     id: 3,
     icon: '🪜',
+    image: '/images/layanan/Railing Tangga - Logam - 9.jpg',
     title: 'Railing Tangga',
-    description: 'Railing tangga putar, railing minimalis, railing stainless steel',
+    description: 'Railing besi/stainless untuk rumah & komersial, aman, ergonomis, dan estetik',
     category: 'Railing'
   },
   {
     id: 4,
     icon: '🚪',
+    image: '/images/layanan/Pintu Besi - Modern - 2.jpg',
     title: 'Pintu Besi',
-    description: 'Pintu garasi, rolling door, pintu besi dengan sistem keamanan tinggi',
+    description: 'Pintu besi rumah/gerbang, finishing halus dan kokoh, kustom model',
     category: 'Pintu'
   },
   {
     id: 5,
     icon: '🪟',
+    image: '/images/layanan/Jendela - Teralis - Pagar - Modern 6.jpg',
     title: 'Jendela & Teralis',
-    description: 'Jendela besi, kasa nyamuk, teralis jendela dengan desain menarik',
+    description: 'Teralis jendela dengan desain aman & menarik, bisa tambah kasa nyamuk',
     category: 'Jendela'
   },
   {
     id: 6,
     icon: '✨',
+    image: '/images/layanan/Stainless Steel - Railing Tangga - 2.jpg',
     title: 'Stainless Steel',
-    description: 'Produk stainless steel premium dengan finishing berkualitas tinggi',
+    description: 'Produk stainless premium: tahan karat, higienis, finishing halus',
     category: 'Stainless'
   },
   {
     id: 7,
     icon: '🌿',
+    image: '/images/layanan/Kanopi - Pargola - Taman - Modern - 5.jpg',
     title: 'Pergola & Kanopi Taman',
-    description: 'Pergola/kanopi estetis untuk teras & taman, material besi/stainless',
+    description: 'Pergola/kanopi estetik untuk teras & taman, teduh, nyaman, tahan cuaca',
     category: 'Kanopi',
   },
   {
     id: 8,
     icon: '🪟',
+    image: '/images/layanan/Railing Balkon - Modern - Minimalis 2.jpg',
     title: 'Railing Balkon',
-    description: 'Railing balkon minimalis/stainless, aman & elegan untuk indoor/outdoor',
+    description: 'Railing balkon minimalis/modern, aman dan mempercantik fasad',
     category: 'Railing',
   },
   {
     id: 9,
     icon: '🚪',
+    image: '/images/layanan/Pintu Gerbang - Modern - Stainless 1.jpg',
     title: 'Pintu Gerbang',
-    description: 'Pintu gerbang minimalis/stainless, aman & elegan untuk indoor/outdoor',
+    description: 'Gerbang besi/stainless, sistem dorong/geser, kunci aman dan awet',
     category: 'Pintu',
   },
   {
-    id: 11,
+    id: 10,
     icon: '✨',
+    image: '/images/layanan/kitchen Set - Rak - Stainless - 2.jpg',
     title: 'Kitchen Set Stainless',
-    description: 'Meja sink & kabinet stainless untuk dapur komersial/rumah',
+    description: 'Meja sink & kabinet stainless, higienis untuk rumah/komersial',
+    category: 'Stainless',
+  },
+  {
+    id: 11,
+    icon: '🧰',
+    image: '/images/layanan/Rak Stainless 1.jpg',
+    title: 'Rak & Meja Stainless',
+    description: 'Rak/meja stainless kuat, higienis, cocok gudang/komersial',
     category: 'Stainless',
   },
   {
     id: 12,
-    icon: '🧰',
-    title: 'Rak & Meja Stainless',
-    description: 'Rak gudang/meja kerja stainless, kuat & higienis',
-    category: 'Stainless',
-  },
-  {
-    id: 13,
     icon: '🧭',
+    image: '/images/layanan/Handrail Tembok Tangga 2.jpg',
     title: 'Handrail Tangga Stainless',
-    description: 'Handrail ergonomis untuk rumah/sarana publik, finishing premium',
+    description: 'Handrail ergonomis, finishing premium, aman untuk semua usia',
     category: 'Stainless',
   },
 ];
 
 export default function LayananSection() {
   const [selectedCategory, setSelectedCategory] = useState('Semua');
-  
-  const categories = ['Semua', 'Pagar', 'Kanopi', 'Railing', 'Pintu', 'Jendela', 'Stainless'];
-  
-  const filteredServices = selectedCategory === 'Semua' 
-    ? services 
-    : services.filter(service => service.category === selectedCategory);
+
+  // 12 kategori layanan + "Semua" sebagai item pertama (total 13)
+  const allCategories = useMemo(() => {
+    const titles = services.map((s) => s.title);
+    return ['Semua', ...titles];
+  }, []);
+
+  // Filter: jika bukan "Semua", cocokkan ke title layanan
+  const filteredServices = selectedCategory === 'Semua'
+    ? services
+    : services.filter(service => service.title === selectedCategory);
+
+  // Pagination carousel untuk seluruh kategori (tanpa drag/x-scroll)
+  const [itemsPerSlide, setItemsPerSlide] = useState(5);
+  const [page, setPage] = useState(0);
+  const totalPages = useMemo(() => {
+    return Math.max(1, Math.ceil(allCategories.length / itemsPerSlide));
+  }, [allCategories.length, itemsPerSlide]);
+
+  useEffect(() => {
+    const computeItemsPerSlide = () => {
+      const w = window.innerWidth;
+      if (w < 640) return 2; // mobile kecil
+      if (w < 1024) return 3; // tablet / small desktop
+      return 5; // desktop, agar tampil "Semua + id 1-4"
+    };
+    const update = () => setItemsPerSlide(computeItemsPerSlide());
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
+
+  // Pastikan page valid saat itemsPerSlide berubah
+  useEffect(() => {
+    if (page > totalPages - 1) setPage(totalPages - 1);
+  }, [totalPages, page]);
+
+  const handlePrev = () => setPage((p) => Math.max(0, p - 1));
+  const handleNext = () => setPage((p) => Math.min(totalPages - 1, p + 1));
+
+  const carouselContainerRef = useRef<HTMLDivElement | null>(null);
+  const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      handlePrev();
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      handleNext();
+    }
+  };
 
   return (
     <section id="layanan" className="py-20 bg-white">
@@ -114,25 +172,65 @@ export default function LayananSection() {
             Layanan Unggulan Kami
           </h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Berbagai jenis jasa las, pagar kustom dan fabrikasi dengan kualitas terbaik dan harga terjangkau
+            Jasa las profesional: pagar besi, kanopi, railing, pintu besi, teralis, hingga stainless. Kustom sesuai kebutuhan dan desain Anda.
           </p>
         </div>
 
-        {/* Category Filter */}
-        <div className="flex flex-wrap justify-center gap-4 mb-12 animate-fade-in-up animation-delay-200">
-          {categories.map((category) => (
+        {/* Category Filter: Single carousel 13 item (termasuk "Semua"), tanpa x-scroll */}
+        <div
+          ref={carouselContainerRef}
+          tabIndex={0}
+          onKeyDown={onKeyDown}
+          aria-roledescription="carousel"
+          aria-label="Kategori layanan"
+          className="relative mb-12 outline-none"
+        >
+          <div className="flex items-center justify-between gap-2">
             <button
-              key={category}
-              onClick={() => setSelectedCategory(category)}
-              className={`px-6 py-2 rounded-full transition-all duration-300 ${
-                selectedCategory === category
-                  ? 'bg-orange-500 text-white shadow-lg'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
+              type="button"
+              onClick={handlePrev}
+              className={`inline-flex items-center justify-center w-9 h-9 rounded-full bg-white border border-gray-200 shadow-sm hover:bg-gray-50 transition ${page === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+              aria-label="Sebelumnya"
             >
-              {category}
+              ‹
             </button>
-          ))}
+            <div className="flex flex-wrap justify-center gap-2 md:gap-3">
+              {allCategories
+                .slice(page * itemsPerSlide, page * itemsPerSlide + itemsPerSlide)
+                .map((category) => (
+                  <button
+                    key={category}
+                    onClick={() => setSelectedCategory(category)}
+                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 border ${
+                      selectedCategory === category
+                        ? 'bg-orange-500 text-white shadow-lg border-orange-500'
+                        : 'bg-gray-50 text-gray-700 hover:bg-gray-100 border-gray-200'
+                    }`}
+                    aria-pressed={selectedCategory === category}
+                  >
+                    <span className="whitespace-nowrap">{category}</span>
+                  </button>
+                ))}
+            </div>
+            <button
+              type="button"
+              onClick={handleNext}
+              className={`inline-flex items-center justify-center w-9 h-9 rounded-full bg-white border border-gray-200 shadow-sm hover:bg-gray-50 transition ${page >= totalPages - 1 ? 'opacity-50 cursor-not-allowed' : ''}`}
+              aria-label="Berikutnya"
+            >
+              ›
+            </button>
+          </div>
+          <div className="mt-2 flex items-center justify-center gap-1">
+            {Array.from({ length: totalPages }).map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setPage(i)}
+                aria-label={`Ke halaman ${i + 1}`}
+                className={`w-2.5 h-2.5 rounded-full transition ${i === page ? 'bg-orange-500' : 'bg-gray-300 hover:bg-gray-400'}`}
+              />
+            ))}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -142,8 +240,24 @@ export default function LayananSection() {
               className="group bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-500 transform hover:-translate-y-2 border border-gray-100 animate-fade-in-up"
               style={{ animationDelay: `${(index + 1) * 100}ms` }}
             >
-              <div className="w-16 h-16 bg-orange-100 rounded-lg flex items-center justify-center mb-4">
-                <span className="text-2xl">{service.icon}</span>
+              {/* Media */}
+              <div className="relative w-full aspect-[16/10] rounded-lg overflow-hidden mb-4 ring-1 ring-gray-100">
+                {service.image ? (
+                  <Image
+                    src={service.image}
+                    alt={service.title}
+                    fill
+                    sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    priority={index === 0}
+                    fetchPriority={index === 0 ? 'high' : 'auto'}
+                    quality={70}
+                  />
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center bg-orange-50 text-5xl">
+                    <span>{service.icon}</span>
+                  </div>
+                )}
               </div>
               <h3 className="text-xl font-semibold text-gray-800 mb-2">{service.title}</h3>
               <p className="text-gray-600 mb-4">{service.description}</p>

@@ -59,6 +59,79 @@ export default function Home() {
         })}
       </Script>
 
+      {/* JSON-LD: LocalBusiness (untuk SEO lokal) */}
+      <Script id="ld-localbusiness" type="application/ld+json">
+        {JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'LocalBusiness',
+          name: 'Bengkel Las Abadi Jaya',
+          url: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
+          logo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/apple-touch-icon.png`,
+          image: [`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/apple-touch-icon.png`],
+          telephone: '+62 896-5375-4317',
+          sameAs: [],
+          areaServed: 'ID',
+          priceRange: '$$',
+          address: {
+            '@type': 'PostalAddress',
+            streetAddress: 'Gg. Bunga, Wanasari, Kec. Cibitung',
+            addressLocality: 'Kabupaten Bekasi',
+            addressRegion: 'Jawa Barat',
+            postalCode: '17520',
+            addressCountry: 'ID'
+          },
+          openingHoursSpecification: [
+            {
+              '@type': 'OpeningHoursSpecification',
+              dayOfWeek: [
+                'Monday',
+                'Tuesday',
+                'Wednesday',
+                'Thursday',
+                'Friday',
+                'Saturday'
+              ],
+              opens: '08:00',
+              closes: '17:00'
+            }
+          ],
+          geo: {
+            '@type': 'GeoCoordinates',
+            latitude: -6.254683,
+            longitude: 107.085045
+          },
+          hasMap: 'https://www.google.com/maps?q=-6.254683,107.085045&z=15',
+          contactPoint: [
+            {
+              '@type': 'ContactPoint',
+              contactType: 'customer support',
+              telephone: '+62 896-5375-4317',
+              availableLanguage: ['Indonesian'],
+              areaServed: 'ID',
+              url: 'https://wa.me/6289653754317?text=Halo! Saya ingin konsultasi tentang jasa las'
+            }
+          ],
+          makesOffer: {
+            '@type': 'OfferCatalog',
+            name: 'Layanan Abadi Jaya',
+            itemListElement: [
+              { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Pagar Besi', description: 'Pagar besi minimalis/modern, kuat dan tahan cuaca, kustom ukuran & motif.' } },
+              { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Kanopi & Carport', description: 'Kanopi teras/garasi, material berkualitas (spandek, polycarbonate, hollow), rapi & presisi.' } },
+              { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Railing Tangga', description: 'Railing besi/stainless untuk rumah & komersial, aman, ergonomis, estetik.' } },
+              { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Pintu Besi', description: 'Pintu besi rumah/gerbang, finishing halus, kokoh, kustom model.' } },
+              { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Jendela & Teralis', description: 'Teralis jendela aman dan menarik, opsional kasa nyamuk.' } },
+              { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Stainless Steel', description: 'Produk stainless premium: tahan karat, higienis, finishing halus.' } },
+              { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Pergola & Kanopi Taman', description: 'Pergola/kanopi estetik untuk teras & taman, teduh, nyaman, tahan cuaca.' } },
+              { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Railing Balkon', description: 'Railing balkon minimalis/modern, aman dan mempercantik fasad.' } },
+              { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Pintu Gerbang', description: 'Gerbang besi/stainless, dorong/geser, kunci aman & awet.' } },
+              { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Kitchen Set Stainless', description: 'Meja sink & kabinet stainless, higienis untuk rumah/komersial.' } },
+              { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Rak & Meja Stainless', description: 'Rak/meja stainless kuat dan higienis, cocok gudang/komersial.' } },
+              { '@type': 'Offer', itemOffered: { '@type': 'Service', name: 'Handrail Tangga Stainless', description: 'Handrail ergonomis, finishing premium, aman untuk semua usia.' } }
+            ]
+          }
+        })}
+      </Script>
+
       <HeroSection />
       <LayananSection />
       <KeunggulanSection />

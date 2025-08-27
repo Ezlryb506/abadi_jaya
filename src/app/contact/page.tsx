@@ -1,12 +1,62 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export default function ContactPage() {
   
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
+  // Tinggi dinamis untuk map agar menyamai tinggi total kartu di sidebar kiri
+  const leftColRef = useRef<HTMLDivElement | null>(null);
+  const mapCardRef = useRef<HTMLDivElement | null>(null);
+  const mapHeaderRef = useRef<HTMLDivElement | null>(null);
+  const [mapHeight, setMapHeight] = useState<number | null>(null);
+
+  useEffect(() => {
+    const MIN_H = 24 * 16; // 24rem = 384px
+    const MAX_H = 90 * 16; // ~1440px (90rem) as a safe cap
+    let raf = 0;
+    const compute = () => {
+      const rect = leftColRef.current?.getBoundingClientRect();
+      const leftH = rect?.height ?? null;
+      if (!leftH) return;
+      // Kurangi tinggi header map card (judul + paddings + border bottom 1px)
+      const headerH = (mapHeaderRef.current?.offsetHeight ?? 0) + 1;
+      const target = leftH - headerH;
+      const clamped = Math.max(MIN_H, Math.min(target, MAX_H));
+      // Hindari loop: hanya update jika beda > 2px
+      if (mapHeight == null || Math.abs(clamped - mapHeight) > 2) {
+        setMapHeight(clamped);
+      }
+    };
+    // Hitung saat mount
+    raf = window.requestAnimationFrame(compute);
+    // Observasi perubahan ukuran konten sidebar kiri
+    const target = leftColRef.current;
+    let ro: ResizeObserver | null = null;
+    if (target && typeof ResizeObserver !== 'undefined') {
+      let ticking = false;
+      ro = new ResizeObserver(() => {
+        if (!ticking) {
+          ticking = true;
+          raf = window.requestAnimationFrame(() => {
+            ticking = false;
+            compute();
+          });
+        }
+      });
+      ro.observe(target);
+    }
+    // Recompute saat resize window
+    const onResize = () => compute();
+    window.addEventListener('resize', onResize);
+    return () => {
+      window.removeEventListener('resize', onResize);
+      if (ro && target) ro.unobserve(target);
+      if (raf) window.cancelAnimationFrame(raf);
+    };
+  }, [mapHeight]);
 
   // Fungsi untuk mendapatkan lokasi pengguna
   const getUserLocation = () => {
@@ -94,7 +144,7 @@ export default function ContactPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           
           {/* Contact Info Cards - Left Sidebar */}
-          <div className="lg:col-span-1 space-y-6">
+          <div ref={leftColRef} className="lg:col-span-1 space-y-6">
             {/* Phone Card */}
             <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
               <div className="flex items-center space-x-4">
@@ -115,7 +165,7 @@ export default function ContactPage() {
               </div>
             </div>
 
-            {/* Enhanced Address Card dengan Smart Route Finding */}
+            {/* Address Card: simple info only (no buttons) */}
             <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
               <div className="flex items-center space-x-4 mb-4">
                 <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
@@ -124,70 +174,6 @@ export default function ContactPage() {
                 <div>
                   <h3 className="font-semibold text-gray-800">Alamat</h3>
                   <p className="text-gray-600">Gg. Bunga, Wanasari, Kec. Cibitung, Kabupaten Bekasi, Jawa Barat 17520</p>
-                </div>
-              </div>
-              
-              {/* Smart Route Finding Section */}
-              <div className="space-y-4">
-                <h4 className="text-sm font-medium text-gray-700 mb-3">Pencarian Rute Cerdas:</h4>
-                
-                {/* Auto Route Button */}
-                <button
-                  onClick={getUserLocation}
-                  disabled={isLoadingLocation}
-                  className={`w-full flex items-center justify-center gap-2 py-3 px-4 rounded-lg text-sm font-medium transition-all transform hover:scale-105 shadow-md hover:shadow-lg ${
-                    isLoadingLocation
-                      ? 'bg-gray-400 text-white cursor-not-allowed'
-                      : 'bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700'
-                  }`}
-                >
-                  {isLoadingLocation ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      Mendeteksi Lokasi...
-                    </>
-                  ) : (
-                    <>
-                      <span className="text-lg">🚀</span>
-                      Rute Otomatis dari Lokasi Saya
-                    </>
-                  )}
-                </button>
-
-                {/* Location Status */}
-                {userLocation && (
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-center">
-                    <p className="text-green-700 text-sm font-medium">✅ Lokasi terdeteksi!</p>
-                    <p className="text-green-600 text-xs">Rute sedang dibuka di Google Maps</p>
-                  </div>
-                )}
-
-                {locationError && (
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-center">
-                    <p className="text-red-700 text-sm font-medium">❌ {locationError}</p>
-                  </div>
-                )}
-
-                {/* Manual Route Options */}
-                <div className="pt-2 border-t border-gray-200">
-                  <h5 className="text-xs font-medium text-gray-600 mb-2">Atau pilih platform:</h5>
-                  <div className="grid grid-cols-1 gap-2">
-                    <button
-                      onClick={openBengkelLocation}
-                      className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-red-500 to-red-600 text-white py-2 px-4 rounded-lg text-sm font-medium hover:from-red-600 hover:to-red-700 transition-all transform hover:scale-105 shadow-md hover:shadow-lg"
-                    >
-                      <span className="text-lg">📍</span>
-                      Lihat Lokasi Bengkel
-                    </button>
-                    <button
-                      onClick={openGoogleMaps}
-                      className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-2 px-4 rounded-lg text-sm font-medium hover:from-blue-600 hover:to-blue-700 transition-all transform hover:scale-105 shadow-md hover:shadow-lg"
-                    >
-                      <span className="text-lg">🗺️</span>
-                      Google Maps
-                    </button>
-                    
-                  </div>
                 </div>
               </div>
             </div>
@@ -205,6 +191,66 @@ export default function ContactPage() {
                 </div>
               </div>
             </div>
+
+            {/* Web Developer Card */}
+            <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+              <div className="flex items-center space-x-4 mb-3">
+                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                  <span className="text-2xl">👨‍💻</span>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-800">Web Developer (Fullstack)</h3>
+                  <p className="text-gray-600">Arizal Winangun</p>
+                  {/* Badge: Freelance Available */}
+                  <span className="inline-flex items-center mt-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-gradient-to-r from-orange-100 to-amber-100 text-orange-700 border border-orange-200">
+                    Freelance Available
+                  </span>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <p className="text-xs uppercase tracking-wide text-gray-500">Laporkan masalah</p>
+                <div className="flex items-center gap-2">
+                  <span>📞</span>
+                  <a
+                    href="tel:+6288809635936"
+                    className="text-orange-600 hover:text-orange-700 font-medium"
+                  >
+                    +62 888-0963-5936
+                  </a>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span>✉️</span>
+                  <a
+                    href="mailto:Arijalwinangun@gmail.com?subject=[Abadi%20Jaya]%20Inquiry%20Website&body=Halo%20Arizal%2C%20saya%20ingin%20..."
+                    className="text-blue-600 hover:text-blue-700 font-medium break-all"
+                  >
+                    Arijalwinangun@gmail.com
+                  </a>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span>💬</span>
+                  <a
+                    href="https://wa.me/6288809635936?text=Halo%20Arizal%2C%20saya%20ingin%20melaporkan%20masalah%20di%20website%20Abadi%20Jaya"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-green-600 hover:text-green-700 font-medium"
+                  >
+                    WhatsApp
+                  </a>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span>🗂️</span>
+                  <a
+                    href="#"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-indigo-600 hover:text-indigo-700 font-medium"
+                  >
+                    Lihat Portofolio (placeholder)
+                  </a>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Form & Map - Right Side */}
@@ -212,7 +258,7 @@ export default function ContactPage() {
 
             {/* Enhanced Map Card dengan Smart Route Finding */}
             <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
-              <div className="p-6 bg-gray-50 border-b border-gray-200">
+              <div ref={mapHeaderRef} className="p-6 bg-gray-50 border-b border-gray-200">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div>
                     <h3 className="text-lg font-semibold text-gray-800">Lokasi Bengkel</h3>
@@ -253,10 +299,14 @@ export default function ContactPage() {
                   </div>
                 </div>
               </div>
-              <div className="h-80 md:h-96">
+              <div
+                ref={mapCardRef}
+                className="overflow-hidden"
+                style={{ height: mapHeight ?? 384, maxHeight: 1440, minHeight: 384, transition: 'height 300ms ease' }}
+              >
                 <iframe
                   title="Lokasi Bengkel Las Abadi Jaya"
-                  src="https://www.google.com/maps?q=-6.254683,107.085045&z=15&output=embed"
+                  src="https://www.google.com/maps?q=-6.254683,107.085045&z=15&output=embed&hl=id&region=ID"
                   width="100%"
                   height="100%"
                   className="w-full h-full border-0"
@@ -264,6 +314,41 @@ export default function ContactPage() {
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
                 ></iframe>
+                {/* Fallback Helper: muncul halus di bawah peta untuk kasus ad blocker memblokir map/telemetry */}
+                <div className="p-4 bg-orange-50/60 border-t border-orange-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div className="text-sm text-orange-800 flex items-start gap-2">
+                    <span className="text-xl leading-none">🛡️</span>
+                    <p>
+                      Jika peta tidak tampil (kemungkinan diblokir extension), Anda masih bisa membuka lokasi langsung di Google Maps
+                      atau memulai rute otomatis dari lokasi Anda.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <a
+                      href="https://www.google.com/maps?q=-6.254683,107.085045&z=15"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-white text-orange-700 border border-orange-200 hover:bg-orange-100 transition shadow-sm"
+                    >
+                      <span>📍</span>
+                      <span>Buka di Google Maps</span>
+                    </a>
+                    <button
+                      type="button"
+                      onClick={getUserLocation}
+                      disabled={isLoadingLocation}
+                      className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium shadow-sm transition border ${
+                        isLoadingLocation
+                          ? 'bg-gray-300 text-gray-600 border-gray-300 cursor-not-allowed'
+                          : 'bg-gradient-to-r from-green-500 to-green-600 text-white border-green-600 hover:from-green-600 hover:to-green-700'
+                      }`}
+                      aria-live="polite"
+                    >
+                      <span>🚀</span>
+                      <span>{isLoadingLocation ? 'Menyiapkan Rute…' : 'Rute Otomatis'}</span>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

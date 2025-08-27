@@ -1,6 +1,4 @@
 import type { Metadata } from 'next';
-import { supabaseServer } from '@/lib/supabaseServer';
-import { slugify } from '@/lib/slug';
 
 export const metadata: Metadata = {
   title: 'Katalog Produk | Abadi Jaya',
@@ -19,32 +17,7 @@ export const metadata: Metadata = {
   }
 };
 
-export default async function CatalogLayout({ children }: { children: React.ReactNode }) {
-  // Ambil sebagian daftar produk untuk ItemList (maks 20 agar ringan)
-  const { data } = await supabaseServer
-    .from('products')
-    .select('id,name')
-    .eq('is_active', true)
-    .order('id', { ascending: false })
-    .limit(20);
-
-  const items = (data || []).map((p, idx) => ({
-    '@type': 'ListItem',
-    position: idx + 1,
-    url: `/catalog/${p.id}-${slugify(p.name || String(p.id))}`,
-    name: p.name,
-  }));
-
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'ItemList',
-    itemListElement: items,
-  };
-
-  return (
-    <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      {children}
-    </>
-  );
+export default function CatalogLayout({ children }: { children: React.ReactNode }) {
+  // Hilangkan fetching di layout agar navigasi cepat; JSON-LD ItemList disediakan di page.tsx
+  return <>{children}</>;
 }

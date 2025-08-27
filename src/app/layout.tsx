@@ -21,7 +21,7 @@ const isProd = process.env.NODE_ENV === 'production';
 
 export const metadata: Metadata = {
   title: "Bengkel Las Abadi Jaya - Spesialis Jasa Las & Fabrikasi Besi",
-  description: "Bengkel Las Abadi Jaya menyediakan jasa las dan fabrikasi besi berkualitas tinggi. Pagar, kanopi, railing tangga, pintu besi, jendela, teralis, dan stainless steel.",
+  description: "Bengkel Las Abadi Jaya — spesialis pagar besi, kanopi, railing, dan fabrikasi stainless. Desain kustom, harga transparan, garansi pengerjaan.",
   keywords: [
     "bengkel las",
     "jasa las",
@@ -53,7 +53,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "Bengkel Las Abadi Jaya",
-    description: "Spesialis Jasa Las & Fabrikasi Besi Berkualitas Tinggi",
+    description: "Spesialis pagar besi, kanopi, railing, dan fabrikasi stainless. Desain kustom, harga transparan, garansi pengerjaan.",
     type: "website",
     url: siteUrl,
     siteName: "Bengkel Las Abadi Jaya",
@@ -70,7 +70,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: "Bengkel Las Abadi Jaya - Spesialis Jasa Las & Fabrikasi Besi",
-    description: "Jasa las & fabrikasi besi: pagar, kanopi, railing, pintu, teralis, stainless.",
+    description: "Spesialis pagar besi, kanopi, railing, dan fabrikasi stainless. Desain kustom, harga transparan, garansi pengerjaan.",
     images: ['/api/og'], // sinkron dengan OG
   },
   icons: {

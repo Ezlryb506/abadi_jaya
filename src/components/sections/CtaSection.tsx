@@ -63,9 +63,9 @@ export default function CtaSection() {
             transition={{ duration: 0.6, ease: 'easeOut', delay: 0.15 }}
             viewport={{ once: true }}
           >
-            Konsultasikan kebutuhan las dan fabrikasi Anda dengan tim ahli kami.
+            Konsultasikan kebutuhan pagar, kanopi, railing, dan fabrikasi Anda.
             <span className="block mt-3 text-orange-600 font-semibold">
-              Dapatkan estimasi harga & desain sesuai budget dan visi Anda.
+              Dapatkan estimasi harga cepat dan rekomendasi desain sesuai anggaran.
             </span>
           </motion.p>
 
@@ -81,8 +81,8 @@ export default function CtaSection() {
             }}
           >
             <motion.button
-              aria-label="Konsultasi via WhatsApp"
-              title="Konsultasi via WhatsApp"
+              aria-label="Konsultasi via WhatsApp (respon cepat < 1x24 jam)"
+              title="Konsultasi via WhatsApp (respon cepat < 1x24 jam)"
               className="group relative inline-flex items-center justify-center bg-gradient-to-r from-orange-500 to-amber-400 text-white px-8 sm:px-10 py-4 sm:py-5 rounded-2xl text-lg sm:text-xl font-bold shadow-xl hover:from-orange-600 hover:to-amber-500 transition-all duration-150 transform will-change-transform focus:outline-none focus-visible:ring-4 focus-visible:ring-orange-300 cursor-pointer"
               onClick={() => window.open('https://wa.me/6289653754317?text=Halo! Saya ingin konsultasi tentang jasa las', '_blank')}
               variants={{ hidden: { y: 10, opacity: 0 }, show: { y: 0, opacity: 1 } }}
@@ -135,14 +135,14 @@ export default function CtaSection() {
             </motion.li>
             <motion.li className="inline-flex items-center gap-2 bg-orange-50 text-orange-700 px-3 py-1.5 rounded-full border border-orange-100 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md hover:bg-orange-100" variants={{ hidden: { y: 8, opacity: 0 }, show: { y: 0, opacity: 1 } }}>
               <span aria-hidden>🛡️</span>
-              Garansi Pengerjaan
+              Garansi Pengerjaan & Material
             </motion.li>
           </motion.ul>
 
           {/* Sub copy */}
           <motion.div className="mt-2 text-center" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.1 }} viewport={{ once: true }}>
             <p className="text-orange-500 text-sm sm:text-base font-medium">
-              🚀 Konsultasi GRATIS • ⚡ Estimasi CEPAT • 💎 Kualitas PREMIUM
+              🚀 Konsultasi gratis • ⚡ Estimasi cepat • 💎 Kualitas premium
             </p>
             <p className="mt-2 text-xs text-gray-500">Tidak ada biaya tersembunyi. Data Anda aman bersama kami.</p>
           </motion.div>

@@ -108,6 +108,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
   // Saat filter kategori aktif, hindari duplikasi row dari inner join yang bisa memotong hasil unik.
   // Strategi: ambil daftar ID unik terlebih dahulu (dengan join + range), lalu fetch detail berdasarkan ID tersebut.
   let prodData: ProductRow[] | null = null;
+  let totalCount = 0;
   if (filteringByCategory) {
     // Step 1: fetch IDs (unique) with the same filters and pagination
     let idQuery = supabaseServer
@@ -123,6 +124,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
     const ids = Array.from(
       new Set(((idRes.data || []) as Array<{ id: number | string }>).map(r => Number(r.id)))
     ).slice(0, PAGE_SIZE);
+    totalCount = idRes.count || ids.length || 0;
 
     // Step 2: fetch product details for those IDs (no join to avoid duplicates)
     const detailQuery = supabaseServer
@@ -146,33 +148,11 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
       .order('id', { ascending: false })
       .range(from, to);
     prodData = listRes.data as ProductRow[] | null;
+    totalCount = listRes.count || (prodData?.length || 0);
   }
 
-  // Prepare count query
-  let countQuery = supabaseServer.from('products')
-    .select(
-      filteringByCategory
-        ? 'id,product_categories!inner(name)'
-        : 'id,product_categories(name)'
-      , { count: 'exact', head: true }
-    )
-    .eq('is_active', true);
-
-  if (filteringByCategory) {
-    countQuery = countQuery.eq('product_categories.name', categoryParam);
-  }
-  if (qParam) {
-    const like = `%${qParam}%`;
-    countQuery = countQuery.or(`name.ilike.${like},description.ilike.${like}`);
-  }
-
-  // Cache DB result per (page, category, q) using unstable_cache
-  const fetchCatalogCached = unstable_cache(async () => {
-    const [countRes] = await Promise.all([countQuery]);
-    const totalInner = countRes.count || (prodData?.length || 0);
-    return { prodData, total: totalInner };
-  }, ['catalog', String(page), categoryParam || 'Semua', qParam || ''], { revalidate, tags: ['catalog'] });
-
+  // Cache wrapper ringan untuk menyatukan hasil (menghindari extra roundtrip)
+  const fetchCatalogCached = unstable_cache(async () => ({ prodData, total: totalCount }), ['catalog', String(page), categoryParam || 'Semua', qParam || ''], { revalidate, tags: ['catalog'] });
   const { prodData: prodDataCached, total } = await fetchCatalogCached();
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
