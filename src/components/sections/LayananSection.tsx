@@ -189,7 +189,7 @@ export default function LayananSection() {
             <button
               type="button"
               onClick={handlePrev}
-              className={`inline-flex items-center justify-center w-9 h-9 rounded-full bg-white border border-gray-200 shadow-sm hover:bg-gray-50 transition ${page === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`inline-flex items-center justify-center w-11 h-11 rounded-full bg-white border border-gray-300 shadow-sm hover:bg-gray-50 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300 ${page === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
               aria-label="Sebelumnya"
             >
               ‹
@@ -201,12 +201,13 @@ export default function LayananSection() {
                   <button
                     key={category}
                     onClick={() => setSelectedCategory(category)}
-                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 border ${
+                    className={`inline-flex items-center gap-2 px-5 py-2 rounded-full transition-all duration-300 border min-h-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300 ${
                       selectedCategory === category
-                        ? 'bg-orange-500 text-white shadow-lg border-orange-500'
-                        : 'bg-gray-50 text-gray-700 hover:bg-gray-100 border-gray-200'
+                        ? 'bg-orange-600 text-white shadow-lg border-orange-600'
+                        : 'bg-white text-gray-800 hover:bg-gray-50 border-gray-300'
                     }`}
                     aria-pressed={selectedCategory === category}
+                    aria-label={`Filter kategori: ${category}`}
                   >
                     <span className="whitespace-nowrap">{category}</span>
                   </button>
@@ -215,20 +216,26 @@ export default function LayananSection() {
             <button
               type="button"
               onClick={handleNext}
-              className={`inline-flex items-center justify-center w-9 h-9 rounded-full bg-white border border-gray-200 shadow-sm hover:bg-gray-50 transition ${page >= totalPages - 1 ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`inline-flex items-center justify-center w-11 h-11 rounded-full bg-white border border-gray-300 shadow-sm hover:bg-gray-50 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300 ${page >= totalPages - 1 ? 'opacity-50 cursor-not-allowed' : ''}`}
               aria-label="Berikutnya"
             >
               ›
             </button>
           </div>
-          <div className="mt-2 flex items-center justify-center gap-1">
+          <div className="mt-2 flex items-center justify-center gap-1.5">
             {Array.from({ length: totalPages }).map((_, i) => (
               <button
                 key={i}
                 onClick={() => setPage(i)}
                 aria-label={`Ke halaman ${i + 1}`}
-                className={`w-2.5 h-2.5 rounded-full transition ${i === page ? 'bg-orange-500' : 'bg-gray-300 hover:bg-gray-400'}`}
-              />
+                aria-current={i === page}
+                className="group w-11 h-11 flex items-center justify-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300"
+              >
+                <span
+                  aria-hidden
+                  className={`w-2.5 h-2.5 rounded-full transition ${i === page ? 'bg-orange-600' : 'bg-gray-300 group-hover:bg-gray-400'}`}
+                />
+              </button>
             ))}
           </div>
         </div>
@@ -264,9 +271,11 @@ export default function LayananSection() {
               
               {/* Action Button: always visible on mobile, hover-reveal on ≥sm */}
               <div className="mt-4 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-300">
-                <button 
-                  className="w-full bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-600 transition-colors cursor-pointer"
+                <button
+                  className="w-full bg-orange-600 text-white py-3 rounded-lg hover:bg-orange-700 transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300 min-h-[44px]"
                   onClick={() => window.open('https://wa.me/6289653754317?text=Halo! Saya ingin konsultasi tentang jasa las', '_blank')}
+                  aria-label="Konsultasi sekarang via WhatsApp"
+                  title="Konsultasi sekarang via WhatsApp"
                 >
                   Konsultasi Sekarang
                 </button>

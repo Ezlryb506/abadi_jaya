@@ -473,7 +473,8 @@ export default function CatalogClient({
                   if (page && page > 1) params.set('page', String(page));
                   const qs = params.toString();
                   const detailHref = `/catalog/${product.id}-${slugify(product.name)}${qs ? `?${qs}` : ''}`;
-                  router.push(detailHref, { scroll: false });
+                  // Biarkan Next.js reset scroll ke atas saat masuk halaman detail
+                  router.push(detailHref);
                 }}
                 onMouseEnter={() => {
                   const params = new URLSearchParams();
@@ -502,7 +503,8 @@ export default function CatalogClient({
                     if (page && page > 1) params.set('page', String(page));
                     const qs = params.toString();
                     const detailHref = `/catalog/${product.id}-${slugify(product.name)}${qs ? `?${qs}` : ''}`;
-                    router.push(detailHref, { scroll: false });
+                    // Biarkan Next.js reset scroll ke atas saat masuk halaman detail
+                    router.push(detailHref);
                   }
                 }}
                 tabIndex={0}
