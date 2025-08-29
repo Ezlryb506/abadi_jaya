@@ -19,6 +19,7 @@ type ProductRow = {
   price: number | null;
   image_url: string | null;
   category_id: number | null;
+  tags?: string[] | null;
 };
 
 const PAGE_SIZE = 12;
@@ -52,23 +53,45 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
   const canonical = `/catalog${tail}` || '/catalog';
   const prev = page > 2 ? `/catalog?page=${page - 1}${category}${q}` : page === 2 ? `/catalog${category || q ? `?${[category.replace(/^&/, ''), q.replace(/^&/, '')].filter(Boolean).join('&')}` : ''}` : undefined;
   const next = `/catalog?page=${page + 1}${category}${q}`; // hint
-  // Build meta description based on category description (if any)
+  // Build rich meta description based on category description and context
   let metaDescription: string | undefined = undefined;
   const categoryName = qs?.category && qs.category !== 'Semua' ? String(qs.category) : '';
+  const searchQuery = qs?.q ? String(qs.q) : '';
+  
   if (categoryName) {
     try {
       const baseRaw = await getCategoryDescriptionCached(categoryName);
       const base = (baseRaw || '').toString().trim();
       if (base) {
-        const truncated = base.length > 165 ? `${base.slice(0, 160).replace(/\s+\S*$/, '')}…` : base;
-        metaDescription = truncated;
+        const truncated = base.length > 140 ? `${base.slice(0, 135).replace(/\s+\S*$/, '')}…` : base;
+        metaDescription = `${truncated} Bengkel Las Abadi Jaya - Konsultasi gratis, garansi pengerjaan, harga transparan.`;
+      } else {
+        // Fallback descriptions per kategori
+        const categoryDescriptions: Record<string, string> = {
+          'Pagar': 'Pagar besi minimalis & modern berkualitas tinggi. Kustomisasi ukuran, motif, dan finishing. Tahan cuaca, awet, dan aman.',
+          'Kanopi': 'Kanopi besi untuk teras, garasi, dan carport. Material premium (spandek, polycarbonate), pemasangan rapi & profesional.',
+          'Railing': 'Railing balkon, railing tangga besi & stainless steel. Desain aman, ergonomis, dan estetik untuk rumah tinggal maupun komersial.',
+          'Pintu Besi': 'Pintu besi rumah & gerbang kuat dan tahan lama. Kustomisasi model, ukuran, dan finishing sesuai kebutuhan.',
+          'Jendela': 'Jendela besi & teralis berkualitas. Aman, menarik, dengan opsi kasa nyamuk. Cocok untuk rumah tinggal.',
+          'Teralis': 'Teralis jendela besi artistik dan fungsional. Melindungi rumah dengan tetap menjaga sirkulasi udara.',
+          'Stainless': 'Produk stainless steel premium: kitchen set, rak, meja, handrail. Tahan karat, higienis, finishing halus.',
+          'Minimalis': 'Desain minimalis modern untuk pagar, kanopi, railing. Simpel, elegan, sesuai arsitektur kontemporer.',
+        };
+        const categoryDesc = categoryDescriptions[categoryName] || `Produk ${categoryName.toLowerCase()} berkualitas dari Bengkel Las Abadi Jaya`;
+        metaDescription = `${categoryDesc} Konsultasi gratis, garansi pengerjaan, harga transparan.`;
       }
     } catch {
-      // noop, fallback below
+      // noop, use fallback below
     }
   }
+  
+  if (searchQuery && !categoryName) {
+    metaDescription = `Hasil pencarian "${searchQuery}" di katalog Bengkel Las Abadi Jaya. Temukan produk las & fabrikasi besi berkualitas - konsultasi gratis.`;
+  }
+  
   if (!metaDescription) {
-    metaDescription = 'Jelajahi katalog produk las dan fabrikasi besi: pagar, kanopi, railing, teralis, dan lainnya. Pilih kategori untuk menemukan produk yang Anda butuhkan.';
+    const pageContext = page > 1 ? ` (Halaman ${page})` : '';
+    metaDescription = `Jelajahi katalog lengkap produk las & fabrikasi besi Abadi Jaya${pageContext}. Pagar, kanopi, railing, teralis, stainless. Konsultasi gratis, garansi pengerjaan.`;
   }
   const baseTitle = 'Katalog Produk | Abadi Jaya';
   const title = categoryName ? `Katalog: ${categoryName} | Abadi Jaya` : baseTitle;
@@ -126,7 +149,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
       .eq('product_categories.name', categoryParam);
     if (qParam) {
       const like = `%${qParam}%`;
-      idQuery = idQuery.or(`name.ilike.${like},description.ilike.${like}`);
+      idQuery = idQuery.or(`name.ilike.${like},description.ilike.${like},tags.cs.{"${qParam}"}`);
     }
     const idRes = await idQuery.order('id', { ascending: false }).range(from, to);
     const ids = Array.from(
@@ -137,7 +160,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
     // Step 2: fetch product details for those IDs (no join to avoid duplicates)
     const detailQuery = supabaseServer
       .from('products')
-      .select('id,name,description,price,image_url,category_id')
+      .select('id,name,description,price,image_url,category_id,tags')
       .in('id', ids)
       .or('is_active.eq.true,is_active.is.null');
     // keep output order by id desc similar to list
@@ -146,11 +169,11 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
   } else {
     // Tanpa filter kategori, gunakan query biasa dengan range
     let listQuery = supabaseServer.from('products')
-      .select('id,name,description,price,image_url,category_id', { count: 'exact' })
+      .select('id,name,description,price,image_url,category_id,tags', { count: 'exact' })
       .or('is_active.eq.true,is_active.is.null');
     if (qParam) {
       const like = `%${qParam}%`;
-      listQuery = listQuery.or(`name.ilike.${like},description.ilike.${like}`);
+      listQuery = listQuery.or(`name.ilike.${like},description.ilike.${like},tags.cs.{"${qParam}"}`);
     }
     const listRes = await listQuery
       .order('id', { ascending: false })
@@ -184,7 +207,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
     switch ((name || '').toLowerCase()) {
       case 'pagar': return '🏗️';
       case 'kanopi': return '🚗';
-      case 'railing tangga': return '🪜';
+      case 'railing': return '🪜';
       case 'pintu besi': return '🚪';
       case 'jendela': return '🪟';
       case 'teralis': return '🔒';
@@ -206,6 +229,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
       image: p.image_url || categoryIcon(catName),
       features: [],
       specifications: {},
+      tags: Array.isArray(p.tags) ? p.tags : [],
     };
   });
 

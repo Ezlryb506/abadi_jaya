@@ -2,8 +2,14 @@
 User-agent: *
 Allow: /
 
+# *
+User-agent: *
+Disallow: /admin-dashboard
+Disallow: /api/
+Disallow: /user-dashboard
+
 # Host
-Host: http://localhost:3000
+Host: http://localhost:3000 #di production sudah saya set variablenya menjadi https://abadi-jaya.vercel.app
 
 # Sitemaps
-Sitemap: http://localhost:3000/sitemap.xml
+Sitemap: http://localhost:3000 #di production sudah saya set variablenya menjadi https://abadi-jaya.vercel.app/sitemap.xml

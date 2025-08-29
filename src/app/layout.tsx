@@ -104,6 +104,9 @@ export default function RootLayout({
             <link rel="dns-prefetch" href={`https://${supabaseHost}`} />
           </>
         )}
+        {/* Preload critical images */}
+        <link rel="preload" as="image" href="/apple-touch-icon.png" />
+        <link rel="preload" as="image" href="/api/og" />
         {/* JSON-LD: WebSite dengan SearchAction untuk membantu mesin pencari memahami fitur pencarian */}
         <Script id="website-searchaction" type="application/ld+json">
           {JSON.stringify({

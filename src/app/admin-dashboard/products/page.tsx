@@ -37,12 +37,16 @@ export default function AdminPage() {
     loadingImages,
     imagePickerOpen,
     selectedExistingUrl,
+    usedImageUrls,
     openImagePicker,
     closeImagePicker,
     selectExistingImage,
     clearSelectedExisting,
     addTag,
     removeTag,
+    // cache utilities
+    refreshImageCache,
+    imagesCacheTime,
     // pagination setters
     setPage,
     setPageSize,
@@ -248,12 +252,15 @@ export default function AdminPage() {
         loadingImages={loadingImages}
         imagePickerOpen={imagePickerOpen}
         selectedExistingUrl={selectedExistingUrl}
+        usedImageUrls={usedImageUrls}
         onOpenImagePicker={openImagePicker}
         onCloseImagePicker={closeImagePicker}
         onSelectExistingImage={selectExistingImage}
         onClearSelectedExisting={clearSelectedExisting}
         addTag={addTag}
         removeTag={removeTag}
+        onRefreshImageCache={refreshImageCache}
+        imagesCacheTime={imagesCacheTime}
       />
       </section>
 

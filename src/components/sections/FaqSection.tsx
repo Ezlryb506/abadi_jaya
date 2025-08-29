@@ -20,6 +20,19 @@ export default function FaqSection() {
       q: 'Apakah menerima desain custom?',
       a: 'Tentu. Bawa referensi Anda, kami bantu pilih material, ukuran, dan finishing sesuai anggaran.'
     }
+    ,
+    {
+      q: 'Apakah kustomisasi/desain berbayar?',
+      a: 'Tidak. Kustomisasi gratis untuk penyesuaian ukuran, warna, bahan, dan penempatan logo. Biaya hanya mengikuti perubahan material/komponen yang disepakati.'
+    },
+    {
+      q: 'Mengapa harga di katalog bisa berbeda saat konsultasi?',
+      a: 'Harga di katalog bersifat estimasi dan tidak diperbarui harian karena fluktuasi bahan. Kami akan mengonfirmasi estimasi terbaru setelah konsultasi sebelum produksi dimulai.'
+    },
+    {
+      q: 'Mengapa ada beberapa gambar terlihat seperti hasil AI?',
+      a: 'Sebagian gambar adalah ilustrasi AI sebagai contoh visual. Hasil akhir akan mengikuti brief dan referensi Anda; kami pastikan produk nyata sesuai spesifikasi yang disepakati.'
+    }
   ];
 
   return (

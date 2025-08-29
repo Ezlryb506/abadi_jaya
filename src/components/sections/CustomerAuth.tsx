@@ -190,7 +190,6 @@ function CustomerAuthInner() {
         const redirectUrl = searchParams.get('redirect') || '/user-dashboard';
         router.replace(redirectUrl);
       } else {
-        // Registrasi disederhanakan: wajib hanya email & password; nama/telepon opsional
         if (!formData.email || !formData.password) {
           setError('Email dan password harus diisi');
           return;
@@ -208,7 +207,6 @@ function CustomerAuthInner() {
           setError('Password ini telah muncul dalam kebocoran data. Mohon gunakan password lain yang lebih kuat dan unik.');
           return;
         }
-        // Nomor telepon opsional; jika diisi, validasi formatnya
         if ((formData.phone || '').trim() && !isValidPhone(formData.phone)) {
           setError('Nomor telepon tidak valid (gunakan format 08xxxx / 62xxxx / +62xxxx)');
           return;
@@ -325,7 +323,7 @@ function CustomerAuthInner() {
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">Nama Lengkap</label>
               <div className="relative">
-                <input id="name" name="name" type="text" value={formData.name} onChange={handleChange} className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all pl-10 bg-white text-gray-900 placeholder-gray-500 font-medium" autoComplete="name" placeholder="Masukkan nama lengkap (opsional)" />
+                <input id="name" name="name" type="text" value={formData.name} onChange={handleChange} className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all pl-10 bg-white text-gray-900 placeholder-gray-500 font-medium" autoComplete="name" placeholder="Masukkan nama lengkap" />
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">👤</span>
               </div>
             </div>
@@ -336,7 +334,7 @@ function CustomerAuthInner() {
             <div>
               <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">Nomor Telepon</label>
               <div className="relative">
-                <input id="phone" name="phone" type="tel" value={formData.phone} onChange={handleChange} className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all pl-10 bg-white text-gray-900 placeholder-gray-500 font-medium" autoComplete="tel" inputMode="tel" maxLength={16} placeholder="Masukkan nomor telepon (opsional)" />
+                <input id="phone" name="phone" type="tel" value={formData.phone} onChange={handleChange} className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all pl-10 bg-white text-gray-900 placeholder-gray-500 font-medium" autoComplete="tel" inputMode="tel" maxLength={16} placeholder="Masukkan nomor telepon" />
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">📱</span>
               </div>
             </div>

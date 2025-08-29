@@ -76,17 +76,64 @@ export default function useProductsAdmin() {
   const [loadingImages, setLoadingImages] = useState(false);
   const [imagePickerOpen, setImagePickerOpen] = useState(false);
   const [selectedExistingUrl, setSelectedExistingUrl] = useState<string | null>(null);
+  // State untuk tracking gambar yang sudah digunakan di database
+  const [usedImageUrls, setUsedImageUrls] = useState<Set<string>>(new Set());
+  // Caching state
+  const [imagesCacheTime, setImagesCacheTime] = useState<number>(0);
+  const [imagesCacheExpiry] = useState<number>(60 * 60 * 1000); // 60 menit TTL
 
   const openImagePicker = async () => {
     setImagePickerOpen(true);
-    await fetchExistingImages();
+    // Hanya fetch jika cache expired atau belum ada data
+    const now = Date.now();
+    if (existingImages.length === 0 || (now - imagesCacheTime) > imagesCacheExpiry) {
+      console.log('[Cache] Fetching images: cache expired atau kosong');
+      await fetchExistingImages();
+    } else {
+      console.log('[Cache] Menggunakan cached images, sisa TTL:', Math.round((imagesCacheExpiry - (now - imagesCacheTime)) / 1000), 'detik');
+    }
+    // Fetch used images setiap kali buka modal untuk data terbaru
+    await fetchUsedImageUrls();
+  };
+
+  // Fungsi untuk mengambil daftar URL gambar yang sudah digunakan di database
+  const fetchUsedImageUrls = async () => {
+    try {
+      console.log('[Usage Check] Fetching used image URLs dari database...');
+      const { data, error } = await supabase
+        .from('products')
+        .select('image_url')
+        .not('image_url', 'is', null);
+      
+      if (error) throw error;
+      
+      const urls = new Set<string>();
+      (data || []).forEach(product => {
+        if (product.image_url && typeof product.image_url === 'string') {
+          urls.add(product.image_url);
+        }
+      });
+      
+      console.log('[Usage Check] Found', urls.size, 'unique used images');
+      console.log('[Usage Check] Sample URLs from DB:', Array.from(urls).slice(0, 3));
+      setUsedImageUrls(urls);
+    } catch (err) {
+      console.error('[Usage Check] Error fetching used image URLs:', err);
+      // Jangan tampilkan toast error karena ini background check
+    }
   };
 
   const closeImagePicker = () => setImagePickerOpen(false);
 
-  const fetchExistingImages = async () => {
+  const fetchExistingImages = async (forceRefresh: boolean = false) => {
+    // Jika bukan force refresh dan cache masih valid, skip
+    if (!forceRefresh && existingImages.length > 0 && (Date.now() - imagesCacheTime) < imagesCacheExpiry) {
+      return;
+    }
+    
     setLoadingImages(true);
     try {
+      console.log('[Cache] Fetching images dari Supabase Storage...');
       // List file di folder products/
       const { data, error } = await supabase.storage.from(BUCKET).list('products', { limit: 100, sortBy: { column: 'name', order: 'asc' } });
       if (error) throw error;
@@ -104,7 +151,10 @@ export default function useProductsAdmin() {
         }
       }
       setExistingImages(files);
-    } catch {
+      setImagesCacheTime(Date.now());
+      console.log(`[Cache] Images cached successfully: ${files.length} items`);
+    } catch (err) {
+      console.error('[Cache] Error fetching images:', err);
       // silent fail: biarkan grid kosong jika gagal
     } finally {
       setLoadingImages(false);
@@ -386,6 +436,7 @@ export default function useProductsAdmin() {
     loadingImages,
     imagePickerOpen,
     selectedExistingUrl,
+    usedImageUrls,
     // setters
     setEditing,
     setPage,
@@ -403,6 +454,9 @@ export default function useProductsAdmin() {
     openImagePicker,
     closeImagePicker,
     fetchExistingImages,
+    // Cache utilities
+    refreshImageCache: () => fetchExistingImages(true),
+    imagesCacheTime,
     selectExistingImage,
     clearSelectedExisting,
     addTag,

@@ -20,12 +20,15 @@ interface ProductFormProps {
   loadingImages: boolean;
   imagePickerOpen: boolean;
   selectedExistingUrl: string | null;
+  usedImageUrls: Set<string>;
   onOpenImagePicker: () => void;
   onCloseImagePicker: () => void;
   onSelectExistingImage: (url: string) => void;
   onClearSelectedExisting: () => void;
   addTag: (raw: string) => void;
   removeTag: (tag: string) => void;
+  onRefreshImageCache: () => void;
+  imagesCacheTime: number;
 }
 
 export default function ProductForm({
@@ -42,12 +45,15 @@ export default function ProductForm({
   loadingImages,
   imagePickerOpen,
   selectedExistingUrl,
+  usedImageUrls,
   onOpenImagePicker,
   onCloseImagePicker,
   onSelectExistingImage,
   onClearSelectedExisting,
   addTag,
   removeTag,
+  onRefreshImageCache,
+  imagesCacheTime,
 }: ProductFormProps) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const objectUrlRef = useRef<string | null>(null);
@@ -436,10 +442,30 @@ export default function ProductForm({
             aria-label="Pilih Gambar dari Storage"
           >
             <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-4 border-b bg-white/95 supports-[backdrop-filter]:backdrop-blur">
-              <h3 className="text-lg font-semibold">Pilih Gambar dari Storage</h3>
-              <button onClick={onCloseImagePicker} className="p-2 rounded-lg hover:bg-gray-100" aria-label="Tutup">
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
-              </button>
+              <div className="flex items-center gap-3">
+                <h3 className="text-lg font-semibold">Pilih Gambar dari Storage</h3>
+                {imagesCacheTime > 0 && (
+                  <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                    Cache: {Math.round((Date.now() - imagesCacheTime) / 1000)}s ago
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={onRefreshImageCache}
+                  disabled={loadingImages}
+                  className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50" 
+                  aria-label="Refresh gambar"
+                  title="Refresh daftar gambar"
+                >
+                  <svg className={`w-4 h-4 ${loadingImages ? 'animate-spin' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                </button>
+                <button onClick={onCloseImagePicker} className="p-2 rounded-lg hover:bg-gray-100" aria-label="Tutup">
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+              </div>
             </div>
             <div className="flex-1 min-h-0 p-3 sm:p-5 overflow-y-auto">
               {loadingImages ? (
@@ -450,30 +476,62 @@ export default function ProductForm({
                 <div className="grid grid-cols-2 min-[480px]:grid-cols-3 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3">
                   {existingImages
                     .filter(img => !img.name.startsWith('.') && !img.path.includes('.emptyFolderPlaceholder'))
-                    .map(img => (
-                    <button
-                      key={img.path}
-                      type="button"
-                      onClick={() => onSelectExistingImage(img.url)}
-                      className="group rounded-xl border hover:shadow-md transition focus:outline-none focus:ring-2 focus:ring-orange-300 flex flex-col items-center p-2"
-                      title={img.name}
-                    >
-                      <div className="relative w-full aspect-[4/3]">
-                        <Image
-                          src={img.url}
-                          alt={img.name}
-                          fill
-                          className="object-cover group-hover:scale-[1.02] transition-transform rounded-md"
-                          sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
-                          loading="lazy"
-                          decoding="async"
-                        />
-                        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/50 to-transparent p-2 rounded-b-md">
-                          <p className="text-[11px] text-white truncate">{img.name}</p>
+                    .map(img => {
+                      // Ekstrak filename dari signed URL untuk matching
+                      const extractFilename = (url: string) => {
+                        try {
+                          const urlObj = new URL(url);
+                          const pathParts = urlObj.pathname.split('/');
+                          return pathParts[pathParts.length - 1];
+                        } catch {
+                          return url;
+                        }
+                      };
+
+                      // Cek apakah gambar sudah digunakan berdasarkan filename
+                      const currentFilename = extractFilename(img.url);
+                      const isUsed = Array.from(usedImageUrls).some(usedUrl => {
+                        const usedFilename = extractFilename(usedUrl);
+                        return usedFilename === currentFilename;
+                      });
+
+                      return (
+                      <button
+                        key={img.path}
+                        type="button"
+                        onClick={() => onSelectExistingImage(img.url)}
+                        className={`group rounded-xl border hover:shadow-md transition focus:outline-none focus:ring-2 focus:ring-orange-300 flex flex-col items-center p-2 relative ${
+                          isUsed ? 'ring-2 ring-green-300 bg-green-50' : ''
+                        }`}
+                        title={`${img.name}${isUsed ? ' (Sudah digunakan di katalog)' : ''}`}
+                      >
+                        <div className="relative w-full aspect-[4/3]">
+                          <Image
+                            src={img.url}
+                            alt={img.name}
+                            fill
+                            className="object-cover group-hover:scale-[1.02] transition-transform rounded-md"
+                            sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
+                            loading="lazy"
+                            decoding="async"
+                          />
+                          {/* Used indicator - checkmark overlay */}
+                          {isUsed && (
+                            <div className="absolute top-2 right-2 z-10">
+                              <div className="flex items-center justify-center w-6 h-6 bg-green-500 rounded-full shadow-lg">
+                                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                </svg>
+                              </div>
+                            </div>
+                          )}
+                          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/50 to-transparent p-2 rounded-b-md">
+                            <p className="text-[11px] text-white truncate">{img.name}</p>
+                          </div>
                         </div>
-                      </div>
-                    </button>
-                  ))}
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </div>

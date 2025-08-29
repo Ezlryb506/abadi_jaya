@@ -293,6 +293,22 @@ export default async function ProductDetailPage({ params, searchParams }: Props)
               <div className="text-3xl font-bold text-orange-600 mb-3">
                 {product.price ? formatRupiah(product.price) : 'Hubungi Kami'}
               </div>
+              {/* Important Notices / Badges */}
+              <div className="mb-5">
+                <div className="flex flex-wrap gap-2" aria-label="Informasi penting">
+                  <span className="inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 select-none">
+                    <span aria-hidden>✔️</span>
+                    <span>Bisa Kustom</span>
+                  </span>
+                  <span className="inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 select-none">
+                    <span aria-hidden>💱</span>
+                    <span>Harga Dapat Berubah</span>
+                  </span>
+                </div>
+                <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50/60 text-amber-900 p-3 text-sm leading-relaxed" role="note">
+                  Harga yang ditampilkan di katalog bersifat estimasi dan tidak diperbarui harian karena fluktuasi bahan-bahan. <br></br>Kami akan mengonfirmasi estimasi terbaru setelah anda berkonsultasi atau sebelum produksi dimulai.
+                </div>
+              </div>
               <p className="text-gray-700 leading-relaxed">{product.description || 'Deskripsi belum tersedia.'}</p>
               {uniqueTags.length > 0 && (
                 <div className="mt-5" aria-label="Tag produk">

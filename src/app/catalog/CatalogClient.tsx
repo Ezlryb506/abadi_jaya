@@ -18,6 +18,7 @@ export interface ProductUI {
   image: string;
   features: string[];
   specifications: Record<string, string>;
+  tags: string[];
 }
 
 export default function CatalogClient({
@@ -518,12 +519,12 @@ export default function CatalogClient({
                       src={product.image}
                       alt={product.name}
                       fill
-                      className="object-cover"
+                      className="object-contain"
                       priority={idx === 0}
                       fetchPriority={idx === 0 ? 'high' : 'auto'}
                       loading={idx === 0 ? 'eager' : 'lazy'}
                       quality={70}
-                      sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
+                      sizes="(min-width: 1280px) 300px, (min-width: 1024px) 280px, (min-width: 768px) 240px, (min-width: 640px) 200px, 180px"
                     />
                   ) : (
                     <span className="absolute inset-0 flex items-center justify-center text-6xl">{product.image}</span>
