@@ -61,7 +61,7 @@ export const metadata: Metadata = {
     locale: 'id_ID',
     images: [
       {
-        url: "/api/og", // TODO: akan dibuat di tahap berikutnya
+        url: "/api/og?title=Bengkel%20Las%20Abadi%20Jaya%20-%20Spesialis%20Jasa%20Las%20%26%20Fabrikasi%20Besi",
         width: 1200,
         height: 630,
         alt: "Bengkel Las Abadi Jaya - Spesialis Jasa Las & Fabrikasi Besi",
@@ -72,7 +72,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: "Bengkel Las Abadi Jaya - Spesialis Jasa Las & Fabrikasi Besi",
     description: "Spesialis pagar besi, kanopi, railing, dan fabrikasi stainless. Desain kustom, harga transparan, garansi pengerjaan.",
-    images: ['/api/og'], // sinkron dengan OG
+    images: ['/api/og?title=Bengkel%20Las%20Abadi%20Jaya%20-%20Spesialis%20Jasa%20Las%20%26%20Fabrikasi%20Besi'],
   },
   icons: {
     icon: [{ url: '/favicon.ico' }],
@@ -104,9 +104,11 @@ export default function RootLayout({
             <link rel="dns-prefetch" href={`https://${supabaseHost}`} />
           </>
         )}
-        {/* Preload critical images */}
-        <link rel="preload" as="image" href="/apple-touch-icon.png" />
-        <link rel="preload" as="image" href="/api/og" />
+        {/* Fallback meta description to ensure Lighthouse detection; page-level metadata can override */}
+        <meta
+          name="description"
+          content="Bengkel Las Abadi Jaya — spesialis pagar besi, kanopi, railing, dan fabrikasi stainless. Desain kustom, harga transparan, garansi pengerjaan."
+        />
         {/* JSON-LD: WebSite dengan SearchAction untuk membantu mesin pencari memahami fitur pencarian */}
         <Script id="website-searchaction" type="application/ld+json">
           {JSON.stringify({

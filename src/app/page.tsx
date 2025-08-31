@@ -131,6 +131,24 @@ export default function Home() {
           }
         })}
       </Script>
+      
+      {/* JSON-LD: FAQPage (sinkron dengan konten FaqSection) */}
+      <Script id="ld-faq" type="application/ld+json">
+        {JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'FAQPage',
+          mainEntity: [
+            { '@type': 'Question', name: 'Apakah bisa konsultasi dan survei dahulu?', acceptedAnswer: { '@type': 'Answer', text: 'Bisa. Konsultasi gratis via WhatsApp. Kami juga dapat menjadwalkan survei lokasi sesuai kebutuhan.' } },
+            { '@type': 'Question', name: 'Bagaimana sistem pembayaran (DP/termin)?', acceptedAnswer: { '@type': 'Answer', text: 'Umumnya DP di awal, pelunasan setelah pekerjaan selesai/terverifikasi. Skema termin fleksibel sesuai proyek.' } },
+            { '@type': 'Question', name: 'Berapa lama waktu pengerjaan?', acceptedAnswer: { '@type': 'Answer', text: 'Bergantung jenis dan skala pekerjaan. Setelah survei, kami berikan estimasi waktu yang jelas.' } },
+            { '@type': 'Question', name: 'Apakah ada garansi?', acceptedAnswer: { '@type': 'Answer', text: 'Ada. Garansi pengerjaan dan material sesuai ketentuan pada invoice/kontrak.' } },
+            { '@type': 'Question', name: 'Apakah menerima desain custom?', acceptedAnswer: { '@type': 'Answer', text: 'Tentu. Bawa referensi Anda, kami bantu pilih material, ukuran, dan finishing sesuai anggaran.' } },
+            { '@type': 'Question', name: 'Apakah kustomisasi/desain berbayar?', acceptedAnswer: { '@type': 'Answer', text: 'Tidak. Kustomisasi gratis untuk penyesuaian ukuran, warna, bahan, dan penempatan logo. Biaya hanya mengikuti perubahan material/komponen yang disepakati.' } },
+            { '@type': 'Question', name: 'Mengapa harga di katalog bisa berbeda saat konsultasi?', acceptedAnswer: { '@type': 'Answer', text: 'Harga di katalog bersifat estimasi dan tidak diperbarui harian karena fluktuasi bahan. Kami akan mengonfirmasi estimasi terbaru setelah konsultasi sebelum produksi dimulai.' } },
+            { '@type': 'Question', name: 'Mengapa ada beberapa gambar terlihat seperti hasil AI?', acceptedAnswer: { '@type': 'Answer', text: 'Sebagian gambar adalah ilustrasi AI sebagai contoh visual. Hasil akhir akan mengikuti brief dan referensi Anda; kami pastikan produk nyata sesuai spesifikasi yang disepakati.' } }
+          ]
+        })}
+      </Script>
 
       <HeroSection />
       <LayananSection />

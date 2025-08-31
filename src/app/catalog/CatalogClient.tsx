@@ -60,6 +60,41 @@ export default function CatalogClient({
   const filterSectionRef = useRef<HTMLDivElement | null>(null);
   const navStartRef = useRef<number | null>(null);
 
+  // Determine how many columns are visible (to apply priority to first-row images)
+  const [cols, setCols] = useState<number>(4);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mqXl = window.matchMedia('(min-width: 1280px)'); // xl: 4 cols
+    const mqLg = window.matchMedia('(min-width: 1024px)'); // lg: 3 cols
+    const mqMd = window.matchMedia('(min-width: 768px)');  // md: 2 cols
+    const update = () => {
+      const c = mqXl.matches ? 4 : mqLg.matches ? 3 : mqMd.matches ? 2 : 1;
+      setCols(c);
+    };
+    update();
+    // Subscribe to changes
+    try {
+      mqXl.addEventListener?.('change', update);
+      mqLg.addEventListener?.('change', update);
+      mqMd.addEventListener?.('change', update);
+      return () => {
+        mqXl.removeEventListener?.('change', update);
+        mqLg.removeEventListener?.('change', update);
+        mqMd.removeEventListener?.('change', update);
+      };
+    } catch {
+      // Fallback for older browsers
+      mqXl.addListener?.(update);
+      mqLg.addListener?.(update);
+      mqMd.addListener?.(update);
+      return () => {
+        mqXl.removeListener?.(update);
+        mqLg.removeListener?.(update);
+        mqMd.removeListener?.(update);
+      };
+    }
+  }, []);
+
 
   useEffect(() => {
     // Check user authentication (client-only)
@@ -463,146 +498,155 @@ export default function CatalogClient({
         <div className="relative min-h-[420px] md:min-h-[520px] lg:min-h-[560px]" aria-busy={isNavigating || skeletonVisible}>
           {/* Actual products grid with fade transition */}
           <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 transition-opacity duration-300 ${(isNavigating || skeletonVisible) ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
-            {filteredProducts.map((product, idx) => (
-              <div
-                key={product.id}
-                className="group relative bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer flex flex-col focus:outline-none focus:ring-2 focus:ring-orange-400/60 max-w-sm w-full mx-auto md:max-w-none"
-                onClick={() => {
-                  const params = new URLSearchParams();
-                  if (selectedCategory && selectedCategory !== 'Semua') params.set('category', selectedCategory);
-                  if (searchQuery) params.set('q', searchQuery);
-                  if (page && page > 1) params.set('page', String(page));
-                  const qs = params.toString();
-                  const detailHref = `/catalog/${product.id}-${slugify(product.name)}${qs ? `?${qs}` : ''}`;
-                  // Biarkan Next.js reset scroll ke atas saat masuk halaman detail
-                  router.push(detailHref);
-                }}
-                onMouseEnter={() => {
-                  const params = new URLSearchParams();
-                  if (selectedCategory && selectedCategory !== 'Semua') params.set('category', selectedCategory);
-                  if (searchQuery) params.set('q', searchQuery);
-                  if (page && page > 1) params.set('page', String(page));
-                  const qs = params.toString();
-                  const detailHref = `/catalog/${product.id}-${slugify(product.name)}${qs ? `?${qs}` : ''}`;
-                  router.prefetch?.(detailHref);
-                }}
-                onFocus={() => {
-                  const params = new URLSearchParams();
-                  if (selectedCategory && selectedCategory !== 'Semua') params.set('category', selectedCategory);
-                  if (searchQuery) params.set('q', searchQuery);
-                  if (page && page > 1) params.set('page', String(page));
-                  const qs = params.toString();
-                  const detailHref = `/catalog/${product.id}-${slugify(product.name)}${qs ? `?${qs}` : ''}`;
-                  router.prefetch?.(detailHref);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    const params = new URLSearchParams();
-                    if (selectedCategory && selectedCategory !== 'Semua') params.set('category', selectedCategory);
-                    if (searchQuery) params.set('q', searchQuery);
-                    if (page && page > 1) params.set('page', String(page));
-                    const qs = params.toString();
-                    const detailHref = `/catalog/${product.id}-${slugify(product.name)}${qs ? `?${qs}` : ''}`;
-                    // Biarkan Next.js reset scroll ke atas saat masuk halaman detail
-                    router.push(detailHref);
-                  }
-                }}
-                tabIndex={0}
-                role="link"
-                aria-label={`Buka detail ${product.name}`}
-              >
-                {/* Product Image */}
-                <div className="relative m-2 rounded-lg overflow-hidden bg-gradient-to-br from-orange-100 to-orange-200 aspect-[16/9]">
-                  {product.image.startsWith('http') ? (
-                    <Image
-                      src={product.image}
-                      alt={product.name}
-                      fill
-                      className="object-contain"
-                      priority={idx === 0}
-                      fetchPriority={idx === 0 ? 'high' : 'auto'}
-                      loading={idx === 0 ? 'eager' : 'lazy'}
-                      quality={70}
-                      sizes="(min-width: 1280px) 300px, (min-width: 1024px) 280px, (min-width: 768px) 240px, (min-width: 640px) 200px, 180px"
-                    />
-                  ) : (
-                    <span className="absolute inset-0 flex items-center justify-center text-6xl">{product.image}</span>
-                  )}
-                </div>
+            {(() => {
+              // Prioritaskan N gambar HTTP pertama (berdasarkan cols) agar LCP tidak terlewat
+              let httpSeenForPriority = 0;
+              const maxPriority = Math.max(1, cols * 2);
+              return filteredProducts.map((product) => {
+                const isHttp = product.image.startsWith('http');
+                const isPriorityImg = isHttp && httpSeenForPriority < maxPriority;
+                if (isHttp) httpSeenForPriority++;
 
-              {/* UX hint (always visible on mobile, reveal on hover in desktop) */}
-              <div className="px-4 -mt-2 mb-1 text-[11px] text-gray-500 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:transition-opacity md:duration-200">Klik untuk detail</div>
-
-              {/* Product Info */}
-              <div className="px-5 py-3 flex flex-col flex-1">
-                <div className="mb-2">
-                  <span className="inline-block bg-orange-100 text-orange-800 text-xs font-medium px-2.5 py-0.5 rounded-full">{product.category}</span>
-                </div>
-                <h3 className="text-lg font-bold text-gray-800 mb-2 line-clamp-2">{product.name}</h3>
-                <p className="text-gray-600 text-sm mb-4 line-clamp-3 flex-grow">{product.description}</p>
-                <div className="mb-3">
-                  <span className="text-2xl font-bold text-orange-600">{product.priceText || '-'}</span>
-                </div>
-                {/* Action Buttons */}
-                <div className="flex gap-2 mt-auto">
-                  <button
-                    onClick={(e) => { e.stopPropagation(); handleOrder(product); }}
-                    disabled={orderLoading}
-                    className="flex-1 bg-gradient-to-r from-green-500 to-green-600 text-white py-2 px-3 rounded-lg text-sm font-medium hover:from-green-600 hover:to-green-700 transition-all transform hover:scale-105 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                return (
+                  <div
+                    key={product.id}
+                    className="group relative bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer flex flex-col focus:outline-none focus:ring-2 focus:ring-orange-400/60 max-w-sm w-full mx-auto md:max-w-none"
+                    onClick={() => {
+                      const params = new URLSearchParams();
+                      if (selectedCategory && selectedCategory !== 'Semua') params.set('category', selectedCategory);
+                      if (searchQuery) params.set('q', searchQuery);
+                      if (page && page > 1) params.set('page', String(page));
+                      const qs = params.toString();
+                      const detailHref = `/catalog/${product.id}-${slugify(product.name)}${qs ? `?${qs}` : ''}`;
+                      router.push(detailHref);
+                    }}
+                    onMouseEnter={() => {
+                      const params = new URLSearchParams();
+                      if (selectedCategory && selectedCategory !== 'Semua') params.set('category', selectedCategory);
+                      if (searchQuery) params.set('q', searchQuery);
+                      if (page && page > 1) params.set('page', String(page));
+                      const qs = params.toString();
+                      const detailHref = `/catalog/${product.id}-${slugify(product.name)}${qs ? `?${qs}` : ''}`;
+                      router.prefetch?.(detailHref);
+                    }}
+                    onFocus={() => {
+                      const params = new URLSearchParams();
+                      if (selectedCategory && selectedCategory !== 'Semua') params.set('category', selectedCategory);
+                      if (searchQuery) params.set('q', searchQuery);
+                      if (page && page > 1) params.set('page', String(page));
+                      const qs = params.toString();
+                      const detailHref = `/catalog/${product.id}-${slugify(product.name)}${qs ? `?${qs}` : ''}`;
+                      router.prefetch?.(detailHref);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        const params = new URLSearchParams();
+                        if (selectedCategory && selectedCategory !== 'Semua') params.set('category', selectedCategory);
+                        if (searchQuery) params.set('q', searchQuery);
+                        if (page && page > 1) params.set('page', String(page));
+                        const qs = params.toString();
+                        const detailHref = `/catalog/${product.id}-${slugify(product.name)}${qs ? `?${qs}` : ''}`;
+                        router.push(detailHref);
+                      }
+                    }}
+                    tabIndex={0}
+                    role="link"
+                    aria-label={`Buka detail ${product.name}`}
                   >
-                    {orderLoading ? '⏳ Memproses...' : '🛒 Pesan'}
-                  </button>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); openWhatsApp(product); }}
-                    className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 text-white py-2 px-3 rounded-lg text-sm font-medium hover:from-orange-600 hover:to-orange-700 transition-all transform hover:scale-105 cursor-pointer"
-                  >
-                    💬 Konsultasi
-                  </button>
-                </div>
-              </div>
-              {/* Corner badge (top-right) */}
-              <div className="pointer-events-none absolute top-3 right-3 z-10">
-                <span className="inline-flex items-center gap-1 rounded-full bg-orange-500/95 text-white text-[11px] font-medium px-2.5 py-1 shadow-sm opacity-100 md:opacity-0 md:-translate-y-1 md:group-hover:opacity-100 md:group-hover:translate-y-0 md:group-focus-within:opacity-100 md:group-focus-within:translate-y-0 transition-all duration-200">
-                  Lihat detail
-                  <span aria-hidden>→</span>
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
+                    {/* Product Image */}
+                    <div className="relative m-2 rounded-lg overflow-hidden bg-gradient-to-br from-orange-100 to-orange-200 aspect-[16/9]">
+                      {product.image.startsWith('http') ? (
+                        <Image
+                          src={product.image}
+                          alt={product.name}
+                          fill
+                          className="object-contain"
+                          priority={isPriorityImg}
+                          fetchPriority={isPriorityImg ? 'high' : 'auto'}
+                          loading={isPriorityImg ? 'eager' : 'lazy'}
+                          quality={70}
+                          sizes="(min-width: 1280px) 300px, (min-width: 1024px) 280px, (min-width: 768px) 240px, (min-width: 640px) 200px, 180px"
+                        />
+                      ) : (
+                        <span className="absolute inset-0 flex items-center justify-center text-6xl">{product.image}</span>
+                      )}
+                    </div>
 
-        {/* Skeleton overlay + backdrop blur saat navigasi */}
-        {skeletonVisible && (
-          <>
-            <div className="absolute inset-0 bg-white/40 backdrop-blur-[2px] z-10" />
-            <div className="absolute inset-0 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 z-20">
-              {Array.from({ length: Math.min(pageSize, 8) }).map((_, i) => (
-                <div key={`sk-${i}`} className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden animate-pulse max-w-sm w-full mx-auto md:max-w-none">
-                  <div className="m-2 rounded-lg bg-orange-100/60 aspect-[16/9]" />
-                  <div className="px-5 py-3">
-                    <div className="h-5 w-24 bg-gray-200 rounded-full mb-3" />
-                    <div className="h-6 w-3/4 bg-gray-200 rounded mb-2" />
-                    <div className="h-4 w-full bg-gray-200 rounded mb-2" />
-                    <div className="h-4 w-5/6 bg-gray-200 rounded mb-4" />
-                    <div className="h-7 w-32 bg-gray-200 rounded" />
+                    {/* UX hint (always visible on mobile, reveal on hover in desktop) */}
+                    <div className="px-4 -mt-2 mb-1 text-[11px] text-gray-500 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:transition-opacity md:duration-200">Klik untuk detail</div>
+
+                    {/* Product Info */}
+                    <div className="px-5 py-3 flex flex-col flex-1">
+                      <div className="mb-2">
+                        <span className="inline-block bg-orange-100 text-orange-800 text-xs font-medium px-2.5 py-0.5 rounded-full">{product.category}</span>
+                      </div>
+                      <h3 className="text-lg font-bold text-gray-800 mb-2 line-clamp-2">{product.name}</h3>
+                      <p className="text-gray-600 text-sm mb-4 line-clamp-3 flex-grow">{product.description}</p>
+                      <div className="mb-3">
+                        <span className="text-2xl font-bold text-orange-600">{product.priceText || '-'}</span>
+                      </div>
+                      {/* Action Buttons */}
+                      <div className="flex gap-2 mt-auto">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleOrder(product); }}
+                          disabled={orderLoading}
+                          className="flex-1 bg-gradient-to-r from-green-500 to-green-600 text-white py-2 px-3 rounded-lg text-sm font-medium hover:from-green-600 hover:to-green-700 transition-all transform hover:scale-105 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {orderLoading ? '⏳ Memproses...' : '🛒 Pesan'}
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); openWhatsApp(product); }}
+                          className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 text-white py-2 px-3 rounded-lg text-sm font-medium hover:from-orange-600 hover:to-orange-700 transition-all transform hover:scale-105 cursor-pointer"
+                        >
+                          💬 Konsultasi
+                        </button>
+                      </div>
+                    </div>
+                    {/* Corner badge (top-right) */}
+                    <div className="pointer-events-none absolute top-3 right-3 z-10">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-orange-500/95 text-white text-[11px] font-medium px-2.5 py-1 shadow-sm opacity-100 md:opacity-0 md:-translate-y-1 md:group-hover:opacity-100 md:group-hover:translate-y-0 md:group-focus-within:opacity-100 md:group-focus-within:translate-y-0 transition-all duration-200">
+                        {product.category}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-        {/* Empty State - centered in wrapper */}
-        {!isNavigating && !skeletonVisible && filteredProducts.length === 0 && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-center px-4 py-8 md:py-10">
-              <div className="text-5xl md:text-6xl mb-3 md:mb-4">🔍</div>
-              <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-1 md:mb-2">Produk Tidak Ditemukan</h3>
-              <p className="text-gray-600">Coba ubah filter atau kata kunci pencarian Anda</p>
-            </div>
+                );
+              });
+            })()}
           </div>
-        )}
-      </div>
+
+          {skeletonVisible && (
+            <>
+              <div className="absolute inset-0 bg-white/40 backdrop-blur-[2px] z-10" />
+              <div className="absolute inset-0 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 z-20">
+                {Array.from({ length: Math.min(pageSize, 8) }).map((_, i) => (
+                  <div key={i} className="group relative bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
+                    <div className="m-2 rounded-lg bg-orange-100/60 aspect-[16/9]" />
+                    <div className="px-5 py-3">
+                      <div className="h-5 w-24 bg-gray-200 rounded-full mb-3" />
+                      <div className="h-6 w-3/4 bg-gray-200 rounded mb-2" />
+                      <div className="h-4 w-full bg-gray-200 rounded mb-2" />
+                      <div className="h-4 w-5/6 bg-gray-200 rounded mb-4" />
+                      <div className="h-7 w-32 bg-gray-200 rounded" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {/* Empty State - centered in wrapper */}
+          {!isNavigating && !skeletonVisible && filteredProducts.length === 0 && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-center px-4 py-8 md:py-10">
+                <div className="text-5xl md:text-6xl mb-3 md:mb-4">🔍</div>
+                <h3 className="text-lg md:text-xl font-semibold text-gray-800 mb-1 md:mb-2">Produk Tidak Ditemukan</h3>
+                <p className="text-gray-600">Coba ubah filter atau kata kunci pencarian Anda</p>
+              </div>
+            </div>
+          )}
+
+        </div>
 
         {/* Product Count & Pagination */}
         <div className="mt-8 grid grid-cols-1 md:grid-cols-3 items-center text-gray-600 gap-3 md:gap-0">

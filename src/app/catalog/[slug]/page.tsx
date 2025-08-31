@@ -88,6 +88,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   let metaDesc: string | undefined;
   let metaName: string | undefined;
   let metaPrice: number | undefined;
+  let metaCategory: string | undefined;
   let metaTagsLocal: string[] = [];
 
   // Try to use product image if valid and host matches Supabase; also derive meta description, price, and tags
@@ -95,10 +96,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     if (Number.isFinite(idNum as number) && (idNum as number) > 0) {
       const { data, error } = await supabaseServer
         .from('products')
-        .select('image_url,name,description,price,tags')
+        .select('image_url,name,description,price,tags,product_categories(name)')
         .eq('id', idNum as number)
         .single();
-      type ProductMetaRow = { image_url: string | null; name: string | null; description: string | null; price: number | null; tags?: string[] | null };
+      type ProductMetaRow = { image_url: string | null; name: string | null; description: string | null; price: number | null; tags?: string[] | null; product_categories?: { name?: string } | { name?: string }[] | null };
       const row = (data || null) as ProductMetaRow | null;
       if (!error && row && row.image_url) {
         const imgUrl = String(row.image_url);
@@ -118,6 +119,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       metaName = typeof row?.name === 'string' ? (row?.name as string) : undefined;
       // capture price if numeric
       metaPrice = typeof row?.price === 'number' ? (row.price as number) : undefined;
+      // derive category name (first if array)
+      try {
+        const pc = row?.product_categories as ProductRow['product_categories'] | undefined;
+        metaCategory = Array.isArray(pc) ? (pc[0]?.name || undefined) : (pc?.name || undefined);
+      } catch {}
       // collect tags locally to be merged into keywords
       if (Array.isArray(row?.tags)) {
         try {
@@ -142,14 +148,27 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   } catch { metaKeywords = undefined; }
 
   const effectiveTitle = `${(metaName || safeSlug.replace(/-/g, ' '))} | Abadi Jaya`;
-  // Build dynamic OG image URL (absolute if possible) using title
+  // Build dynamic OG image URL (absolute if possible) using variant=product and enrich params
   let ogDynamicUrl: string | undefined;
   try {
-    ogDynamicUrl = site
-      ? new URL(`/api/og?title=${encodeURIComponent(effectiveTitle)}`, site).toString()
-      : `/api/og?title=${encodeURIComponent(effectiveTitle)}`;
+    const params: string[] = [
+      `variant=product`,
+      `title=${encodeURIComponent(effectiveTitle)}`,
+    ];
+    if (metaCategory) params.push(`category=${encodeURIComponent(metaCategory)}`);
+    if (typeof metaPrice === 'number') params.push(`price=${encodeURIComponent(formatRupiah(metaPrice))}`);
+    params.push(`badge=${encodeURIComponent('Bisa Kustom')}`);
+    const path = `/api/og?${params.join('&')}`;
+    ogDynamicUrl = site ? new URL(path, site).toString() : path;
   } catch {
-    ogDynamicUrl = `/api/og?title=${encodeURIComponent(effectiveTitle)}`;
+    const params: string[] = [
+      `variant=product`,
+      `title=${encodeURIComponent(effectiveTitle)}`,
+    ];
+    if (metaCategory) params.push(`category=${encodeURIComponent(metaCategory)}`);
+    if (typeof metaPrice === 'number') params.push(`price=${encodeURIComponent(formatRupiah(metaPrice))}`);
+    params.push(`badge=${encodeURIComponent('Bisa Kustom')}`);
+    ogDynamicUrl = `/api/og?${params.join('&')}`;
   }
   return {
     title: effectiveTitle,

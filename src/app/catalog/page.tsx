@@ -100,11 +100,17 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
   const site = process.env.NEXT_PUBLIC_SITE_URL;
   let ogUrl: string | undefined;
   try {
-    ogUrl = site
-      ? new URL(`/api/og?title=${encodeURIComponent(title)}`, site).toString()
-      : `/api/og?title=${encodeURIComponent(title)}`;
+    if (categoryName) {
+      const path = `/api/og?variant=category&category=${encodeURIComponent(categoryName)}&title=${encodeURIComponent(title)}`;
+      ogUrl = site ? new URL(path, site).toString() : path;
+    } else {
+      const path = `/api/og?title=${encodeURIComponent(title)}`;
+      ogUrl = site ? new URL(path, site).toString() : path;
+    }
   } catch {
-    ogUrl = `/api/og?title=${encodeURIComponent(title)}`;
+    ogUrl = categoryName
+      ? `/api/og?variant=category&category=${encodeURIComponent(categoryName)}&title=${encodeURIComponent(title)}`
+      : `/api/og?title=${encodeURIComponent(title)}`;
   }
   return {
     alternates: { canonical },

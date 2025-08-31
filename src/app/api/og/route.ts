@@ -14,14 +14,9 @@ async function loadInterBold(): Promise<ArrayBuffer | null> {
       const res = await fetch(cdnUrl, { cache: 'force-cache' });
       if (res.ok) {
         const buf = await res.arrayBuffer();
-        console.log('[OG] Loaded CDN font Inter-Bold');
         return buf;
       }
-      console.warn('[OG] CDN font fetch failed, status:', res.status);
-    } catch (e) {
-      console.warn('[OG] Failed to fetch CDN font:', (e as Error)?.message || e);
-    }
-    console.warn('[OG] Proceeding without font data');
+    } catch {}
     return null;
   })();
   return fontDataPromise;
@@ -31,49 +26,213 @@ async function loadInterBold(): Promise<ArrayBuffer | null> {
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    if (searchParams.get('plain') === '1') {
-      return new Response('OG route OK', { status: 200, headers: { 'content-type': 'text/plain' } });
-    }
-    // Minimal test image to isolate Satori errors
-    if (searchParams.get('minimal') === '1') {
-      console.log('[OG] minimal=1 branch');
-      return new ImageResponse(
-        React.createElement('div', {
-          style: {
-            height: '100%', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            backgroundColor: '#fff', color: '#111', fontSize: 64, fontWeight: 700,
-          }
-        }, 'Abadi Jaya'),
-        { width: 1200, height: 630 }
-      );
-    }
     const title = searchParams.get('title') || 'Bengkel Las Abadi Jaya';
     const subtitle = 'Spesialis Jasa Las & Fabrikasi Besi';
-
-    // Log untuk debugging sementara (akan dihapus setelah uji berhasil)
-    console.log('[OG] Generating image with title:', title);
+    const variant = (searchParams.get('variant') || 'default').toLowerCase();
+    const categoryParam = searchParams.get('category') || '';
+    const priceParam = searchParams.get('price') || '';
+    const badgeParam = searchParams.get('badge') || '';
 
     // Load font bila tersedia
     const interBold = await loadInterBold();
 
-    return new ImageResponse(
-      React.createElement(
+    // Dev-only debug log (avoid noisy logs in production)
+    const isDev = process.env.NODE_ENV !== 'production';
+    if (isDev) {
+      try {
+        console.info('[OG] render', { variant, title, categoryParam, priceParam, badgeParam });
+      } catch {}
+    }
+
+    // Compose content by variant
+    const baseWrapper = {
+      height: '100%',
+      width: '100%',
+      display: 'flex',
+      flexDirection: 'column' as const,
+      justifyContent: 'center',
+      alignItems: 'center',
+      background: 'linear-gradient(135deg, #fff7ed 0%, #ffedd5 50%, #fde68a 100%)',
+      fontFamily:
+        'ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Noto Sans, Ubuntu, Cantarell, Helvetica Neue, Arial',
+      position: 'relative' as const,
+      padding: '48px',
+    };
+
+    let content: React.ReactElement;
+
+    if (variant === 'category') {
+      const cat = (categoryParam || title).toString();
+      content = React.createElement(
         'div',
-        {
+        { style: baseWrapper },
+        // Ribbon angle
+        React.createElement('div', {
           style: {
-            height: '100%',
-            width: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center',
-            backgroundColor: '#ffedd5',
-            fontFamily:
-              'ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Noto Sans, Ubuntu, Cantarell, Helvetica Neue, Arial',
-            position: 'relative',
-            padding: '40px',
+            position: 'absolute',
+            top: '-40px',
+            right: '-120px',
+            transform: 'rotate(25deg)',
+            backgroundColor: '#f59e0b',
+            width: '420px',
+            height: '120px',
+            opacity: 0.15,
+            borderRadius: '24px',
+          }
+        }),
+        React.createElement(
+          'div',
+          {
+            style: {
+              fontSize: 86,
+              fontWeight: 900,
+              lineHeight: 1.1,
+              color: '#b45309',
+              textAlign: 'center',
+              textTransform: 'uppercase',
+              letterSpacing: '-0.02em',
+              maxWidth: '1080px',
+            },
           },
-        },
+          cat
+        ),
+        React.createElement(
+          'div',
+          {
+            style: {
+              marginTop: '18px',
+              fontSize: 32,
+              color: '#6b7280',
+              fontWeight: 700,
+              textAlign: 'center',
+            },
+          },
+          'Katalog Abadi Jaya'
+        ),
+        React.createElement(
+          'div',
+          {
+            style: {
+              position: 'absolute',
+              bottom: '28px',
+              left: '48px',
+              right: '48px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              color: '#92400e',
+              fontSize: 22,
+              fontWeight: 700,
+            },
+          },
+          React.createElement('span', null, 'abadi-jaya'),
+          React.createElement('span', null, 'Pagar • Kanopi • Railing • Stainless')
+        )
+      );
+    } else if (variant === 'product') {
+      const name = (title || 'Produk').toString();
+      const cat = categoryParam || '';
+      const price = priceParam || '';
+      const badge = badgeParam || '';
+      content = React.createElement(
+        'div',
+        { style: baseWrapper },
+        // Title
+        React.createElement(
+          'div',
+          {
+            style: {
+              fontSize: 72,
+              fontWeight: 900,
+              lineHeight: 1.15,
+              color: '#0f172a',
+              textAlign: 'center',
+              maxWidth: '1040px',
+              letterSpacing: '-0.02em',
+            },
+          },
+          name
+        ),
+        // Category line
+        (cat
+          ? React.createElement(
+              'div',
+              {
+                style: {
+                  marginTop: '14px',
+                  fontSize: 30,
+                  color: '#334155',
+                  fontWeight: 700,
+                },
+              },
+              `Kategori: ${cat}`
+            )
+          : null),
+        // Chips bottom-right
+        React.createElement(
+          'div',
+          {
+            style: {
+              position: 'absolute',
+              bottom: '32px',
+              right: '48px',
+              display: 'flex',
+              gap: '12px',
+            },
+          },
+          price
+            ? React.createElement(
+                'div',
+                {
+                  style: {
+                    padding: '10px 16px',
+                    backgroundColor: '#059669',
+                    color: '#ecfdf5',
+                    borderRadius: '9999px',
+                    fontSize: 24,
+                    fontWeight: 800,
+                  },
+                },
+                price
+              )
+            : null,
+          badge
+            ? React.createElement(
+                'div',
+                {
+                  style: {
+                    padding: '10px 16px',
+                    backgroundColor: '#f59e0b',
+                    color: '#111827',
+                    borderRadius: '9999px',
+                    fontSize: 22,
+                    fontWeight: 800,
+                  },
+                },
+                badge
+              )
+            : null
+        ),
+        // Footer left
+        React.createElement(
+          'div',
+          {
+            style: {
+              position: 'absolute',
+              bottom: '32px',
+              left: '48px',
+              color: '#92400e',
+              fontSize: 22,
+              fontWeight: 700,
+            },
+          },
+          'abadi-jaya'
+        )
+      );
+    } else {
+      // default (site wide)
+      content = React.createElement(
+        'div',
+        { style: baseWrapper },
         React.createElement(
           'div',
           {
@@ -120,19 +279,20 @@ export async function GET(request: Request) {
           React.createElement('span', null, 'abadi-jaya'),
           React.createElement('span', null, 'Jasa Las - Pagar - Kanopi - Railing')
         )
-      ),
-      {
-        width: 1200,
-        height: 630,
-        ...(interBold
-          ? {
-              fonts: [
-                { name: 'Inter', data: interBold, weight: 700, style: 'normal' },
-              ],
-            }
-          : {}),
-      }
-    );
+      );
+    }
+
+    return new ImageResponse(content, {
+      width: 1200,
+      height: 630,
+      ...(interBold
+        ? {
+            fonts: [
+              { name: 'Inter', data: interBold, weight: 700, style: 'normal' },
+            ],
+          }
+        : {}),
+    });
   } catch (err) {
     console.error('[OG] Failed to generate image:', err);
     return new Response('OG Image generation failed', { status: 500 });

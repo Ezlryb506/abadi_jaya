@@ -15,6 +15,8 @@ const nextConfig: NextConfig = {
     formats: ['image/avif', 'image/webp'],
     // Reasonable device sizes for our layout breakpoints
     deviceSizes: [360, 640, 768, 1024, 1280],
+    // Whitelist qualities used in the app (Next.js 16 requires explicit configuration)
+    qualities: [60, 70, 75, 85, 95],
     // Keep optimized images cached longer on the CDN (in seconds)
     minimumCacheTTL: 60 * 60 * 24 * 7, // 7 days
     remotePatterns: supabaseHost
