@@ -96,6 +96,16 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
   const baseTitle = 'Katalog Produk | Abadi Jaya';
   const title = categoryName ? `Katalog: ${categoryName} | Abadi Jaya` : baseTitle;
   const robots = qs?.q ? { index: false, follow: true } : { index: true, follow: true };
+  // Build dynamic OG image URL (absolute if possible)
+  const site = process.env.NEXT_PUBLIC_SITE_URL;
+  let ogUrl: string | undefined;
+  try {
+    ogUrl = site
+      ? new URL(`/api/og?title=${encodeURIComponent(title)}`, site).toString()
+      : `/api/og?title=${encodeURIComponent(title)}`;
+  } catch {
+    ogUrl = `/api/og?title=${encodeURIComponent(title)}`;
+  }
   return {
     alternates: { canonical },
     title,
@@ -104,10 +114,12 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
     openGraph: {
       title,
       description: metaDescription,
+      images: ogUrl ? [{ url: ogUrl }] : undefined,
     },
     twitter: {
       title,
       description: metaDescription,
+      images: ogUrl ? [ogUrl] : undefined,
     },
     other: {
       'link:rel:prev': prev || '',
@@ -123,6 +135,14 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
   const qParam = qs?.q || '';
   const from = (page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
+
+  // Build absolute URLs helper for JSON-LD
+  const site = process.env.NEXT_PUBLIC_SITE_URL;
+  const toAbs = (path: string): string | undefined => {
+    try { return site ? new URL(path, site).toString() : undefined; } catch { return undefined; }
+  };
+  const rootAbs = toAbs('/');
+  const catalogAbs = toAbs('/catalog');
 
   // Fetch categories (server-side), include description for SEO/UI
   const { data: catData } = await supabaseServer
@@ -246,13 +266,13 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
               '@type': 'ListItem',
               'position': 1,
               'name': 'Beranda',
-              'item': '/'
+              'item': rootAbs || '/'
             },
             {
               '@type': 'ListItem',
               'position': 2,
               'name': 'Katalog',
-              'item': '/catalog'
+              'item': catalogAbs || '/catalog'
             }
           ]
         })}
@@ -265,12 +285,13 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
           if (categoryParam && categoryParam !== 'Semua') parts.push(`category=${encodeURIComponent(categoryParam)}`);
           if (qParam) parts.push(`q=${encodeURIComponent(qParam)}`);
           const urlPath = parts.length ? `/catalog?${parts.join('&')}` : '/catalog';
+          const urlPathAbs = toAbs(urlPath);
           return JSON.stringify({
             '@context': 'https://schema.org',
             '@type': 'CollectionPage',
             'name': categoryParam && categoryParam !== 'Semua' ? `Katalog: ${categoryParam}` : 'Katalog Produk',
             'description': (activeCategoryDesc || 'Katalog produk las dan fabrikasi besi.'),
-            'url': urlPath
+            'url': urlPathAbs || urlPath
           });
         })()}
       </Script>
@@ -282,7 +303,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
           'itemListElement': initialProducts.map((p, idx) => ({
             '@type': 'ListItem',
             'position': (from + idx + 1),
-            'url': `/catalog/${p.id}-${slugify(p.name)}`
+            'url': (toAbs(`/catalog/${p.id}-${slugify(p.name)}`) || `/catalog/${p.id}-${slugify(p.name)}`)
           }))
         })}
       </Script>

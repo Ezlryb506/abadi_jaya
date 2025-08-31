@@ -142,6 +142,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   } catch { metaKeywords = undefined; }
 
   const effectiveTitle = `${(metaName || safeSlug.replace(/-/g, ' '))} | Abadi Jaya`;
+  // Build dynamic OG image URL (absolute if possible) using title
+  let ogDynamicUrl: string | undefined;
+  try {
+    ogDynamicUrl = site
+      ? new URL(`/api/og?title=${encodeURIComponent(effectiveTitle)}`, site).toString()
+      : `/api/og?title=${encodeURIComponent(effectiveTitle)}`;
+  } catch {
+    ogDynamicUrl = `/api/og?title=${encodeURIComponent(effectiveTitle)}`;
+  }
   return {
     title: effectiveTitle,
     description: metaDesc || 'Jelajahi katalog produk las dan fabrikasi besi Abadi Jaya. Kualitas tinggi, harga transparan, layanan profesional.',
@@ -162,7 +171,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: effectiveTitle,
       type: 'website',
       url: canonicalAbs || relativeUrl,
-      images: ogImageAbs ? [{ url: ogImageAbs }] : undefined,
+      images: (ogImageAbs ? [{ url: ogImageAbs }] : (ogDynamicUrl ? [{ url: ogDynamicUrl }] : undefined)),
       description: metaDesc,
     },
     other: (typeof metaPrice === 'number') ? {
@@ -172,7 +181,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     twitter: {
       card: 'summary_large_image',
       title: effectiveTitle,
-      images: ogImageAbs ? [ogImageAbs] : undefined,
+      images: ogImageAbs ? [ogImageAbs] : (ogDynamicUrl ? [ogDynamicUrl] : undefined),
       description: metaDesc,
     },
   };
