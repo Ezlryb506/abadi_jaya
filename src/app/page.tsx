@@ -19,6 +19,11 @@ const KeunggulanSection = dynamic(() => import('@/components/sections/Keunggulan
   ssr: true,
 });
 
+const HowToSection = dynamic(() => import('@/components/sections/HowToSection'), {
+  loading: () => <div className="h-96 bg-gray-100 animate-pulse rounded-lg"></div>,
+  ssr: true,
+});
+
 const CtaSection = dynamic(() => import('@/components/sections/CtaSection'), {
   loading: () => <div className="h-96 bg-gray-100 animate-pulse rounded-lg"></div>,
   ssr: true,
@@ -53,7 +58,7 @@ export default function Home() {
           url: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
           potentialAction: {
             '@type': 'SearchAction',
-            target: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/catalog?query={search_term_string}`,
+            target: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/catalog?q={search_term_string}`,
             'query-input': 'required name=search_term_string',
           },
         })}
@@ -70,7 +75,34 @@ export default function Home() {
           image: [`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/apple-touch-icon.png`],
           telephone: '+62 896-5375-4317',
           sameAs: [],
-          areaServed: 'ID',
+          areaServed: {
+            '@type': 'AdministrativeArea',
+            name: 'Jawa Barat',
+            geoContains: [
+              { '@type': 'City', name: 'Kabupaten Bekasi' },
+              { '@type': 'City', name: 'Kota Bekasi' },
+              { '@type': 'City', name: 'Cibitung' },
+              { '@type': 'City', name: 'Cikarang' },
+              { '@type': 'City', name: 'Cikarang Barat' },
+              { '@type': 'City', name: 'Cikarang Selatan' },
+              { '@type': 'City', name: 'Cikarang Utara' },
+              { '@type': 'City', name: 'Tambun' },
+              { '@type': 'City', name: 'Tambun Selatan' },
+              { '@type': 'City', name: 'Tambun Utara' },
+              { '@type': 'City', name: 'Setu' },
+              { '@type': 'City', name: 'Babelan' },
+              { '@type': 'City', name: 'Tarumajaya' },
+              { '@type': 'City', name: 'Karangbahagia' },
+              { '@type': 'City', name: 'Tambelang' },
+              { '@type': 'City', name: 'Sukatani' },
+              { '@type': 'City', name: 'Sukakarya' },
+              { '@type': 'City', name: 'Pebayuran' },
+              { '@type': 'City', name: 'Kedungwaringin' },
+              { '@type': 'City', name: 'Serang Baru' },
+              { '@type': 'City', name: 'Bojongmangu' },
+              { '@type': 'City', name: 'Cabangbungin' }
+            ]
+          },
           priceRange: '$$',
           address: {
             '@type': 'PostalAddress',
@@ -131,6 +163,26 @@ export default function Home() {
           }
         })}
       </Script>
+
+      {/* JSON-LD: HowTo (alur penggunaan & transaksi) */}
+      <Script id="ld-howto" type="application/ld+json">
+        {JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'HowTo',
+          name: 'Cara Menggunakan & Alur Transaksi di Bengkel Las Abadi Jaya',
+          step: [
+            { '@type': 'HowToStep', name: 'Pilih Layanan / Katalog', text: 'Jelajahi katalog untuk melihat contoh produk dan range harga sebagai gambaran awal.' },
+            { '@type': 'HowToStep', name: 'Konsultasi Cepat', text: 'Ceritakan kebutuhan via WhatsApp. Kami bantu rekomendasi desain, material, dan estimasi.' },
+            { '@type': 'HowToStep', name: 'Daftar Akun Customer', text: 'Buat akun agar proses transaksi lebih mudah dan data tersimpan rapi.' },
+            { '@type': 'HowToStep', name: 'Masuk & Lengkapi Alamat', text: 'Masuk ke dashboard lalu lengkapi alamat untuk mempermudah pengiriman & penawaran.' },
+            { '@type': 'HowToStep', name: 'Survei & Estimasi Detail', text: 'Jika diperlukan, kami jadwalkan survei lokasi untuk pengukuran dan validasi kebutuhan.' },
+            { '@type': 'HowToStep', name: 'Penawaran & DP', text: 'Kami kirimkan penawaran resmi. Produksi dimulai setelah DP disepakati.' },
+            { '@type': 'HowToStep', name: 'Produksi & QC', text: 'Produksi sesuai spesifikasi dan Quality Check sebelum pemasangan.' },
+            { '@type': 'HowToStep', name: 'Instalasi & Garansi', text: 'Pemasangan di lokasi, serah terima, pelunasan, dan garansi sesuai ketentuan.' },
+            { '@type': 'HowToStep', name: 'Pantau Dashboard', text: 'Lihat status proyek, update progres, dan histori pembayaran di dashboard Anda.' }
+          ]
+        })}
+      </Script>
       
       {/* JSON-LD: FAQPage (sinkron dengan konten FaqSection) */}
       <Script id="ld-faq" type="application/ld+json">
@@ -153,6 +205,7 @@ export default function Home() {
       <HeroSection />
       <LayananSection />
       <KeunggulanSection />
+      <HowToSection />
       <CtaSection />
       <FaqSection />
     </>

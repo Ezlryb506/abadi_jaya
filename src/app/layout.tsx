@@ -21,9 +21,10 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 const isProd = process.env.NODE_ENV === 'production';
 
 export const metadata: Metadata = {
-  title: "Bengkel Las Abadi Jaya - Spesialis Jasa Las & Fabrikasi Besi",
-  description: "Bengkel Las Abadi Jaya — spesialis pagar besi, kanopi, railing, dan fabrikasi stainless. Desain kustom, harga transparan, garansi pengerjaan.",
+  title: "Bengkel Las Bekasi - Abadi Jaya | Jasa Pagar & Kanopi Profesional",
+  description: "Bengkel Las Abadi Jaya di Cibitung, Bekasi. Melayani jasa pembuatan pagar, kanopi, & railing untuk area Kabupaten Bekasi, Kota Bekasi, Cikarang, dan sekitarnya. Garansi pengerjaan.",
   keywords: [
+    // Generic services
     "bengkel las",
     "jasa las",
     "fabrikasi besi",
@@ -35,6 +36,34 @@ export const metadata: Metadata = {
     "teralis",
     "stainless steel",
     "abadi jaya",
+    // Local SEO (Bekasi & sekitarnya)
+    "bengkel las bekasi",
+    "bengkel las cibitung",
+    "bengkel las cikarang",
+    "bengkel las kabupaten bekasi",
+    "bengkel las kota bekasi",
+    "jasa las bekasi",
+    "jasa las cikarang",
+    "kanopi bekasi",
+    "kanopi tambun",
+    "pagar besi bekasi",
+    "cikarang barat",
+    "cikarang selatan",
+    "cikarang utara",
+    "tambun selatan",
+    "tambun utara",
+    "setu",
+    "babelan",
+    "tarumajaya",
+    "karangbahagia",
+    "tambelang",
+    "sukatani",
+    "sukakarya",
+    "pebayuran",
+    "kedungwaringin",
+    "serang baru",
+    "bojongmangu",
+    "cabangbungin",
   ],
   authors: [{ name: "Abadi Jaya" }],
   metadataBase: new URL(siteUrl),
@@ -53,8 +82,8 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    title: "Bengkel Las Abadi Jaya",
-    description: "Spesialis pagar besi, kanopi, railing, dan fabrikasi stainless. Desain kustom, harga transparan, garansi pengerjaan.",
+    title: "Bengkel Las Bekasi - Abadi Jaya | Jasa Pagar & Kanopi Profesional",
+    description: "Bengkel Las Abadi Jaya di Cibitung, Bekasi. Melayani jasa pembuatan pagar, kanopi, & railing untuk area Kabupaten Bekasi, Kota Bekasi, Cikarang, dan sekitarnya.",
     type: "website",
     url: siteUrl,
     siteName: "Bengkel Las Abadi Jaya",
@@ -70,8 +99,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: "Bengkel Las Abadi Jaya - Spesialis Jasa Las & Fabrikasi Besi",
-    description: "Spesialis pagar besi, kanopi, railing, dan fabrikasi stainless. Desain kustom, harga transparan, garansi pengerjaan.",
+    title: "Bengkel Las Bekasi - Abadi Jaya | Jasa Pagar & Kanopi Profesional",
+    description: "Bengkel Las Abadi Jaya di Cibitung, Bekasi. Melayani jasa pembuatan pagar, kanopi, & railing untuk area Kabupaten Bekasi dan sekitarnya.",
     images: ['/api/og?title=Bengkel%20Las%20Abadi%20Jaya%20-%20Spesialis%20Jasa%20Las%20%26%20Fabrikasi%20Besi'],
   },
   icons: {
@@ -107,7 +136,7 @@ export default function RootLayout({
         {/* Fallback meta description to ensure Lighthouse detection; page-level metadata can override */}
         <meta
           name="description"
-          content="Bengkel Las Abadi Jaya — spesialis pagar besi, kanopi, railing, dan fabrikasi stainless. Desain kustom, harga transparan, garansi pengerjaan."
+          content="Bengkel Las Abadi Jaya di Cibitung, Bekasi. Melayani jasa pembuatan pagar, kanopi, & railing untuk area Kabupaten Bekasi, Kota Bekasi, Cikarang, dan sekitarnya. Garansi pengerjaan."
         />
         {/* JSON-LD: WebSite dengan SearchAction untuk membantu mesin pencari memahami fitur pencarian */}
         <Script id="website-searchaction" type="application/ld+json">
@@ -140,8 +169,8 @@ export default function RootLayout({
         {/* Footer Global */}
         <Footer />
 
-        {/* Vercel Web Analytics */}
-        <Analytics />
+        {/* Vercel Web Analytics (aktif hanya di production) */}
+        {isProd && <Analytics />}
       </body>
     </html>
   );

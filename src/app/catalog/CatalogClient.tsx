@@ -606,7 +606,7 @@ export default function CatalogClient({
                     {/* Corner badge (top-right) */}
                     <div className="pointer-events-none absolute top-3 right-3 z-10">
                       <span className="inline-flex items-center gap-1 rounded-full bg-orange-500/95 text-white text-[11px] font-medium px-2.5 py-1 shadow-sm opacity-100 md:opacity-0 md:-translate-y-1 md:group-hover:opacity-100 md:group-hover:translate-y-0 md:group-focus-within:opacity-100 md:group-focus-within:translate-y-0 transition-all duration-200">
-                        {product.category}
+                        {"lihat detail"}
                       </span>
                     </div>
                   </div>

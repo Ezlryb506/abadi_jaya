@@ -46,6 +46,24 @@ function LoginPageInner() {
         return;
       }
 
+      // Rate limit guard (server-side)
+      try {
+        const guardRes = await fetch('/api/auth/guard', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: formData.email, purpose: 'admin-login' })
+        });
+        if (guardRes.ok) {
+          const g = await guardRes.json();
+          if (g && g.ok === false) {
+            const seconds = Math.ceil((g.waitMs || Math.max(0, (g.reset || Date.now()) - Date.now())) / 1000);
+            setError(`Terlalu banyak percobaan. Coba lagi dalam ${seconds}s.`);
+            return;
+          }
+        }
+      } catch {
+        // fail-open: lanjutkan jika guard bermasalah agar tidak menghambat user legit
+      }
 
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: formData.email,
@@ -133,7 +151,7 @@ function LoginPageInner() {
               onClick={() => { setActiveTab('customer'); setError(''); }}
               className={`py-3 rounded-xl font-semibold transition-all ${activeTab === 'customer' ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
             >
-              👤 Customer
+              👤 Pelanggan
             </button>
           </div>
         </div>

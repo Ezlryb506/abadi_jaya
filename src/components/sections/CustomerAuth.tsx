@@ -57,6 +57,16 @@ function CustomerAuthInner() {
     })();
   }, [router]);
 
+  // Init tab via query (?mode=register|login)
+  useEffect(() => {
+    const mode = (searchParams.get('mode') || '').toLowerCase();
+    if (mode === 'register' || mode === 'signup') {
+      setIsLogin(false);
+    } else if (mode === 'login' || mode === 'signin') {
+      setIsLogin(true);
+    }
+  }, [searchParams]);
+
   useEffect(() => {
     const t = setTimeout(() => setPwdDebounced(formData.password), 450);
     return () => clearTimeout(t);
@@ -174,6 +184,25 @@ function CustomerAuthInner() {
         if (!isStrongPassword(formData.password)) {
           setError('Password minimal 8 karakter dan kombinasi huruf & angka');
           return;
+        }
+
+        // Rate limit guard (server-side)
+        try {
+          const guardRes = await fetch('/api/auth/guard', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: formData.email, purpose: 'customer-login' })
+          });
+          if (guardRes.ok) {
+            const g = await guardRes.json();
+            if (g && g.ok === false) {
+              const seconds = Math.ceil((g.waitMs || Math.max(0, (g.reset || Date.now()) - Date.now())) / 1000);
+              setError(`Terlalu banyak percobaan. Coba lagi dalam ${seconds} detik.`);
+              return;
+            }
+          }
+        } catch {
+          // fail-open: jika guard error, lanjutkan agar tidak menghambat user legit
         }
 
         const { error } = await supabase.auth.signInWithPassword({
@@ -305,13 +334,13 @@ function CustomerAuthInner() {
           onClick={() => { setIsLogin(true); setError(''); setSuccess(''); }}
           className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${isLogin ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-800'}`}
         >
-          Login
+          Masuk
         </button>
         <button
           onClick={() => { setIsLogin(false); setError(''); setSuccess(''); }}
           className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${!isLogin ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-800'}`}
         >
-          Register
+          Daftar
         </button>
       </div>
 

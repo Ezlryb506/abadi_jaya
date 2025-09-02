@@ -7,6 +7,7 @@ import { notFound } from 'next/navigation';
 import ProductDetailActions from '@/components/sections/ProductDetailActions';
 import { supabaseServer } from '@/lib/supabaseServer';
 import { formatRupiah } from '@/lib/format';
+import { areaAll } from '@/lib/areaLayanan';
 
 type RouteParams = { id?: string; slug?: string } & Record<string, string | undefined>;
 type Props = { params: Promise<RouteParams>; searchParams?: Promise<{ page?: string; category?: string; q?: string }>; };
@@ -144,6 +145,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     if (safeSlug) safeSlug.split(/[-\s]+/g).forEach(w => { const t = w.trim().toLowerCase(); if (t.length > 2) tokens.add(t); });
     ['abadi', 'jaya', 'produk', 'katalog'].forEach(w => tokens.add(w));
     metaTagsLocal.forEach(t => { if (t && t.length > 1) tokens.add(t); });
+    areaAll.forEach(a => tokens.add(a));
     metaKeywords = Array.from(tokens);
   } catch { metaKeywords = undefined; }
 
@@ -234,6 +236,16 @@ export default async function ProductDetailPage({ params, searchParams }: Props)
     image: isHttpUrl(product.image) ? product.image : undefined,
     category: product.category,
     keywords: Array.isArray(product.tags) && product.tags.length ? product.tags.join(', ') : undefined,
+    brand: {
+      '@type': 'Organization',
+      name: 'Abadi Jaya',
+      areaServed: areaAll,
+    },
+    seller: {
+      '@type': 'Organization',
+      name: 'Abadi Jaya',
+      areaServed: areaAll,
+    },
     offers: product.price ? {
       '@type': 'Offer',
       priceCurrency: 'IDR',
@@ -334,7 +346,7 @@ export default async function ProductDetailPage({ params, searchParams }: Props)
                   </span>
                 </div>
                 <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50/60 text-amber-900 p-3 text-sm leading-relaxed" role="note">
-                  Harga yang ditampilkan di katalog bersifat estimasi dan tidak diperbarui harian karena fluktuasi bahan-bahan. <br></br>Kami akan mengonfirmasi estimasi terbaru setelah anda berkonsultasi atau sebelum produksi dimulai.
+                  Harga yang ditampilkan di katalog bersifat estimasi bisa lebih murah bisa juga lebih mahal dan tidak diperbarui harian karena fluktuasi bahan-bahan. <br></br>Kami akan mengonfirmasi estimasi terbaru setelah anda berkonsultasi atau sebelum produksi dimulai.
                 </div>
               </div>
               <p className="text-gray-700 leading-relaxed">{product.description || 'Deskripsi belum tersedia.'}</p>

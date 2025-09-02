@@ -264,13 +264,13 @@ function OrderCard({ order, customerId, onChanged }: { order: Order; customerId:
             onClick={() => setTab('updates')}
             className={`px-3 py-1.5 text-xs md:text-sm rounded-lg transition-colors ${tab === 'updates' ? 'bg-white text-sky-700 shadow border border-sky-100' : 'text-gray-600 hover:text-gray-800'}`}
           >
-            Update Proyek
+            Status Proyek Saya
           </button>
           <button
             onClick={() => setTab('payments')}
             className={`px-3 py-1.5 text-xs md:text-sm rounded-lg transition-colors ${tab === 'payments' ? 'bg-white text-sky-700 shadow border border-sky-100' : 'text-gray-600 hover:text-gray-800'}`}
           >
-            Riwayat Pembayaran
+            Riwayat Pembayaran Saya
           </button>
         </div>
 

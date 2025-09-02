@@ -1,0 +1,75 @@
+RENCANA AKSI PENINGKATAN SEO LOKAL (REVISI) - BENGKEL LAS ABADI JAYA
+
+Dokumen ini adalah versi perbaikan dari rencana aksi sebelumnya, dengan instruksi yang lebih detail dan terstruktur untuk dieksekusi oleh AI Coder.
+
+BAGIAN 1: FONDASI ON-PAGE SEO LOKAL (PRIORITAS TERTINGGI)
+TUGAS 1.1: OPTIMALISASI METADATA GLOBAL
+
+TUJUAN: Menambahkan kata kunci lokasi utama (Cibitung, Bekasi) ke judul dan deskripsi default situs. FILE TARGET: src/app/layout.tsx INSTRUKSI: Buka file src/app/layout.tsx. Temukan dan modifikasi objek metadata. Ubah title menjadi: "Bengkel Las Bekasi - Abadi Jaya | Jasa Pagar & Kanopi Profesional". Ubah description menjadi: "Bengkel Las Abadi Jaya di Cibitung, Bekasi. Melayani jasa pembuatan pagar, kanopi, & railing untuk area Kabupaten Bekasi, Kota Bekasi, Cikarang, dan sekitarnya. Garansi pengerjaan.". Tambahkan kata kunci berikut ke dalam array keywords: "bengkel las bekasi", "jasa las cikarang", "kanopi tambun", "bengkel las kabupaten bekasi", dsb. VERIFIKASI: Setelah selesai, buka halaman utama dan periksa judul tab browser serta source code halaman untuk memastikan title dan description sudah sesuai.
+
+TUGAS 1.2: PERKAYA KONTEN FOOTER DENGAN KONTEKS LOKAL
+
+TUJUAN: Menambahkan teks eksplisit mengenai area layanan di footer.
+FILE TARGET: src/components/layout/Footer.tsx
+INSTRUKSI:
+Buka file src/components/layout/Footer.tsx. Di dalam div grid pertama (yang berisi logo dan deskripsi), di bawah paragraf <p className="text-gray-300 mb-4">, tambahkan paragraf baru dengan teks: "Area layanan utama kami meliputi Cibitung, Cikarang, Tambun, Setu, dan seluruh wilayah Kabupaten Bekasi serta Kota Bekasi."
+VERIFIKASI: Periksa tampilan footer di website untuk memastikan kalimat baru tersebut muncul.
+
+TUGAS 1.3: PERKAYA HALAMAN KONTAK DENGAN AREA LAYANAN
+
+TUJUAN: Membuat halaman kontak lebih informatif secara lokal.
+FILE TARGET: src/app/contact/page.tsx
+INSTRUKSI:
+Buka file src/app/contact/page.tsx. Di dalam div dengan ref={leftColRef}, setelah div "Address Card", buat sebuah div kartu baru dengan struktur dan styling yang sama. Beri kartu baru ini judul h3 "Area Layanan Kami". Di dalamnya, buat daftar <ul> dengan kelas list-disc list-inside text-gray-600 yang berisi nama-nama kecamatan target seperti: <li>Cibitung</li>, <li>Cikarang Barat</li>, <li>Cikarang Selatan</li>, <li>Tambun Selatan</li>, <li>Tambun Utara</li>, <li>Setu</li>.
+VERIFIKASI: Buka halaman /contact dan pastikan kartu "Area Layanan Kami" muncul dengan daftar lokasi.
+
+TUGAS 1.4: PERKUAT SCHEMA JSON-LD LOKAL
+
+TUJUAN: Membuat structured data LocalBusiness lebih spesifik.
+FILE TARGET: src/app/page.tsx
+INSTRUKSI:
+Buka file src/app/page.tsx. Temukan skrip JSON-LD dengan id="ld-localbusiness". Di dalam objek LocalBusiness, ganti properti areaServed yang semula "ID" dengan objek AdministrativeArea berikut:
+"areaServed": {
+"@type": "AdministrativeArea",
+"name": "Jawa Barat",
+"geoContains": [
+{ "@type": "City", "name": "Bekasi" },
+{ "@type": "City", "name": "Cikarang" },
+{ "@type": "City", "name": "Tambun" }
+]
+}
+VERIFIKASI: Periksa source code halaman utama untuk memastikan JSON-LD LocalBusiness telah diperbarui.
+
+BAGIAN 2: PEMBUATAN KONTEN HALAMAN LOKAL (PRIORITAS MENENGAH)
+TUGAS 2.1: BUAT FILE DATA UNTUK AREA LAYANAN
+
+TUJUAN: Membuat sumber data terpusat untuk halaman-halaman layanan lokal.
+INSTRUKSI:
+Buat file baru di src/lib/areaLayanan.ts. Isi file ini dengan konten berikut:
+export const daftarArea = [
+{ slug: 'cikarang', nama: 'Cikarang', deskripsi: 'Kami melayani jasa las dan fabrikasi besi profesional untuk seluruh wilayah Cikarang, termasuk kawasan industri dan perumahan. Dapatkan pagar, kanopi, dan railing berkualitas dengan harga terbaik.' },
+{ slug: 'tambun', nama: 'Tambun', deskripsi: 'Layanan bengkel las Abadi Jaya menjangkau area Tambun Selatan dan Tambun Utara. Hubungi kami untuk kebutuhan kanopi, pagar, dan teralis di wilayah Tambun.' },
+{ slug: 'cibitung', nama: 'Cibitung', deskripsi: 'Sebagai basis kami, Abadi Jaya menyediakan layanan prioritas untuk area Cibitung dan sekitarnya. Konsultasikan kebutuhan fabrikasi besi Anda sekarang.' }
+];
+VERIFIKASI: Pastikan file src/lib/areaLayanan.ts telah dibuat dan berisi data di atas.
+
+TUGAS 2.2: BUAT HALAMAN AREA LAYANAN DINAMIS
+
+TUJUAN: Membuat halaman yang tertarget untuk setiap lokasi utama.
+INSTRUKSI:
+Buat struktur folder dan file baru: src/app/layanan/[area]/page.tsx.
+Implementasikan halaman [area]/page.tsx ini dengan fungsionalitas berikut:
+LANGKAH 1: Impor daftarArea dari src/lib/areaLayanan.ts.
+LANGKAH 2: Gunakan fungsi generateStaticParams untuk membuat rute statis untuk setiap slug di daftarArea.
+LANGKAH 3: Gunakan fungsi generateMetadata untuk membuat <title> dan <meta name="description"> yang dinamis berdasarkan slug yang cocok. Contoh judul: Jasa Las & Kanopi di ${area.nama} | Abadi Jaya.
+LANGKAH 4: Komponen halaman harus menerima params sebagai properti, mencari data area yang sesuai dari daftarArea, dan menampilkan nama serta deskripsi area tersebut dalam elemen HTML (misal: h1 untuk nama, p untuk deskripsi). Jika area tidak ditemukan, tampilkan pesan "Area tidak ditemukan".
+VERIFIKASI: Buka rute /layanan/cikarang dan /layanan/tambun di browser. Pastikan halaman menampilkan judul dan konten yang benar untuk masing-masing area.
+
+TUGAS 2.3: INTEGRASIKAN TAUTAN AREA LAYANAN KE FOOTER
+
+TUJUAN: Membuat halaman area layanan dapat diakses oleh pengguna dan mesin pencari.
+INSTRUKSI:
+LANGKAH 1: Buka file src/components/layout/Footer.tsx.
+LANGKAH 2: Di div grid kedua (setelah div grid pertama), di bawah h4 "Layanan kustom", tambahkan h4 baru dengan judul "Area Layanan".
+LANGKAH 3: Di bawah judul baru tersebut, buat <ul> yang secara dinamis me-render tautan <Link> ke setiap halaman area layanan dari data daftarArea yang diimpor dari src/lib/areaLayanan.ts.
+VERIFIKASI: Periksa footer di website. Pastikan ada bagian "Area Layanan" dengan tautan ke Cikarang, Tambun, dan Cibitung.

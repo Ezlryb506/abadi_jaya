@@ -5,6 +5,7 @@ import { supabaseServer } from '@/lib/supabaseServer';
 import PrevNextHead from './PrevNextHead';
 import Script from 'next/script';
 import { slugify } from '@/lib/slug';
+import { areaAll } from '@/lib/areaLayanan';
 
 // Enable Incremental Static Regeneration for the catalog page (refresh every 5 minutes)
 export const revalidate = 300; // 5 minutes
@@ -112,10 +113,21 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
       ? `/api/og?variant=category&category=${encodeURIComponent(categoryName)}&title=${encodeURIComponent(title)}`
       : `/api/og?title=${encodeURIComponent(title)}`;
   }
+  // Build keywords including local service areas for stronger local SEO
+  const keywords = (() => {
+    const tokens = new Set<string>();
+    tokens.add('katalog');
+    tokens.add('produk las');
+    tokens.add('fabrikasi besi');
+    if (categoryName) tokens.add(categoryName);
+    areaAll.forEach((a) => tokens.add(a));
+    return Array.from(tokens);
+  })();
   return {
     alternates: { canonical },
     title,
     description: metaDescription,
+    keywords,
     robots,
     openGraph: {
       title,
@@ -311,6 +323,16 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
             'position': (from + idx + 1),
             'url': (toAbs(`/catalog/${p.id}-${slugify(p.name)}`) || `/catalog/${p.id}-${slugify(p.name)}`)
           }))
+        })}
+      </Script>
+      {/* JSON-LD: WebPage with local area context (about/mentions) */}
+      <Script id="areaserved-catalog" type="application/ld+json">
+        {JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'WebPage',
+          'name': 'Katalog Produk',
+          'about': areaAll,
+          'mentions': areaAll
         })}
       </Script>
       <CatalogClient

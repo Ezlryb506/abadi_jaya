@@ -129,7 +129,7 @@ export default function Header() {
                       : 'bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200 hover:border-gray-300'
                   }`}
                 >
-                  🔐 Login
+                  🔐 Masuk atau Daftar
                 </Link>
               </>
             )}
@@ -242,7 +242,7 @@ export default function Header() {
                     }`}
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    🔐 Login
+                    🔐 Masuk atau Daftar
                   </Link>
                 </>
               )}

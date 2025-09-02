@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { areaGroups } from '@/lib/areaLayanan';
 
 export default function ContactPage() {
   
@@ -285,17 +286,10 @@ export default function ContactPage() {
                         </>
                       )}
                     </button>
-                    
-                    {/* <button
-                      onClick={openBengkelLocation}
-                      className="flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white py-2 px-4 rounded-lg text-sm font-medium hover:from-orange-600 hover:to-orange-700 transition-all transform hover:scale-105 shadow-md hover:shadow-lg whitespace-nowrap"
-                    >
-                      <span className="text-sm">📍</span>
-                      Lihat Lokasi
-                    </button> */}
                   </div>
                 </div>
               </div>
+              
               <div
                 ref={mapCardRef}
                 className="overflow-hidden"
@@ -347,6 +341,36 @@ export default function ContactPage() {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Section: Area Layanan (Terpisah dari sidebar & map, ditempatkan di bawah grid) */}
+        <div className="mt-10">
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                <span>🗺️</span>
+                <span>Area Layanan Kami</span>
+              </h2>
+              <p className="text-gray-600 mt-1 text-sm">Kami melayani wilayah Bekasi dan sekitarnya. Berikut beberapa area utama:</p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {areaGroups.map((group) => (
+                <div key={group.title} className="rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition overflow-hidden">
+                  <div className={`px-4 py-3 bg-gradient-to-r ${group.gradient} text-white`}>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl">{group.icon}</span>
+                      <h3 className="font-semibold">{group.title}</h3>
+                    </div>
+                  </div>
+                  <ul className="p-4 text-gray-700 text-sm space-y-1 list-disc list-inside">
+                    {group.items.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
             </div>
           </div>
         </div>
