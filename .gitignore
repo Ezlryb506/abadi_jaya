@@ -43,6 +43,7 @@ next-env.d.ts
 
 # project docs (ignore Light House folder)
 real_docs/Light\ House/
+real_docs/spd
 
 # local debug utilities (not for commit)
 debug\ utility/

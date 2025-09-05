@@ -254,7 +254,7 @@ export default function LayananSection() {
                     src={service.image}
                     alt={service.title}
                     fill
-                    sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
+                    sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, calc(100vw-48px)"
                     className="object-cover transition-transform duration-500 group-hover:scale-105"
                     priority={index === 0}
                     fetchPriority={index === 0 ? 'high' : 'auto'}
