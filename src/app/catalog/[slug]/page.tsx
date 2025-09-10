@@ -4,10 +4,12 @@ import Link from 'next/link';
 import Script from 'next/script';
 import ShareButtons from '@/components/ui/ShareButtons';
 import { notFound } from 'next/navigation';
+import { redirect } from 'next/navigation';
 import ProductDetailActions from '@/components/sections/ProductDetailActions';
 import { supabaseServer } from '@/lib/supabaseServer';
 import { formatRupiah } from '@/lib/format';
 import { areaAll } from '@/lib/areaLayanan';
+import { slugify } from '@/lib/slug';
 
 type RouteParams = { id?: string; slug?: string } & Record<string, string | undefined>;
 type Props = { params: Promise<RouteParams>; searchParams?: Promise<{ page?: string; category?: string; q?: string }>; };
@@ -225,6 +227,23 @@ export default async function ProductDetailPage({ params, searchParams }: Props)
   if (!product) {
     return notFound();
   }
+
+  // Enforce canonical slug: if URL slug mismatch, redirect permanently to the correct one
+  try {
+    const expectedSlug = slugify(product.name || 'produk');
+    const givenSlug = (slug || '').toString();
+    // Redirect juga saat slug kosong agar URL selalu kanonik {id}-{slug}
+    if (expectedSlug && expectedSlug !== givenSlug) {
+      // Preserve query params if exist
+      const category = qs?.category && qs.category !== 'Semua' ? `&category=${encodeURIComponent(qs.category)}` : '';
+      const q = qs?.q ? `&q=${encodeURIComponent(qs.q)}` : '';
+      const pageNum = Math.max(1, Number(qs?.page || '1') || 1);
+      const pagePart = pageNum > 1 ? `?page=${pageNum}` : (category || q ? '?' : '');
+      const joiner = pagePart ? '&' : '?';
+      const tail = `${pagePart}${(category || q) ? `${joiner}${[category.replace(/^&/, ''), q.replace(/^&/, '')].filter(Boolean).join('&')}` : ''}`.replace(/\?$|&$/, '');
+      redirect(`/catalog/${product.id}-${expectedSlug}${tail}`);
+    }
+  } catch { /* noop */ }
 
   const isHttpUrl = (u?: string | null) => !!u && /^https?:\/\//i.test(u);
 
