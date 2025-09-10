@@ -138,6 +138,52 @@ export default function RootLayout({
           name="description"
           content="Bengkel Las Abadi Jaya di Cibitung, Bekasi. Melayani jasa pembuatan pagar, kanopi, & railing untuk area Kabupaten Bekasi, Kota Bekasi, Cikarang, dan sekitarnya. Garansi pengerjaan."
         />
+        {/* Non-blocking load for animations to reduce critical CSS size */}
+        <link rel="preload" href="/styles/animations.css" as="style" />
+        <Script id="load-animations-css" strategy="afterInteractive">
+          {`
+            (function(){
+              try {
+                if (document.getElementById('animations-css')) return;
+                var l = document.createElement('link');
+                l.rel = 'stylesheet';
+                l.href = '/styles/animations.css';
+                l.media = 'all';
+                l.id = 'animations-css';
+                document.head.appendChild(l);
+              } catch(e) { /* noop */ }
+            })();
+          `}
+        </Script>
+        <noscript>
+          <link id="animations-css" rel="stylesheet" href="/styles/animations.css" />
+        </noscript>
+
+        {/* Load other non-critical CSS (forms and ui helpers) non-blocking */}
+        <link rel="preload" href="/styles/forms.css" as="style" />
+        <link rel="preload" href="/styles/ui.css" as="style" />
+        <Script id="load-forms-ui-css" strategy="afterInteractive">
+          {`
+            (function(){
+              try {
+                var add = function(id, href){
+                  if (document.getElementById(id)) return;
+                  var l = document.createElement('link');
+                  l.rel = 'stylesheet';
+                  l.href = href;
+                  l.id = id;
+                  document.head.appendChild(l);
+                };
+                add('forms-css','/styles/forms.css');
+                add('ui-css','/styles/ui.css');
+              } catch(e) { /* noop */ }
+            })();
+          `}
+        </Script>
+        <noscript>
+          <link id="forms-css" rel="stylesheet" href="/styles/forms.css" />
+          <link id="ui-css" rel="stylesheet" href="/styles/ui.css" />
+        </noscript>
         {/* JSON-LD: WebSite dengan SearchAction untuk membantu mesin pencari memahami fitur pencarian */}
         <Script id="website-searchaction" type="application/ld+json">
           {JSON.stringify({

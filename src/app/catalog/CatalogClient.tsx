@@ -62,6 +62,7 @@ export default function CatalogClient({
 
   // Determine how many columns are visible (to apply priority to first-row images)
   const [cols, setCols] = useState<number>(4);
+  const [isSlowEnv, setIsSlowEnv] = useState<boolean>(false);
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const mqXl = window.matchMedia('(min-width: 1280px)'); // xl: 4 cols
@@ -92,6 +93,25 @@ export default function CatalogClient({
         mqLg.removeListener?.(update);
         mqMd.removeListener?.(update);
       };
+    }
+  }, []);
+
+  // Deteksi kondisi koneksi lambat / data saver untuk menunda prefetch berat (mobile LCP)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      // Touch device asumsi mobile
+      const isTouch = 'ontouchstart' in window || (navigator.maxTouchPoints || 0) > 0;
+      // Ketikkan tipe aman untuk Network Information API agar menghindari any
+      type Conn = { effectiveType?: string; saveData?: boolean };
+      const navWithConn = navigator as Navigator & { connection?: Conn };
+      const conn: Conn = navWithConn.connection || {};
+      const eff: string | undefined = conn.effectiveType;
+      const saveData: boolean = Boolean(conn.saveData);
+      const slow = saveData || ['slow-2g', '2g'].includes(eff || '');
+      setIsSlowEnv(Boolean(isTouch && slow));
+    } catch {
+      setIsSlowEnv(false);
     }
   }, []);
 
@@ -316,6 +336,8 @@ export default function CatalogClient({
     if (typeof window === 'undefined') return;
     // Hindari saat sedang navigasi atau skeleton tampil untuk menghemat bandwidth
     if (isNavigating || skeletonVisible) return;
+    // Skip prefetch di kondisi lambat (mobile + data saver/jaringan lambat)
+    if (isSlowEnv) return;
     const nextPage = Math.min(pageCount, page + 1);
     const prevPage = Math.max(1, page - 1);
     // Build href inline agar tidak bergantung pada fungsi luar (menghindari missing dependency)
@@ -339,13 +361,14 @@ export default function CatalogClient({
         router.prefetch?.(prevHref);
       }
     } catch { /* noop */ }
-  }, [page, pageCount, selectedCategory, searchQuery, isNavigating, skeletonVisible, router]);
+  }, [page, pageCount, selectedCategory, searchQuery, isNavigating, skeletonVisible, router, isSlowEnv]);
 
   // Idle prefetch: detail 3-4 produk teratas (ringan) untuk perceived speed
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if (!filteredProducts?.length) return;
     if (isNavigating || skeletonVisible) return;
+    if (isSlowEnv) return; // tunda prefetch detail di jaringan lambat
     const run = () => {
       const count = Math.min(4, filteredProducts.length);
       for (let i = 0; i < count; i++) {
@@ -371,7 +394,7 @@ export default function CatalogClient({
       const t = setTimeout(run, 350);
       return () => clearTimeout(t);
     }
-  }, [filteredProducts, selectedCategory, searchQuery, page, isNavigating, skeletonVisible, router]);
+  }, [filteredProducts, selectedCategory, searchQuery, page, isNavigating, skeletonVisible, router, isSlowEnv]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-orange-50 to-white">
@@ -499,18 +522,17 @@ export default function CatalogClient({
           {/* Actual products grid with fade transition */}
           <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 transition-opacity duration-300 ${(isNavigating || skeletonVisible) ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
             {(() => {
-              // Prioritaskan N gambar HTTP pertama (berdasarkan cols) agar LCP tidak terlewat
-              let httpSeenForPriority = 0;
-              const maxPriority = Math.max(1, cols * 2);
-              return filteredProducts.map((product) => {
+              // Desktop bisa menampilkan beberapa kolom; LCP sering berasal dari item selain index 0.
+              // Prioritaskan seluruh item pada baris pertama (index < cols) agar discoverable di HTML.
+              return filteredProducts.map((product, index) => {
                 const isHttp = product.image.startsWith('http');
-                const isPriorityImg = isHttp && httpSeenForPriority < maxPriority;
-                if (isHttp) httpSeenForPriority++;
+                const isPriorityImg = isHttp && index < cols;
 
                 return (
                   <div
                     key={product.id}
                     className="group relative bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer flex flex-col focus:outline-none focus:ring-2 focus:ring-orange-400/60 max-w-sm w-full mx-auto md:max-w-none"
+                    style={{ contentVisibility: 'auto', containIntrinsicSize: '300px 200px' }}
                     onClick={() => {
                       const params = new URLSearchParams();
                       if (selectedCategory && selectedCategory !== 'Semua') params.set('category', selectedCategory);
@@ -555,7 +577,7 @@ export default function CatalogClient({
                     aria-label={`Buka detail ${product.name}`}
                   >
                     {/* Product Image */}
-                    <div className="relative m-2 rounded-lg overflow-hidden bg-gradient-to-br from-orange-100 to-orange-200 aspect-[16/9]">
+                    <div className="relative m-2 rounded-lg overflow-hidden aspect-[4/3] sm:aspect-[16/9] bg-white sm:bg-gradient-to-br sm:from-orange-100 sm:to-orange-200">
                       {product.image.startsWith('http') ? (
                         <Image
                           src={product.image}
@@ -565,8 +587,8 @@ export default function CatalogClient({
                           priority={isPriorityImg}
                           fetchPriority={isPriorityImg ? 'high' : 'auto'}
                           loading={isPriorityImg ? 'eager' : 'lazy'}
-                          quality={70}
-                          sizes="(min-width: 1280px) 300px, (min-width: 1024px) 280px, (min-width: 768px) 240px, (min-width: 640px) 200px, 180px"
+                          quality={60}
+                          sizes="(max-width: 767px) 92vw, (max-width: 1023px) 44vw, (max-width: 1279px) 30vw, 22vw"
                         />
                       ) : (
                         <span className="absolute inset-0 flex items-center justify-center text-6xl">{product.image}</span>

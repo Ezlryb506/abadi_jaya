@@ -4,9 +4,9 @@ import Link from 'next/link';
 
 export default function HeroSection() {
   return (
-    <section id="beranda" className="relative min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 overflow-hidden">
+    <section id="beranda" className="relative h-[calc(100svh-4.5rem)] md:h-[calc(100vh-4.5rem)] md:flex md:items-center md:justify-center px-4 sm:px-6 lg:px-8 overflow-hidden pt-4 md:pt-0 bg-gradient-to-br from-slate-50 via-orange-50 to-amber-50 md:bg-none">
       {/* Enhanced Background Pattern dengan Multiple Layers */}
-      <div className="absolute inset-0">
+      <div className="absolute inset-0 hidden md:block">
         {/* Primary Gradient Background */}
         <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-orange-50 to-amber-50"></div>
         
@@ -23,8 +23,12 @@ export default function HeroSection() {
       {/* Main Content Container */}
       <div className="max-w-7xl mx-auto text-center relative z-10">
         {/* Hero Title dengan Enhanced Typography */}
-        <div className="mb-12 animate-fade-in-up">
-          <div className="mb-6">
+        <div className="mb-8 md:mb-12 animate-fade-in-up">
+          {/* Mobile-optimized Title (LCP) */}
+          <h1 className="block md:hidden text-4xl font-extrabold text-slate-900 tracking-tight leading-tight mt-4 mb-6">
+            Bengkel Las Abadi Jaya
+          </h1>
+          <div className="mb-6 hidden md:block">
             <h1 className="text-5xl md:text-7xl lg:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-slate-800 via-orange-600 to-amber-600 mb-4 leading-tight pb-2">
               Bengkel Las
             </h1>
@@ -39,18 +43,18 @@ export default function HeroSection() {
             </div>
           </div>
           
-          <p className="text-xl md:text-2xl text-slate-600 leading-relaxed font-medium">
-            Spesialis jasa las, pagar besi kustom, kanopi, railing, dan fabrikasi stainless. 
-            <span className="block mt-2 text-orange-600 font-semibold">
-              Wujudkan desain Anda dengan kualitas rapi, presisi, dan tahan lama.
+          <p className="text-base sm:text-lg md:text-2xl text-slate-600 leading-relaxed font-medium max-w-prose md:max-w-3xl mx-auto mb-10 ">
+            Wujudkan pagar, kanopi, atau railing impian Anda bersama kami. Kami ahli las di Bekasi dengan pengerjaan yang presisi dan material berkualitas.
+            <span className="block mt-1 sm:mt-2 text-orange-600 font-semibold">
+              Konsultasi gratis dan santai via WhatsApp. Kami akan bantu dari desain hingga pemasangan, dijamin rapi, kuat, dan awet.
             </span>
           </p>
         </div>
         
         {/* Enhanced CTA Buttons */}
-        <div className="flex flex-col sm:flex-row gap-6 justify-center items-center animate-fade-in-up animation-delay-200 mb-16">
+        <div className="flex flex-col sm:flex-row gap-6 justify-center items-center animate-fade-in-up animation-delay-200 mb-6 md:mb-16">
           <button 
-            className="group relative bg-gradient-to-r from-orange-500 via-red-500 to-amber-500 text-white px-10 py-5 rounded-2xl text-xl font-bold hover:from-orange-600 hover:via-red-600 hover:to-amber-600 transition-all duration-500 transform hover:scale-110 hover:-translate-y-1 shadow-2xl hover:shadow-orange-500/25 overflow-hidden cursor-pointer"
+            className="group relative bg-gradient-to-r from-orange-500 via-red-500 to-amber-500 text-white px-10 py-5 rounded-2xl text-xl font-bold hover:from-orange-600 hover:via-red-600 hover:to-amber-600 transition-all duration-500 transform hover:scale-110 hover:-translate-y-1 shadow-2xl hover:shadow-orange-500/25 overflow-hidden cursor-pointer mb-6"
             onClick={() => window.open('https://wa.me/6289653754317?text=Halo! Saya ingin konsultasi tentang jasa las', '_blank')}
           >
             {/* Button Background Animation */}
@@ -67,7 +71,7 @@ export default function HeroSection() {
           
           <Link 
             href="/catalog"
-            className="group relative border-2 border-orange-500 text-orange-600 px-10 py-5 rounded-2xl text-xl font-bold hover:bg-orange-500 hover:text-white transition-all duration-500 transform hover:scale-110 hover:-translate-y-1 shadow-xl hover:shadow-orange-500/25 bg-white/80 backdrop-blur-sm"
+            className="group relative border-2 border-orange-500 text-orange-600 px-10 py-5 rounded-2xl text-xl font-bold hover:bg-orange-500 hover:text-white transition-all duration-500 transform hover:scale-110 hover:-translate-y-1 shadow-xl hover:shadow-orange-500/25 bg-white/80 backdrop-blur-sm mb-6"
           >
             <span className="flex items-center gap-3">
               <span className="text-2xl">🏗️</span>
@@ -80,7 +84,7 @@ export default function HeroSection() {
         </div>
 
         {/* Enhanced Stats dengan Animasi */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 animate-fade-in-up animation-delay-400">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-6 md:gap-8 animate-fade-in-up animation-delay-400">
           <div className="group text-center transform hover:scale-110 transition-all duration-500">
             <div className="relative">
               <div className="text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-500 mb-3 group-hover:from-orange-600 group-hover:to-red-600 transition-all duration-500">
@@ -107,7 +111,7 @@ export default function HeroSection() {
             <div className="w-16 h-1 bg-gradient-to-r from-blue-500 to-cyan-500 mx-auto mt-3 rounded-full group-hover:w-20 transition-all duration-500"></div>
           </div>
           
-          <div className="group text-center transform hover:scale-110 transition-all duration-500">
+          <div className="group text-center transform hover:scale-110 transition-all duration-500 col-span-2 md:col-span-1 mx-auto md:mx-0">
             <div className="relative">
               <div className="text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-500 to-emerald-500 mb-3 group-hover:from-green-600 group-hover:to-emerald-600 transition-all duration-500">
                 96%

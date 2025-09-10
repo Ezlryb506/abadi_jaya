@@ -254,11 +254,11 @@ export default function LayananSection() {
                     src={service.image}
                     alt={service.title}
                     fill
-                    sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, calc(100vw-48px)"
+                    sizes="(max-width: 639px) 330px, (max-width: 1023px) 50vw, 33vw"
                     className="object-cover transition-transform duration-500 group-hover:scale-105"
                     priority={index === 0}
                     fetchPriority={index === 0 ? 'high' : 'auto'}
-                    quality={70}
+                    quality={60}
                   />
                 ) : (
                   <div className="absolute inset-0 flex items-center justify-center bg-orange-50 text-5xl">
