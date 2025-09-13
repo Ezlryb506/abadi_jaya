@@ -1,11 +1,9 @@
-# robots.txt
-# Catatan:
-# - File ini akan dioverwrite oleh next-sitemap saat build (npm run build / postbuild)
-# - Biarkan sebagai fallback selama development.
-
 # *
 User-agent: *
 Allow: /
+
+# *
+User-agent: *
 Disallow: /admin-dashboard
 Disallow: /admin-dashboard/
 Disallow: /admin-dashboard/*
@@ -14,6 +12,11 @@ Disallow: /user-dashboard/*
 Disallow: /api/
 Disallow: /auth/
 Disallow: /auth/*
+Disallow: /login
+Disallow: /gallery
 
-# Sitemaps (absolute URL direkomendasikan untuk produksi)
-Sitemap: https://abadi-jaya.vercel.app/sitemap.xml
+# Host
+Host: http://localhost:3000
+
+# Sitemaps
+Sitemap: http://localhost:3000/sitemap.xml

@@ -693,7 +693,7 @@ export default function CatalogClient({
               {/* Prev */}
               <Link
                 href={buildCatalogHref(Math.max(1, page - 1))}
-                scroll={false}
+                // scroll={false}
                 prefetch
                 aria-disabled={page <= 1}
                 className={`px-3 py-2 rounded-lg border ${page <= 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-orange-50 border-orange-200 text-orange-600'}`}
@@ -707,7 +707,7 @@ export default function CatalogClient({
                 <Link
                   key={p}
                   href={buildCatalogHref(p)}
-                  scroll={false}
+                  // scroll={false}
                   prefetch
                   aria-current={p === page ? 'page' : undefined}
                   className={`px-3 py-2 rounded-lg border ${p === page ? 'bg-orange-500 text-white border-orange-500' : 'hover:bg-orange-50 border-orange-200 text-orange-600'}`}
@@ -718,7 +718,7 @@ export default function CatalogClient({
               {/* Next */}
               <Link
                 href={buildCatalogHref(Math.min(pageCount, page + 1))}
-                scroll={false}
+                // scroll={false}
                 prefetch
                 aria-disabled={page >= pageCount}
                 className={`px-3 py-2 rounded-lg border ${page >= pageCount ? 'opacity-50 cursor-not-allowed' : 'hover:bg-orange-50 border-orange-200 text-orange-600'}`}

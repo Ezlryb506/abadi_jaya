@@ -48,6 +48,7 @@ export default function Header() {
     if (href === '/contact') return pathname === '/contact';
     // Treat /catalog and any sub-route (/catalog/...)
     if (href === '/catalog') return pathname === '/catalog' || pathname.startsWith('/catalog/');
+    if (href === '/layanan') return pathname === '/layanan' || pathname.startsWith('/layanan/');
     if (href === '/login') return pathname === '/login';
     if (href === '/testimoni') return pathname === '/testimoni';
     return false;
@@ -76,8 +77,8 @@ export default function Header() {
               href="/"
               className={`px-4 py-2 rounded-lg font-medium transition-all ${
                 isActive('/') 
-                  ? 'bg-orange-100 text-orange-700 border-2 border-orange-200' 
-                  : 'text-gray-600 hover:text-orange-500 hover:bg-orange-50 border-2 border-transparent'
+                  ? 'bg-orange-50 text-orange-500 border-2 border-orange-200 shadow-md' 
+                  : 'text-gray-600 hover:text-orange-500 hover:bg-orange-50 border-2 border-transparent shadow-md hover:scale-[1.05]'
               }`}
             >
               Beranda
@@ -86,18 +87,28 @@ export default function Header() {
               href="/catalog"
               className={`px-4 py-2 rounded-lg font-medium transition-all ${
                 isActive('/catalog') 
-                  ? 'bg-orange-100 text-orange-700 border-2 border-orange-200' 
-                  : 'text-gray-600 hover:text-orange-500 hover:bg-orange-50 border-2 border-transparent'
+                  ? 'bg-orange-50 text-orange-500 border-2 border-orange-200 shadow-md' 
+                  : 'text-gray-600 hover:text-orange-500 hover:bg-orange-50 border-2 border-transparent shadow-md hover:scale-[1.05]'
               }`}
             >
               Katalog
             </Link>
             <Link
+              href="/layanan"
+              className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                isActive('/layanan') 
+                  ? 'bg-orange-50 text-orange-500 border-2 border-orange-200 shadow-md' 
+                  : 'text-gray-600 hover:text-orange-500 hover:bg-orange-50 border-2 border-transparent shadow-md hover:scale-[1.05]'
+              }`}
+            >
+              Layanan
+            </Link>
+            <Link
               href="/testimoni"
               className={`px-4 py-2 rounded-lg font-medium transition-all ${
                 isActive('/testimoni') 
-                  ? 'bg-orange-100 text-orange-700 border-2 border-orange-200' 
-                  : 'text-gray-600 hover:text-orange-500 hover:bg-orange-50 border-2 border-transparent'
+                  ? 'bg-orange-50 text-orange-500 border-2 border-orange-200 shadow-md' 
+                  : 'text-gray-600 hover:text-orange-500 hover:bg-orange-50 border-2 border-transparent shadow-md hover:scale-[1.05]'
               }`}
             >
               Testimoni
@@ -106,8 +117,8 @@ export default function Header() {
               href="/contact"
               className={`px-4 py-2 rounded-lg font-medium transition-all ${
                 isActive('/contact') 
-                  ? 'bg-orange-100 text-orange-700 border-2 border-orange-200' 
-                  : 'text-gray-600 hover:text-orange-500 hover:bg-orange-50 border-2 border-transparent'
+                  ? 'bg-orange-50 text-orange-500 border-2 border-orange-200 shadow-md' 
+                  : 'text-gray-600 hover:text-orange-500 hover:bg-orange-50 border-2 border-transparent shadow-md hover:scale-[1.05]'
               }`}
             >
               Kontak
@@ -186,8 +197,8 @@ export default function Header() {
                 href="/"
                 className={`inline-flex w-11/12 max-w-xs justify-center text-center px-3 py-2 rounded-lg font-medium transition-colors border-2 ${
                   isActive('/') 
-                    ? 'bg-orange-100 text-orange-700 border-orange-200' 
-                    : 'text-gray-600 hover:bg-orange-50 border-transparent hover:border-orange-100'
+                    ? 'bg-orange-100 text-orange-700 border-orange-200 shadow-md' 
+                    : 'text-gray-600 hover:bg-orange-50 border-2 border-orange-200 shadow-md'
                 }`}
                 onClick={() => setMobileMenuOpen(false)}
               >
@@ -197,19 +208,30 @@ export default function Header() {
                 href="/catalog"
                 className={`inline-flex w-11/12 max-w-xs justify-center text-center px-3 py-2 rounded-lg font-medium transition-colors border-2 ${
                   isActive('/catalog') 
-                    ? 'bg-orange-100 text-orange-700 border-orange-200' 
-                    : 'text-gray-600 hover:bg-orange-50 border-transparent hover:border-orange-100'
+                    ? 'bg-orange-100 text-orange-700 border-orange-200 shadow-md' 
+                    : 'text-gray-600 hover:bg-orange-50 border-2 border-orange-200 shadow-md'
                 }`}
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Katalog
               </Link>
               <Link
+                href="/layanan"
+                className={`inline-flex w-11/12 max-w-xs justify-center text-center px-3 py-2 rounded-lg font-medium transition-colors border-2 ${
+                  isActive('/layanan') 
+                    ? 'bg-orange-100 text-orange-700 border-orange-200 shadow-md' 
+                    : 'text-gray-600 hover:bg-orange-50 border-2 border-orange-200 shadow-md'
+                }`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Layanan
+              </Link>
+              <Link
                 href="/testimoni"
                 className={`inline-flex w-11/12 max-w-xs justify-center text-center px-3 py-2 rounded-lg font-medium transition-colors border-2 ${
                   isActive('/testimoni') 
-                    ? 'bg-orange-100 text-orange-700 border-orange-200' 
-                    : 'text-gray-600 hover:bg-orange-50 border-transparent hover:border-orange-100'
+                    ? 'bg-orange-100 text-orange-700 border-orange-200 shadow-md' 
+                    : 'text-gray-600 hover:bg-orange-50 border-2 border-orange-200 shadow-md'
                 }`}
                 onClick={() => setMobileMenuOpen(false)}
               >
@@ -219,8 +241,8 @@ export default function Header() {
                 href="/contact"
                 className={`inline-flex w-11/12 max-w-xs justify-center text-center px-3 py-2 rounded-lg font-medium transition-colors border-2 ${
                   isActive('/contact') 
-                    ? 'bg-orange-100 text-orange-700 border-orange-200' 
-                    : 'text-gray-600 hover:bg-orange-50 border-transparent hover:border-orange-100'
+                    ? 'bg-orange-100 text-orange-700 border-orange-200 shadow-md' 
+                    : 'text-gray-600 hover:bg-orange-50 border-2 border-orange-200 shadow-md'
                 }`}
                 onClick={() => setMobileMenuOpen(false)}
               >
@@ -240,7 +262,7 @@ export default function Header() {
                       className={`inline-flex w-11/12 max-w-xs justify-center text-center px-4 py-2 rounded-lg font-medium transition-all border-2 shadow-md ${
                         isActive('/login') 
                           ? 'bg-orange-600 text-white border-orange-600 shadow-lg' 
-                          : 'bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200 hover:border-gray-300'
+                          : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200 hover:border-gray-300 shadow-md'
                       }`}
                       onClick={() => setMobileMenuOpen(false)}
                     >

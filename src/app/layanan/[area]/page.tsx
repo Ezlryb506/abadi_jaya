@@ -1,0 +1,288 @@
+import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
+import { areaAll } from '@/lib/areaLayanan';
+import { supabaseServer } from '@/lib/supabaseServer';
+import { slugify } from '@/lib/slug';
+import Link from 'next/link';
+import Script from 'next/script';
+import Button from '@/components/ui/Button';
+import Card from '@/components/ui/Card';
+import ProductCard from '@/components/ui/ProductCard';
+import CategoryCard from '@/components/ui/CategoryCard';
+
+type RouteParams = { area: string };
+type Props = { params: Promise<RouteParams> };
+
+// Validasi area
+function validateArea(area: string): string | null {
+  const normalizedArea = area.toLowerCase().replace(/[^a-z0-9]/g, '');
+  return areaAll.find(a => 
+    slugify(a).toLowerCase() === normalizedArea || 
+    a.toLowerCase().replace(/[^a-z0-9]/g, '') === normalizedArea
+  ) || null;
+}
+
+// Generate metadata dinamis
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { area } = await params;
+  const validArea = validateArea(area);
+  
+  if (!validArea) {
+    return {
+      title: 'Area Tidak Ditemukan | Abadi Jaya',
+      description: 'Area layanan tidak ditemukan. Lihat daftar area layanan kami.',
+    };
+  }
+
+  const site = process.env.NEXT_PUBLIC_SITE_URL;
+  const canonical = `/layanan/${slugify(validArea)}`;
+  const canonicalAbs = site ? new URL(canonical, site).toString() : canonical;
+
+  return {
+    title: `Jasa Las & Fabrikasi Besi di ${validArea} | Abadi Jaya`,
+    description: `Bengkel las terpercaya di ${validArea}. Pagar besi, kanopi, railing, teralis, stainless steel. Konsultasi gratis, garansi pengerjaan, harga transparan.`,
+    keywords: [
+      'bengkel las',
+      'jasa las',
+      'fabrikasi besi',
+      'pagar besi',
+      'kanopi',
+      'railing',
+      'teralis',
+      'stainless steel',
+      validArea.toLowerCase(),
+      'bekasi',
+      'cikarang',
+      'tambun',
+      'cibitung'
+    ],
+    alternates: { canonical: canonicalAbs },
+    robots: { index: true, follow: true },
+    openGraph: {
+      title: `Jasa Las & Fabrikasi Besi di ${validArea} | Abadi Jaya`,
+      description: `Bengkel las terpercaya di ${validArea}. Pagar besi, kanopi, railing, teralis, stainless steel. Konsultasi gratis, garansi pengerjaan.`,
+      type: 'website',
+      url: canonicalAbs,
+      images: site ? [{
+        url: new URL(`/api/og?variant=area&area=${encodeURIComponent(validArea)}&title=${encodeURIComponent(`Jasa Las di ${validArea}`)}`, site).toString()
+      }] : undefined,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `Jasa Las & Fabrikasi Besi di ${validArea} | Abadi Jaya`,
+      description: `Bengkel las terpercaya di ${validArea}. Pagar besi, kanopi, railing, teralis, stainless steel.`,
+    },
+  };
+}
+
+// Generate static params untuk semua area
+export async function generateStaticParams() {
+  return areaAll.map(area => ({
+    area: slugify(area)
+  }));
+}
+
+// Fetch data produk untuk area tertentu
+async function getProductsForArea(_area: string) {
+  // mark as used to satisfy lint while keeping signature stable
+  void _area;
+  const { data: products } = await supabaseServer
+    .from('products')
+    .select(`
+      id,
+      name,
+      description,
+      price,
+      image_url,
+      product_categories(name)
+    `)
+    .or('is_active.eq.true,is_active.is.null')
+    .order('id', { ascending: false })
+    .limit(12);
+
+  return products || [];
+}
+
+// Fetch kategori populer
+async function getPopularCategories() {
+  const { data: categories } = await supabaseServer
+    .from('product_categories')
+    .select('name, description')
+    .order('name')
+    .limit(8);
+
+  return categories || [];
+}
+
+export default async function AreaServicePage({ params }: Props) {
+  const { area } = await params;
+  const validArea = validateArea(area);
+  
+  if (!validArea) {
+    notFound();
+  }
+
+  const [products, categories] = await Promise.all([
+    getProductsForArea(validArea),
+    getPopularCategories()
+  ]);
+
+  const site = process.env.NEXT_PUBLIC_SITE_URL;
+  const currentUrl = `/layanan/${slugify(validArea)}`;
+  const currentAbs = site ? new URL(currentUrl, site).toString() : currentUrl;
+
+  // JSON-LD untuk LocalBusiness
+  const localBusinessJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'LocalBusiness',
+    name: 'Abadi Jaya',
+    description: `Bengkel las dan fabrikasi besi terpercaya di ${validArea}`,
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: validArea,
+      addressRegion: 'Jawa Barat',
+      addressCountry: 'ID'
+    },
+    areaServed: [validArea, ...areaAll],
+    serviceType: ['Bengkel Las', 'Fabrikasi Besi', 'Pagar Besi', 'Kanopi', 'Railing', 'Teralis', 'Stainless Steel'],
+    url: currentAbs,
+    telephone: '+62-896-5375-4317',
+    priceRange: '$$',
+    openingHours: 'Mo-Sa 08:00-17:00',
+    hasOfferCatalog: {
+      '@type': 'OfferCatalog',
+      name: 'Katalog Produk',
+      itemListElement: products.map((product) => ({
+        '@type': 'Offer',
+        itemOffered: {
+          '@type': 'Product',
+          name: product.name,
+          description: product.description,
+          image: product.image_url
+        }
+      }))
+    }
+  };
+
+  // Breadcrumb JSON-LD
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Beranda', item: site || '/' },
+      { '@type': 'ListItem', position: 2, name: 'Layanan', item: site ? new URL('/layanan', site).toString() : '/layanan' },
+      { '@type': 'ListItem', position: 3, name: validArea, item: currentAbs }
+    ]
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-orange-50 to-white">
+      <Script id="local-business-ld" type="application/ld+json">
+        {JSON.stringify(localBusinessJsonLd)}
+      </Script>
+      <Script id="breadcrumb-ld" type="application/ld+json">
+        {JSON.stringify(breadcrumbJsonLd)}
+      </Script>
+
+      {/* Hero Section */}
+      <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white py-16">
+        <div className="max-w-6xl mx-auto px-4">
+          <nav className="text-orange-100 text-sm mb-3">
+            <Link href="/" className="hover:underline">Beranda</Link> <span>/</span> 
+            <Link href="/layanan" className="hover:underline">Layanan</Link> <span>/</span> 
+            <span className="opacity-90">{validArea}</span>
+          </nav>
+          <h1 className="text-3xl md:text-4xl font-bold mb-4">
+            Jasa Las & Fabrikasi Besi di {validArea}
+          </h1>
+          <p className="text-orange-100 text-lg max-w-3xl">
+            Bengkel las terpercaya di {validArea} dengan pengalaman bertahun-tahun. 
+            Pagar besi, kanopi, railing, teralis, dan stainless steel berkualitas tinggi.
+          </p>
+        </div>
+      </div>
+
+      <div className="max-w-6xl mx-auto px-4 py-10">
+        {/* Keunggulan Area */}
+        <Card className="mb-10 p-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">
+            Mengapa Memilih Abadi Jaya di {validArea}?
+          </h2>
+          <div className="grid md:grid-cols-3 gap-6">
+            <div className="text-center">
+              <div className="text-4xl mb-3">🚚</div>
+              <h3 className="font-semibold text-lg mb-2">Layanan Lokal</h3>
+              <p className="text-gray-600">Tim kami berpengalaman melayani pelanggan di {validArea} dan sekitarnya</p>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl mb-3">⚡</div>
+              <h3 className="font-semibold text-lg mb-2">Respon Cepat</h3>
+              <p className="text-gray-600">Survey dan konsultasi gratis dengan jadwal yang fleksibel</p>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl mb-3">🛡️</div>
+              <h3 className="font-semibold text-lg mb-2">Garansi Pengerjaan</h3>
+              <p className="text-gray-600">Kualitas terjamin dengan garansi pengerjaan yang jelas</p>
+            </div>
+          </div>
+        </Card>
+
+        {/* Kategori Layanan */}
+        <div className="mb-10">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">
+            Layanan Kami di {validArea}
+          </h2>
+          <div className="grid md:grid-cols-3 gap-8">
+            {categories.map((category) => (
+              <CategoryCard
+                key={category.name}
+                category={category}
+                areaCount={areaAll.length}
+                href={`/layanan/${slugify(validArea)}/${slugify(category.name)}`}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Produk Unggulan */}
+        <div className="mb-10">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">
+            Produk Unggulan di {validArea}
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {products.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                showConsultation={true}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* CTA Section */}
+        <Card className="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-8 text-center">
+          <h2 className="text-2xl font-bold mb-4">
+            Siap Memulai Proyek Anda di {validArea}?
+          </h2>
+          <p className="text-orange-100 mb-6 max-w-2xl mx-auto">
+            Konsultasi gratis untuk proyek pagar besi, kanopi, railing, atau fabrikasi besi lainnya. 
+            Tim kami siap membantu mewujudkan impian Anda.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="https://wa.me/6289653754317" target="_blank" rel="noopener noreferrer">
+              <Button variant="ghost" size="lg" className="bg-white text-orange-600 hover:bg-orange-50 hover:scale-[1.05]">
+                📞 Hubungi Sekarang
+              </Button>
+            </a>
+            <a href="https://wa.me/6289653754317?text=Halo%2C%20saya%20ingin%20konsultasi%20gratis%20untuk%20proyek%20las%20dan%20fabrikasi%20besi" target="_blank" rel="noopener noreferrer">
+              <Button variant="outline" size="lg" className="border-white text-white hover:bg-white hover:text-orange-600 hover:scale-[1.05]">
+                💬 Konsultasi Gratis
+              </Button>
+            </a>
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
+}

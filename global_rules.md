@@ -26,4 +26,4 @@
 26. untuk env var url site sudah saya berikan di .env vercel
 27. Kamu boleh menambahkan dependency yang relavan dengan framework project
 28. Sebelum memberikan permintaan testing kepada saya pastikan dulu lingkungan apa yang ada saat ini (sudah deploy/masih development),Jika testing bisa dilakukan melalui dev environtment utamakan ini dan beritahu, jika hanya bisa di lingkungan deployed beritahu.
-29. Jika terjadi error hidration/lainnya jangan gunakan solusi darurat -> cari solusi elegan yang dapat menghasilkan hasil terbaik tanpa mengorbankan sesuatu yang penting seperti performa.
+29. Jika terjadi error hidration/lainnya jangan gunakan solusi darurat -> cari solusi elegan yang dapat menghasilkan yang terbaik tanpa mengorbankan sesuatu yang penting seperti performa -> harus jelas dulu akar masalahnya agar solusinya bisa tepat.

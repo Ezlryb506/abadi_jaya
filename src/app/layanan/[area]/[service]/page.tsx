@@ -1,0 +1,383 @@
+import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
+import { areaAll } from '@/lib/areaLayanan';
+import { supabaseServer } from '@/lib/supabaseServer';
+import { slugify } from '@/lib/slug';
+import Link from 'next/link';
+import Script from 'next/script';
+import Button from '@/components/ui/Button';
+import Card from '@/components/ui/Card';
+import ProductCard from '@/components/ui/ProductCard';
+
+type RouteParams = { area: string; service: string };
+type Props = { params: Promise<RouteParams> };
+
+// Validasi area
+function validateArea(area: string): string | null {
+  const normalizedArea = area.toLowerCase().replace(/[^a-z0-9]/g, '');
+  return areaAll.find(a => 
+    slugify(a).toLowerCase() === normalizedArea || 
+    a.toLowerCase().replace(/[^a-z0-9]/g, '') === normalizedArea
+  ) || null;
+}
+
+// Validasi service
+async function validateService(service: string): Promise<string | null> {
+  const { data: categories } = await supabaseServer
+    .from('product_categories')
+    .select('name')
+    .order('name');
+  
+  if (!categories) return null;
+  
+  const normalizedService = service.toLowerCase().replace(/[^a-z0-9]/g, '');
+  return categories.find(cat => 
+    slugify(cat.name).toLowerCase() === normalizedService ||
+    cat.name.toLowerCase().replace(/[^a-z0-9]/g, '') === normalizedService
+  )?.name || null;
+}
+
+// Generate metadata dinamis
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { area, service } = await params;
+  const validArea = validateArea(area);
+  const validService = await validateService(service);
+  
+  if (!validArea || !validService) {
+    return {
+      title: 'Layanan Tidak Ditemukan | Abadi Jaya',
+      description: 'Layanan tidak ditemukan. Lihat daftar layanan kami.',
+    };
+  }
+
+  const site = process.env.NEXT_PUBLIC_SITE_URL;
+  const canonical = `/layanan/${slugify(validArea)}/${slugify(validService)}`;
+  const canonicalAbs = site ? new URL(canonical, site).toString() : canonical;
+
+  // Generate long-tail keywords
+  const longTailKeywords = [
+    `jasa ${validService.toLowerCase()} di ${validArea}`,
+    `bengkel las ${validService.toLowerCase()} ${validArea}`,
+    `harga ${validService.toLowerCase()} ${validArea}`,
+    `kontraktor ${validService.toLowerCase()} ${validArea}`,
+    `pemasangan ${validService.toLowerCase()} ${validArea}`,
+    `kustom ${validService.toLowerCase()} ${validArea}`,
+    `modern ${validService.toLowerCase()} ${validArea}`,
+    `minimalis ${validService.toLowerCase()} ${validArea}`,
+    validArea.toLowerCase(),
+    validService.toLowerCase(),
+    'bekasi',
+    'cikarang',
+    'tambun',
+    'cibitung'
+  ];
+
+  return {
+    title: `Jasa ${validService} di ${validArea} | Abadi Jaya`,
+    description: `Layanan ${validService.toLowerCase()} terpercaya di ${validArea}. Kualitas tinggi, harga transparan, konsultasi gratis. Bengkel las Abadi Jaya siap membantu proyek Anda.`,
+    keywords: longTailKeywords,
+    alternates: { canonical: canonicalAbs },
+    robots: { index: true, follow: true },
+    openGraph: {
+      title: `Jasa ${validService} di ${validArea} | Abadi Jaya`,
+      description: `Layanan ${validService.toLowerCase()} terpercaya di ${validArea}. Kualitas tinggi, harga transparan, konsultasi gratis.`,
+      type: 'website',
+      url: canonicalAbs,
+      images: site ? [{
+        url: new URL(`/api/og?variant=service&service=${encodeURIComponent(validService)}&area=${encodeURIComponent(validArea)}&title=${encodeURIComponent(`Jasa ${validService} di ${validArea}`)}`, site).toString()
+      }] : undefined,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `Jasa ${validService} di ${validArea} | Abadi Jaya`,
+      description: `Layanan ${validService.toLowerCase()} terpercaya di ${validArea}. Kualitas tinggi, harga transparan.`,
+    },
+  };
+}
+
+// Generate static params
+export async function generateStaticParams() {
+  const { data: categories } = await supabaseServer
+    .from('product_categories')
+    .select('name');
+  
+  if (!categories) return [];
+  
+  const params: Array<{ area: string; service: string }> = [];
+  
+  for (const area of areaAll) {
+    for (const category of categories) {
+      params.push({
+        area: slugify(area),
+        service: slugify(category.name)
+      });
+    }
+  }
+  
+  return params;
+}
+
+// Fetch produk berdasarkan kategori dan area
+async function getProductsForService(serviceName: string, _area: string) {
+  // mark param as used to satisfy lint while keeping signature stable
+  void _area;
+  // Fallback untuk kategori "Jendela" yang belum ada data
+  const actualServiceName = serviceName === 'Jendela' ? 'Teralis' : serviceName;
+  // Step 1: Dapatkan ID kategori berdasarkan nama
+  const { data: categoryData } = await supabaseServer
+    .from('product_categories')
+    .select('id')
+    .eq('name', actualServiceName)
+    .single();
+
+  if (!categoryData) {
+    return [];
+  }
+
+  // Step 2: Fetch produk berdasarkan category_id
+  const { data: products } = await supabaseServer
+    .from('products')
+    .select(`
+      id,
+      name,
+      description,
+      price,
+      image_url,
+      tags,
+      product_categories(name)
+    `)
+    .eq('category_id', categoryData.id)
+    .or('is_active.eq.true,is_active.is.null')
+    .order('id', { ascending: false })
+    .limit(12);
+
+  return products || [];
+}
+
+// Fetch kategori detail
+async function getCategoryDetail(serviceName: string) {
+  const { data: category } = await supabaseServer
+    .from('product_categories')
+    .select('name, description')
+    .eq('name', serviceName)
+    .single();
+
+  return category;
+}
+
+export default async function AreaServiceDetailPage({ params }: Props) {
+  const { area, service } = await params;
+  const validArea = validateArea(area);
+  const validService = await validateService(service);
+  
+  if (!validArea || !validService) {
+    notFound();
+  }
+
+  const [products, categoryDetail] = await Promise.all([
+    getProductsForService(validService, validArea),
+    getCategoryDetail(validService)
+  ]);
+
+  const site = process.env.NEXT_PUBLIC_SITE_URL;
+  const currentUrl = `/layanan/${slugify(validArea)}/${slugify(validService)}`;
+  const currentAbs = site ? new URL(currentUrl, site).toString() : currentUrl;
+
+  // JSON-LD untuk Service
+  const serviceJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Service',
+    name: `Jasa ${validService} di ${validArea}`,
+    description: `Layanan ${validService.toLowerCase()} terpercaya di ${validArea}`,
+    provider: {
+      '@type': 'LocalBusiness',
+      name: 'Abadi Jaya',
+      address: {
+        '@type': 'PostalAddress',
+        addressLocality: validArea,
+        addressRegion: 'Jawa Barat',
+        addressCountry: 'ID'
+      },
+      areaServed: validArea,
+      telephone: '+62-896-5375-4317'
+    },
+    areaServed: {
+      '@type': 'City',
+      name: validArea
+    },
+    serviceType: validService,
+    url: currentAbs,
+    hasOfferCatalog: {
+      '@type': 'OfferCatalog',
+      name: `Katalog ${validService}`,
+      itemListElement: products.map((product) => ({
+        '@type': 'Offer',
+        itemOffered: {
+          '@type': 'Product',
+          name: product.name,
+          description: product.description,
+          image: product.image_url
+        }
+      }))
+    }
+  };
+
+  // Breadcrumb JSON-LD
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Beranda', item: site || '/' },
+      { '@type': 'ListItem', position: 2, name: 'Layanan', item: site ? new URL('/layanan', site).toString() : '/layanan' },
+      { '@type': 'ListItem', position: 3, name: validArea, item: site ? new URL(`/layanan/${slugify(validArea)}`, site).toString() : `/layanan/${slugify(validArea)}` },
+      { '@type': 'ListItem', position: 4, name: validService, item: currentAbs }
+    ]
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-orange-50 to-white">
+      <Script id="service-ld" type="application/ld+json">
+        {JSON.stringify(serviceJsonLd)}
+      </Script>
+      <Script id="breadcrumb-ld" type="application/ld+json">
+        {JSON.stringify(breadcrumbJsonLd)}
+      </Script>
+
+      {/* Hero Section */}
+      <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white py-16">
+        <div className="max-w-6xl mx-auto px-4">
+          <nav className="text-orange-100 text-sm mb-3">
+            <Link href="/" className="hover:underline">Beranda</Link> <span>/</span> 
+            <Link href="/layanan" className="hover:underline">Layanan</Link> <span>/</span>
+            <Link href={`/layanan/${slugify(validArea)}`} className="hover:underline">{validArea}</Link> <span>/</span>
+            <span className="opacity-90">{validService}</span>
+          </nav>
+          <h1 className="text-3xl md:text-4xl font-bold mb-4">
+            Jasa {validService} di {validArea}
+          </h1>
+          <p className="text-orange-100 text-lg max-w-3xl">
+            {categoryDetail?.description || `Layanan ${validService.toLowerCase()} terpercaya di ${validArea} dengan kualitas tinggi dan harga transparan.`}
+          </p>
+        </div>
+      </div>
+
+      <div className="max-w-6xl mx-auto px-4 py-10">
+        {/* Keunggulan Layanan */}
+        <Card className="mb-10 p-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">
+            Mengapa Memilih {validService} dari Abadi Jaya di {validArea}?
+          </h2>
+          <div className="grid md:grid-cols-4 gap-6">
+            <div className="text-center">
+              <div className="text-4xl mb-3">🎯</div>
+              <h3 className="font-semibold text-lg mb-2">Spesialisasi</h3>
+              <p className="text-gray-600">Fokus pada {validService.toLowerCase()} dengan pengalaman bertahun-tahun</p>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl mb-3">🔧</div>
+              <h3 className="font-semibold text-lg mb-2">Kustomisasi</h3>
+              <p className="text-gray-600">Desain dan ukuran sesuai kebutuhan spesifik Anda</p>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl mb-3">⚡</div>
+              <h3 className="font-semibold text-lg mb-2">Pengerjaan Cepat</h3>
+              <p className="text-gray-600">Tim berpengalaman dengan jadwal pengerjaan yang tepat waktu</p>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl mb-3">🛡️</div>
+              <h3 className="font-semibold text-lg mb-2">Garansi Kualitas</h3>
+              <p className="text-gray-600">Material berkualitas dengan garansi pengerjaan yang jelas</p>
+            </div>
+          </div>
+        </Card>
+
+        {/* Produk Layanan */}
+        <div className="mb-10">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">
+            Contoh {validService} di {validArea}
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {products.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                showConsultation={true}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* FAQ Section */}
+        <div className="mb-10">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">
+            Pertanyaan Umum tentang {validService} di {validArea}
+          </h2>
+          <div className="space-y-4">
+            <Card className="p-6">
+              <h3 className="font-semibold text-lg mb-2">
+                Berapa lama pengerjaan {validService.toLowerCase()} di {validArea}?
+              </h3>
+              <p className="text-gray-600">
+                Waktu pengerjaan bervariasi tergantung kompleksitas proyek. Umumnya 3-7 hari kerja untuk proyek standar, 
+                dan 1-2 minggu untuk proyek kustom yang lebih kompleks.
+              </p>
+            </Card>
+            <Card className="p-6">
+              <h3 className="font-semibold text-lg mb-2">
+                Apakah ada garansi untuk {validService.toLowerCase()}?
+              </h3>
+              <p className="text-gray-600">
+                Ya, kami memberikan garansi pengerjaan 1 tahun untuk semua produk {validService.toLowerCase()}. 
+                Garansi meliputi kualitas pengerjaan dan material yang digunakan.
+              </p>
+            </Card>
+            <Card className="p-6">
+              <h3 className="font-semibold text-lg mb-2">
+                Bisakah {validService.toLowerCase()} dikustomisasi sesuai kebutuhan?
+              </h3>
+              <p className="text-gray-600">
+                Tentu! Kami melayani kustomisasi desain, ukuran, warna, dan finishing sesuai kebutuhan spesifik Anda. 
+                Konsultasi gratis untuk menentukan desain yang tepat.
+              </p>
+            </Card>
+          </div>
+        </div>
+
+        {/* CTA Section */}
+        <Card className="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-8 text-center">
+          <h2 className="text-2xl font-bold mb-4">
+            Siap Memesan {validService} di {validArea}?
+          </h2>
+          <p className="text-orange-100 mb-6 max-w-2xl mx-auto">
+            Konsultasi gratis untuk proyek {validService.toLowerCase()} Anda. 
+            Tim kami siap membantu mewujudkan desain yang Anda inginkan.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="https://wa.me/6289653754317" target="_blank" rel="noopener noreferrer">
+              <Button 
+                variant="ghost" 
+                size="lg" 
+                className="bg-white text-orange-700 font-semibold hover:bg-orange-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 shadow-md hover:shadow-lg ring-1 ring-white/60 hover:scale-[1.05]"
+              >
+                📞 Hubungi Sekarang
+              </Button>
+            </a>
+            <a
+              href={`https://wa.me/6289653754317?text=${encodeURIComponent(`Halo, saya ingin konsultasi gratis untuk proyek ${validService} di ${validArea}`)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Button 
+                variant="outline" 
+                size="lg" 
+                className="border-white text-white hover:bg-white hover:text-orange-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 hover:scale-[1.05]"
+              >
+                💬 Konsultasi Gratis
+              </Button>
+            </a>
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
+}
