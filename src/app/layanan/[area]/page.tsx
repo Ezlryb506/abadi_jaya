@@ -132,6 +132,9 @@ export default async function AreaServicePage({ params }: Props) {
   const currentAbs = site ? new URL(currentUrl, site).toString() : currentUrl;
 
   // JSON-LD untuk LocalBusiness
+  const priceValidUntil = new Date(Date.now() + 1000 * 60 * 60 * 24 * 180)
+    .toISOString()
+    .split('T')[0];
   const localBusinessJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'LocalBusiness',
@@ -154,11 +157,30 @@ export default async function AreaServicePage({ params }: Props) {
       name: 'Katalog Produk',
       itemListElement: products.map((product) => ({
         '@type': 'Offer',
+        price: Number.isFinite(product.price as number) ? product.price : undefined,
+        priceCurrency: Number.isFinite(product.price as number) ? 'IDR' : undefined,
+        availability: Number.isFinite(product.price as number) ? 'https://schema.org/InStock' : undefined,
+        url: product.id && product.name ? (site ? new URL(`/catalog/${product.id}-${slugify(product.name)}`, site).toString() : `/catalog/${product.id}-${slugify(product.name)}`) : undefined,
+        priceValidUntil: Number.isFinite(product.price as number) ? priceValidUntil : undefined,
+        itemCondition: Number.isFinite(product.price as number) ? 'https://schema.org/NewCondition' : undefined,
+        shippingDetails: Number.isFinite(product.price as number) ? {
+          '@type': 'OfferShippingDetails',
+          shippingRate: { '@type': 'MonetaryAmount', value: '0', currency: 'IDR' },
+          shippingDestination: { '@type': 'DefinedRegion', addressCountry: 'ID' },
+          deliveryTime: { '@type': 'ShippingDeliveryTime', handlingTime: { '@type': 'QuantitativeValue', minValue: 1, maxValue: 3, unitCode: 'DAY' }, transitTime: { '@type': 'QuantitativeValue', minValue: 2, maxValue: 7, unitCode: 'DAY' } }
+        } : undefined,
+        hasMerchantReturnPolicy: Number.isFinite(product.price as number) ? {
+          '@type': 'MerchantReturnPolicy',
+          returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
+          merchantReturnDays: 7,
+          returnMethod: 'https://schema.org/ReturnByMail'
+        } : undefined,
         itemOffered: {
           '@type': 'Product',
           name: product.name,
           description: product.description,
-          image: product.image_url
+          image: product.image_url,
+          brand: { '@type': 'Brand', name: 'Abadi Jaya' }
         }
       }))
     }

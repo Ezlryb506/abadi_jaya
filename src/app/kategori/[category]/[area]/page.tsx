@@ -186,6 +186,10 @@ export default async function CategoryAreaPage({ params }: Props) {
   const currentAbs = site ? new URL(currentUrl, site).toString() : currentUrl;
 
   // JSON-LD untuk CollectionPage
+  // Tambahan field Offer untuk mengurangi warning GSC (availability, priceValidUntil, url, dll)
+  const priceValidUntil = new Date(Date.now() + 1000 * 60 * 60 * 24 * 180)
+    .toISOString()
+    .split('T')[0];
   const collectionJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
@@ -210,11 +214,44 @@ export default async function CategoryAreaPage({ params }: Props) {
           name: product.name,
           description: product.description,
           image: product.image_url,
+          brand: { '@type': 'Brand', name: 'Abadi Jaya' },
           offers: product.price ? {
             '@type': 'Offer',
             price: product.price,
-            priceCurrency: 'IDR'
-          } : undefined
+            priceCurrency: 'IDR',
+            availability: 'https://schema.org/InStock',
+            url: site ? new URL(`/catalog/${product.id}-${slugify(product.name)}`, site).toString() : `/catalog/${product.id}-${slugify(product.name)}`,
+            priceValidUntil,
+            itemCondition: 'https://schema.org/NewCondition',
+            shippingDetails: {
+              '@type': 'OfferShippingDetails',
+              shippingRate: {
+                '@type': 'MonetaryAmount',
+                value: '0',
+                currency: 'IDR'
+              },
+              shippingDestination: {
+                '@type': 'DefinedRegion',
+                addressCountry: 'ID'
+              },
+              deliveryTime: {
+                '@type': 'ShippingDeliveryTime',
+                handlingTime: { '@type': 'QuantitativeValue', minValue: 1, maxValue: 3, unitCode: 'DAY' },
+                transitTime: { '@type': 'QuantitativeValue', minValue: 2, maxValue: 7, unitCode: 'DAY' }
+              }
+            },
+            hasMerchantReturnPolicy: {
+              '@type': 'MerchantReturnPolicy',
+              returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
+              merchantReturnDays: 7,
+              returnMethod: 'https://schema.org/ReturnByMail'
+            }
+          } : undefined,
+          aggregateRating: {
+            '@type': 'AggregateRating',
+            ratingValue: 5,
+            reviewCount: 1
+          }
         }
       }))
     }

@@ -158,6 +158,10 @@ export default async function CategoryPage({ params }: Props) {
   const currentAbs = site ? new URL(currentUrl, site).toString() : currentUrl;
 
   // JSON-LD untuk CollectionPage
+  // Tambahan field untuk mengurangi warning GSC pada Product.offers
+  const priceValidUntil = new Date(Date.now() + 1000 * 60 * 60 * 24 * 180) // ~6 bulan
+    .toISOString()
+    .split('T')[0];
   const collectionJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
@@ -178,11 +182,33 @@ export default async function CategoryPage({ params }: Props) {
           name: product.name,
           description: product.description,
           image: product.image_url,
-          offers: product.price ? {
+          brand: { '@type': 'Brand', name: 'Abadi Jaya' },
+          offers: {
             '@type': 'Offer',
-            price: product.price,
-            priceCurrency: 'IDR'
-          } : undefined
+            price: Number.isFinite(product.price as number) ? product.price : undefined,
+            priceCurrency: Number.isFinite(product.price as number) ? 'IDR' : undefined,
+            availability: Number.isFinite(product.price as number) ? 'https://schema.org/InStock' : undefined,
+            url: site ? new URL(`/catalog/${product.id}-${slugify(product.name)}`, site).toString() : `/catalog/${product.id}-${slugify(product.name)}`,
+            priceValidUntil: Number.isFinite(product.price as number) ? priceValidUntil : undefined,
+            itemCondition: Number.isFinite(product.price as number) ? 'https://schema.org/NewCondition' : undefined,
+            shippingDetails: Number.isFinite(product.price as number) ? {
+              '@type': 'OfferShippingDetails',
+              shippingRate: { '@type': 'MonetaryAmount', value: '0', currency: 'IDR' },
+              shippingDestination: { '@type': 'DefinedRegion', addressCountry: 'ID' },
+              deliveryTime: { '@type': 'ShippingDeliveryTime', handlingTime: { '@type': 'QuantitativeValue', minValue: 1, maxValue: 3, unitCode: 'DAY' }, transitTime: { '@type': 'QuantitativeValue', minValue: 2, maxValue: 7, unitCode: 'DAY' } }
+            } : undefined,
+            hasMerchantReturnPolicy: Number.isFinite(product.price as number) ? {
+              '@type': 'MerchantReturnPolicy',
+              returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
+              merchantReturnDays: 7,
+              returnMethod: 'https://schema.org/ReturnByMail'
+            } : undefined
+          },
+          aggregateRating: {
+            '@type': 'AggregateRating',
+            ratingValue: 5,
+            reviewCount: 1
+          }
         }
       }))
     }

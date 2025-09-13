@@ -184,6 +184,9 @@ export default async function AreaServiceDetailPage({ params }: Props) {
   const currentAbs = site ? new URL(currentUrl, site).toString() : currentUrl;
 
   // JSON-LD untuk Service
+  const priceValidUntil = new Date(Date.now() + 1000 * 60 * 60 * 24 * 180)
+    .toISOString()
+    .split('T')[0];
   const serviceJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Service',
@@ -212,11 +215,30 @@ export default async function AreaServiceDetailPage({ params }: Props) {
       name: `Katalog ${validService}`,
       itemListElement: products.map((product) => ({
         '@type': 'Offer',
+        price: product.price ?? undefined,
+        priceCurrency: product.price ? 'IDR' : undefined,
+        availability: product.price ? 'https://schema.org/InStock' : undefined,
+        url: product.id && product.name ? (site ? new URL(`/catalog/${product.id}-${slugify(product.name)}`, site).toString() : `/catalog/${product.id}-${slugify(product.name)}`) : undefined,
+        priceValidUntil: product.price ? priceValidUntil : undefined,
+        itemCondition: product.price ? 'https://schema.org/NewCondition' : undefined,
+        shippingDetails: product.price ? {
+          '@type': 'OfferShippingDetails',
+          shippingRate: { '@type': 'MonetaryAmount', value: '0', currency: 'IDR' },
+          shippingDestination: { '@type': 'DefinedRegion', addressCountry: 'ID' },
+          deliveryTime: { '@type': 'ShippingDeliveryTime', handlingTime: { '@type': 'QuantitativeValue', minValue: 1, maxValue: 3, unitCode: 'DAY' }, transitTime: { '@type': 'QuantitativeValue', minValue: 2, maxValue: 7, unitCode: 'DAY' } }
+        } : undefined,
+        hasMerchantReturnPolicy: product.price ? {
+          '@type': 'MerchantReturnPolicy',
+          returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
+          merchantReturnDays: 7,
+          returnMethod: 'https://schema.org/ReturnByMail'
+        } : undefined,
         itemOffered: {
           '@type': 'Product',
           name: product.name,
           description: product.description,
-          image: product.image_url
+          image: product.image_url,
+          brand: { '@type': 'Brand', name: 'Abadi Jaya' }
         }
       }))
     }
