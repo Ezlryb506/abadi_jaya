@@ -151,6 +151,7 @@ export default async function AreaServicePage({ params }: Props) {
     url: currentAbs,
     telephone: '+62-896-5375-4317',
     priceRange: '$$',
+    image: site ? [new URL('/apple-touch-icon.png', site).toString()] : undefined,
     openingHours: 'Mo-Sa 08:00-17:00',
     hasOfferCatalog: {
       '@type': 'OfferCatalog',
@@ -173,13 +174,16 @@ export default async function AreaServicePage({ params }: Props) {
           '@type': 'MerchantReturnPolicy',
           returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
           merchantReturnDays: 7,
-          returnMethod: 'https://schema.org/ReturnByMail'
+          returnMethod: 'https://schema.org/ReturnByMail',
+          returnFees: 'https://schema.org/FreeReturn',
+          applicableCountry: 'ID'
         } : undefined,
         itemOffered: {
           '@type': 'Product',
           name: product.name,
           description: product.description,
           image: product.image_url,
+          url: product.id && product.name ? (site ? new URL(`/catalog/${product.id}-${slugify(product.name)}`, site).toString() : `/catalog/${product.id}-${slugify(product.name)}`) : undefined,
           brand: { '@type': 'Brand', name: 'Abadi Jaya' }
         }
       }))
@@ -213,6 +217,7 @@ export default async function AreaServicePage({ params }: Props) {
               name: product.name,
               description: product.description || undefined,
               image: product.image_url || undefined,
+              url: site ? new URL(`/catalog/${product.id}-${slugify(product.name)}`, site).toString() : `/catalog/${product.id}-${slugify(product.name)}`,
               brand: { '@type': 'Brand', name: 'Abadi Jaya' },
               offers: {
                 '@type': 'Offer',
@@ -232,7 +237,9 @@ export default async function AreaServicePage({ params }: Props) {
                   '@type': 'MerchantReturnPolicy',
                   returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
                   merchantReturnDays: 7,
-                  returnMethod: 'https://schema.org/ReturnByMail'
+                  returnMethod: 'https://schema.org/ReturnByMail',
+                  returnFees: 'https://schema.org/FreeReturn',
+                  applicableCountry: 'ID'
                 } : undefined
               },
               aggregateRating: {
@@ -260,8 +267,8 @@ export default async function AreaServicePage({ params }: Props) {
           <h1 className="text-3xl md:text-4xl font-bold mb-4">
             Jasa Las & Fabrikasi Besi di {validArea}
           </h1>
-          <p className="text-orange-100 text-lg max-w-3xl">
-            Bengkel las terpercaya di {validArea} dengan pengalaman bertahun-tahun. 
+          <p className="text-orange-100 text-lg">
+            Bengkel las terpercaya di {validArea} dengan pengalaman bertahun-tahun. <br></br>
             Pagar besi, kanopi, railing, teralis, dan stainless steel berkualitas tinggi.
           </p>
         </div>
@@ -271,7 +278,7 @@ export default async function AreaServicePage({ params }: Props) {
         {/* Keunggulan Area */}
         <Card className="mb-10 p-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">
-            Mengapa Memilih Abadi Jaya di {validArea}?
+            Mengapa Memilih Jasa Las Abadi Jaya untuk kamu yang berada di {validArea}?
           </h2>
           <div className="grid md:grid-cols-3 gap-6">
             <div className="text-center">
@@ -295,7 +302,7 @@ export default async function AreaServicePage({ params }: Props) {
         {/* Kategori Layanan */}
         <div className="mb-10">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">
-            Layanan Kami di {validArea}
+            Layanan / Jasa Las Kami di {validArea}
           </h2>
           <div className="grid md:grid-cols-3 gap-8">
             {categories.map((category) => (
@@ -331,7 +338,7 @@ export default async function AreaServicePage({ params }: Props) {
             Siap Memulai Proyek Anda di {validArea}?
           </h2>
           <p className="text-orange-100 mb-6 max-w-2xl mx-auto">
-            Konsultasi gratis untuk proyek pagar besi, kanopi, railing, atau fabrikasi besi lainnya. 
+            Konsultasi gratis untuk proyek pagar besi, kanopi, railing, atau fabrikasi besi lainnya. <br></br>
             Tim kami siap membantu mewujudkan impian Anda.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">

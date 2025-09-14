@@ -74,7 +74,7 @@ const services: ServiceCard[] = [
     icon: '🪟',
     image: '/images/layanan/Railing Balkon - Modern - Minimalis 2.jpg',
     title: 'Railing Balkon',
-    description: 'Railing balkon minimalis/modern, aman dan mempercantik fasad',
+    description: 'Railing balkon minimalis/modern, aman dan mempercantik balkon',
     category: 'Railing',
   },
   {

@@ -201,7 +201,9 @@ export default async function CategoryPage({ params }: Props) {
               '@type': 'MerchantReturnPolicy',
               returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
               merchantReturnDays: 7,
-              returnMethod: 'https://schema.org/ReturnByMail'
+              returnMethod: 'https://schema.org/ReturnByMail',
+              returnFees: 'https://schema.org/FreeReturn',
+              applicableCountry: 'ID'
             } : undefined
           },
           aggregateRating: {
@@ -243,7 +245,7 @@ export default async function CategoryPage({ params }: Props) {
             <span className="opacity-90">{validCategory}</span>
           </nav>
           <h1 className="text-3xl md:text-4xl font-bold mb-4">
-            Katalog {validCategory}
+            Katalog Produk Kategori {validCategory}
           </h1>
           <p className="text-orange-100 text-lg max-w-3xl">
             {categoryDetail?.description || `Katalog lengkap ${validCategory.toLowerCase()} berkualitas tinggi dengan kustomisasi sesuai kebutuhan.`}
@@ -255,7 +257,7 @@ export default async function CategoryPage({ params }: Props) {
         {/* Area Layanan */}
         <div className="mb-10">
           <h2 className="text-xl font-bold text-gray-900 mb-4">
-            {validCategory} di Area Layanan Kami
+            Produk {validCategory} di Area Layanan Kami
           </h2>
           <div className="grid md:grid-cols-4 lg:grid-cols-6 gap-4">
             {areaAll.map((area) => (
@@ -317,7 +319,7 @@ export default async function CategoryPage({ params }: Props) {
         {/* Keunggulan Kategori */}
         <div className="mb-10">
           <h2 className="text-xl font-bold text-gray-900 mb-6">
-            Keunggulan {validCategory} dari Abadi Jaya
+            Keunggulan Produk {validCategory} dari Abadi Jaya
           </h2>
           <div className="grid md:grid-cols-3 gap-6">
             <Card className="p-6 text-center">
@@ -347,10 +349,10 @@ export default async function CategoryPage({ params }: Props) {
         {/* CTA Section */}
         <Card className="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-8 text-center">
           <h2 className="text-2xl font-bold mb-4">
-            Butuh {validCategory} Kustom?
+            Butuh Jasa Las atau Pembuatan Produk {validCategory} Kustom?
           </h2>
           <p className="text-orange-100 mb-6 max-w-2xl mx-auto">
-            Konsultasi gratis untuk proyek {validCategory.toLowerCase()} Anda. 
+            Konsultasi gratis untuk proyek {validCategory.toLowerCase()} Anda. <br></br>
             Tim kami siap membantu mewujudkan desain yang Anda inginkan.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">

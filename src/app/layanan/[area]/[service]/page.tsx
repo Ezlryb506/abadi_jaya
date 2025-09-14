@@ -12,6 +12,17 @@ import ProductCard from '@/components/ui/ProductCard';
 type RouteParams = { area: string; service: string };
 type Props = { params: Promise<RouteParams> };
 
+// Tipe minimal untuk baris produk yang kita pakai di halaman ini
+type ProductLite = {
+  id: number;
+  name: string;
+  description: string | null;
+  price: number | null;
+  image_url: string | null;
+  tags?: string[] | null;
+  product_categories?: { name?: string } | { name?: string }[] | null;
+};
+
 // Validasi area
 function validateArea(area: string): string | null {
   const normalizedArea = area.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -117,41 +128,94 @@ export async function generateStaticParams() {
   return params;
 }
 
-// Fetch produk berdasarkan kategori dan area
+// Fetch produk berdasarkan kategori, area dan (tambahan) nama produk yang mengandung kata layanan
 async function getProductsForService(serviceName: string, _area: string) {
   // mark param as used to satisfy lint while keeping signature stable
   void _area;
   // Fallback untuk kategori "Jendela" yang belum ada data
   const actualServiceName = serviceName === 'Jendela' ? 'Teralis' : serviceName;
-  // Step 1: Dapatkan ID kategori berdasarkan nama
+
+  // 1) Ambil ID kategori (jika ada)
   const { data: categoryData } = await supabaseServer
     .from('product_categories')
     .select('id')
     .eq('name', actualServiceName)
     .single();
 
-  if (!categoryData) {
-    return [];
+  // 2) Query berdasarkan kategori (jika ditemukan)
+  let byCategory: ProductLite[] = [];
+  if (categoryData?.id) {
+    const { data } = await supabaseServer
+      .from('products')
+      .select(`
+        id,
+        name,
+        description,
+        price,
+        image_url,
+        tags,
+        product_categories(name)
+      `)
+      .eq('category_id', categoryData.id)
+      .or('is_active.eq.true,is_active.is.null')
+      .order('id', { ascending: false })
+      .limit(24);
+    byCategory = Array.isArray(data) ? (data as ProductLite[]) : [];
   }
 
-  // Step 2: Fetch produk berdasarkan category_id
-  const { data: products } = await supabaseServer
-    .from('products')
-    .select(`
-      id,
-      name,
-      description,
-      price,
-      image_url,
-      tags,
-      product_categories(name)
-    `)
-    .eq('category_id', categoryData.id)
-    .or('is_active.eq.true,is_active.is.null')
-    .order('id', { ascending: false })
-    .limit(12);
+  // 3) Query tambahan: nama produk yang mengandung kata layanan (case-insensitive)
+  //    Buat token dari nama layanan, termasuk bentuk slug yang dipisah spasi
+  const base = String(actualServiceName || '').trim();
+  const slugWords = slugify(base).replace(/-/g, ' ');
+  const tokens = Array.from(
+    new Set(
+      [base, slugWords]
+        .flatMap(s => s.split(/\s+/g))
+        .map(s => s.trim())
+        .filter(s => s.length >= 3)
+    )
+  );
 
-  return products || [];
+  let byName: ProductLite[] = [];
+  if (tokens.length) {
+    // Bangun ekspresi OR untuk PostgREST
+    const orExpr = tokens.map(t => `name.ilike.%${t}%`).join(',');
+    const { data } = await supabaseServer
+      .from('products')
+      .select(`
+        id,
+        name,
+        description,
+        price,
+        image_url,
+        tags,
+        product_categories(name)
+      `)
+      .or(orExpr)
+      .or('is_active.eq.true,is_active.is.null')
+      .order('id', { ascending: false })
+      .limit(24);
+    byName = Array.isArray(data) ? (data as ProductLite[]) : [];
+  }
+
+  // 4) Gabungkan unik berdasarkan id, prioritaskan hasil byCategory terlebih dahulu
+  const seen = new Set<number>();
+  const merged: ProductLite[] = [];
+  for (const row of byCategory) {
+    const idNum = Number(row?.id);
+    if (!Number.isFinite(idNum) || seen.has(idNum)) continue;
+    seen.add(idNum);
+    merged.push(row);
+  }
+  for (const row of byName) {
+    const idNum = Number(row?.id);
+    if (!Number.isFinite(idNum) || seen.has(idNum)) continue;
+    seen.add(idNum);
+    merged.push(row);
+  }
+
+  // 5) Batasi 12 item untuk efisiensi
+  return merged.slice(0, 12);
 }
 
 // Fetch kategori detail
@@ -201,13 +265,11 @@ export default async function AreaServiceDetailPage({ params }: Props) {
         addressRegion: 'Jawa Barat',
         addressCountry: 'ID'
       },
-      areaServed: validArea,
-      telephone: '+62-896-5375-4317'
+      telephone: '+62-896-5375-4317',
+      priceRange: '$$',
+      image: site ? [new URL('/apple-touch-icon.png', site).toString()] : undefined,
     },
-    areaServed: {
-      '@type': 'City',
-      name: validArea
-    },
+    areaServed: { '@type': 'City', name: validArea },
     serviceType: validService,
     url: currentAbs,
     hasOfferCatalog: {
@@ -231,13 +293,16 @@ export default async function AreaServiceDetailPage({ params }: Props) {
           '@type': 'MerchantReturnPolicy',
           returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
           merchantReturnDays: 7,
-          returnMethod: 'https://schema.org/ReturnByMail'
+          returnMethod: 'https://schema.org/ReturnByMail',
+          returnFees: 'https://schema.org/FreeReturn',
+          applicableCountry: 'ID'
         } : undefined,
         itemOffered: {
           '@type': 'Product',
           name: product.name,
           description: product.description,
           image: product.image_url,
+          url: site ? new URL(`/catalog/${product.id}-${slugify(product.name)}`, site).toString() : `/catalog/${product.id}-${slugify(product.name)}`,
           brand: { '@type': 'Brand', name: 'Abadi Jaya' }
         }
       }))
@@ -276,6 +341,7 @@ export default async function AreaServiceDetailPage({ params }: Props) {
               name: product.name,
               description: product.description || undefined,
               image: product.image_url || undefined,
+              url: site ? new URL(`/catalog/${product.id}-${slugify(product.name)}`, site).toString() : `/catalog/${product.id}-${slugify(product.name)}`,
               brand: { '@type': 'Brand', name: 'Abadi Jaya' },
               offers: {
                 '@type': 'Offer',
@@ -295,7 +361,9 @@ export default async function AreaServiceDetailPage({ params }: Props) {
                   '@type': 'MerchantReturnPolicy',
                   returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
                   merchantReturnDays: 7,
-                  returnMethod: 'https://schema.org/ReturnByMail'
+                  returnMethod: 'https://schema.org/ReturnByMail',
+                  returnFees: 'https://schema.org/FreeReturn',
+                  applicableCountry: 'ID'
                 } : undefined
               },
               aggregateRating: {
@@ -326,7 +394,7 @@ export default async function AreaServiceDetailPage({ params }: Props) {
             <span className="opacity-90">{validService}</span>
           </nav>
           <h1 className="text-3xl md:text-4xl font-bold mb-4">
-            Jasa {validService} di {validArea}
+            Jasa Las {validService} di {validArea}
           </h1>
           <p className="text-orange-100 text-lg max-w-3xl">
             {categoryDetail?.description || `Layanan ${validService.toLowerCase()} terpercaya di ${validArea} dengan kualitas tinggi dan harga transparan.`}
@@ -338,7 +406,7 @@ export default async function AreaServiceDetailPage({ params }: Props) {
         {/* Keunggulan Layanan */}
         <Card className="mb-10 p-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">
-            Mengapa Memilih {validService} dari Abadi Jaya di {validArea}?
+            Mengapa Memilih Produk {validService} dari Abadi Jaya untuk kamu yang tinggal di {validArea}?
           </h2>
           <div className="grid md:grid-cols-4 gap-6">
             <div className="text-center">
@@ -367,13 +435,20 @@ export default async function AreaServiceDetailPage({ params }: Props) {
         {/* Produk Layanan */}
         <div className="mb-10">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">
-            Contoh {validService} di {validArea}
+            Contoh Produk {validService} di {validArea}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {products.map((product) => (
               <ProductCard
                 key={product.id}
-                product={product}
+                product={{
+                  id: Number(product.id),
+                  name: String(product.name),
+                  description: product.description ?? undefined,
+                  price: typeof product.price === 'number' ? product.price : undefined,
+                  image_url: product.image_url ?? undefined,
+                  tags: Array.isArray(product.tags) ? product.tags : undefined,
+                }}
                 showConsultation={true}
               />
             ))}
@@ -383,12 +458,12 @@ export default async function AreaServiceDetailPage({ params }: Props) {
         {/* FAQ Section */}
         <div className="mb-10">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">
-            Pertanyaan Umum tentang {validService} di {validArea}
+            Pertanyaan Umum tentang Jasa Las Produk {validService} di {validArea}
           </h2>
           <div className="space-y-4">
             <Card className="p-6">
               <h3 className="font-semibold text-lg mb-2">
-                Berapa lama pengerjaan {validService.toLowerCase()} di {validArea}?
+                Berapa lama pengerjaan produk {validService.toLowerCase()} di {validArea}?
               </h3>
               <p className="text-gray-600">
                 Waktu pengerjaan bervariasi tergantung kompleksitas proyek. Umumnya 3-7 hari kerja untuk proyek standar, 
@@ -397,7 +472,7 @@ export default async function AreaServiceDetailPage({ params }: Props) {
             </Card>
             <Card className="p-6">
               <h3 className="font-semibold text-lg mb-2">
-                Apakah ada garansi untuk {validService.toLowerCase()}?
+                Apakah ada garansi untuk produk {validService.toLowerCase()}?
               </h3>
               <p className="text-gray-600">
                 Ya, kami memberikan garansi pengerjaan 1 tahun untuk semua produk {validService.toLowerCase()}. 
@@ -406,7 +481,7 @@ export default async function AreaServiceDetailPage({ params }: Props) {
             </Card>
             <Card className="p-6">
               <h3 className="font-semibold text-lg mb-2">
-                Bisakah {validService.toLowerCase()} dikustomisasi sesuai kebutuhan?
+                Bisakah produk {validService.toLowerCase()} dikustomisasi sesuai kebutuhan?
               </h3>
               <p className="text-gray-600">
                 Tentu! Kami melayani kustomisasi desain, ukuran, warna, dan finishing sesuai kebutuhan spesifik Anda. 
@@ -419,10 +494,10 @@ export default async function AreaServiceDetailPage({ params }: Props) {
         {/* CTA Section */}
         <Card className="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-8 text-center">
           <h2 className="text-2xl font-bold mb-4">
-            Siap Memesan {validService} di {validArea}?
+            Siap Memesan Produk {validService} di {validArea}?
           </h2>
           <p className="text-orange-100 mb-6 max-w-2xl mx-auto">
-            Konsultasi gratis untuk proyek {validService.toLowerCase()} Anda. 
+            Konsultasi gratis untuk proyek las produk {validService.toLowerCase()} Anda. <br></br>
             Tim kami siap membantu mewujudkan desain yang Anda inginkan.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">

@@ -244,7 +244,9 @@ export default async function CategoryAreaPage({ params }: Props) {
               '@type': 'MerchantReturnPolicy',
               returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
               merchantReturnDays: 7,
-              returnMethod: 'https://schema.org/ReturnByMail'
+              returnMethod: 'https://schema.org/ReturnByMail',
+              returnFees: 'https://schema.org/FreeReturn',
+              applicableCountry: 'ID'
             }
           } : undefined,
           aggregateRating: {
@@ -288,7 +290,7 @@ export default async function CategoryAreaPage({ params }: Props) {
             <span className="opacity-90">{validArea}</span>
           </nav>
           <h1 className="text-3xl md:text-4xl font-bold mb-4">
-            {validCategory} di {validArea}
+            Jasa Pembuatan Produk Kategori {validCategory} di {validArea}
           </h1>
           <p className="text-orange-100 text-lg max-w-3xl">
             {categoryDetail?.description || `Katalog ${validCategory.toLowerCase()} terpercaya di ${validArea} dengan kualitas tinggi dan harga transparan.`}
@@ -386,10 +388,10 @@ export default async function CategoryAreaPage({ params }: Props) {
         {/* CTA Section */}
         <Card className="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-8 text-center">
           <h2 className="text-2xl font-bold mb-4">
-            Butuh {validCategory} Kustom di {validArea}?
+            Butuh {validCategory} Kustom untuk daerah {validArea}?
           </h2>
           <p className="text-orange-100 mb-6 max-w-2xl mx-auto">
-            Konsultasi gratis untuk proyek {validCategory.toLowerCase()} Anda di {validArea}. 
+            Konsultasi gratis untuk proyek {validCategory.toLowerCase()} Anda di {validArea}. <br></br>
             Tim kami siap membantu mewujudkan desain yang Anda inginkan.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">

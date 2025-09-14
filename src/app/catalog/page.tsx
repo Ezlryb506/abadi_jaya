@@ -180,11 +180,16 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
   let totalCount = 0;
   if (filteringByCategory) {
     // Step 1: fetch IDs (unique) with the same filters and pagination
+    const categoriesToMatch = (categoryParam === 'Jendela')
+      ? ['Jendela', 'Teralis']
+      : [categoryParam];
     let idQuery = supabaseServer
       .from('products')
       .select('id,product_categories!inner(name)', { count: 'exact' })
       .or('is_active.eq.true,is_active.is.null')
-      .eq('product_categories.name', categoryParam);
+      // Fallback: jika kategori adalah Jendela dan belum ada data,
+      // kita sertakan Teralis agar tetap ada hasil.
+      .in('product_categories.name', categoriesToMatch);
     if (qParam) {
       const like = `%${qParam}%`;
       idQuery = idQuery.or(`name.ilike.${like},description.ilike.${like},tags.cs.{"${qParam}"}`);

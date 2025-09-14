@@ -219,7 +219,7 @@ export default async function LayananPage({}: Props) {
             Siap Memulai Proyek Anda?
           </h2>
           <p className="text-orange-100 mb-6 max-w-2xl mx-auto">
-            Konsultasi gratis untuk proyek las dan fabrikasi besi Anda. 
+            Konsultasi gratis untuk proyek las dan fabrikasi besi Anda. <br></br>
             Tim kami siap membantu mewujudkan impian Anda di area manapun.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">

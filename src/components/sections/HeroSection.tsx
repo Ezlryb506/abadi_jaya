@@ -43,10 +43,10 @@ export default function HeroSection() {
             </div>
           </div>
           
-          <p className="text-base sm:text-lg md:text-2xl text-slate-600 leading-relaxed font-medium max-w-prose md:max-w-3xl mx-auto mb-10 ">
-            Wujudkan pagar, kanopi, atau railing impian Anda bersama kami. Kami ahli las di Bekasi dengan pengerjaan yang presisi dan material berkualitas.
+          <p className="text-base sm:text-lg md:text-2xl text-slate-600 leading-relaxed font-medium mx-auto mb-10 ">
+            Wujudkan pagar, kanopi, atau railing impian Anda bersama kami. <br></br>Kami ahli las di Bekasi dengan pengerjaan yang presisi dan material berkualitas.
             <span className="block mt-1 sm:mt-2 text-orange-600 font-semibold">
-              Konsultasi gratis dan santai via WhatsApp. Kami akan bantu dari desain hingga pemasangan, dijamin rapi, kuat, dan awet.
+              Konsultasi gratis dan santai via WhatsApp. <br></br>Kami akan bantu dari desain hingga pemasangan, dijamin rapi, kuat, dan awet.
             </span>
           </p>
         </div>

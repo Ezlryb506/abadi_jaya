@@ -285,7 +285,9 @@ export default async function ProductDetailPage({ params, searchParams }: Props)
           '@type': 'MerchantReturnPolicy',
           returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
           merchantReturnDays: 7,
-          returnMethod: 'https://schema.org/ReturnByMail'
+          returnMethod: 'https://schema.org/ReturnByMail',
+          returnFees: 'https://schema.org/FreeReturn',
+          applicableCountry: 'ID'
         }
       } as const;
     })(),
