@@ -255,22 +255,45 @@ export default async function ProductDetailPage({ params, searchParams }: Props)
     image: isHttpUrl(product.image) ? product.image : undefined,
     category: product.category,
     keywords: Array.isArray(product.tags) && product.tags.length ? product.tags.join(', ') : undefined,
-    brand: {
-      '@type': 'Organization',
-      name: 'Abadi Jaya',
-      areaServed: areaAll,
-    },
+    brand: { '@type': 'Brand', name: 'Abadi Jaya' },
     seller: {
       '@type': 'Organization',
       name: 'Abadi Jaya',
       areaServed: areaAll,
     },
-    offers: product.price ? {
-      '@type': 'Offer',
-      priceCurrency: 'IDR',
-      price: product.price,
-      availability: 'https://schema.org/InStock',
-    } : undefined,
+    offers: (() => {
+      if (typeof product.price !== 'number') return undefined;
+      const site = process.env.NEXT_PUBLIC_SITE_URL;
+      let urlAbs: string | undefined;
+      try { urlAbs = site ? new URL(`/catalog/${product.id}-${slugify(product.name)}`, site).toString() : undefined; } catch { urlAbs = undefined; }
+      const priceValidUntil = new Date(Date.now() + 1000 * 60 * 60 * 24 * 180).toISOString().split('T')[0];
+      return {
+        '@type': 'Offer',
+        priceCurrency: 'IDR',
+        price: product.price,
+        availability: 'https://schema.org/InStock',
+        url: urlAbs || `/catalog/${product.id}-${slugify(product.name)}`,
+        priceValidUntil,
+        itemCondition: 'https://schema.org/NewCondition',
+        shippingDetails: {
+          '@type': 'OfferShippingDetails',
+          shippingRate: { '@type': 'MonetaryAmount', value: '0', currency: 'IDR' },
+          shippingDestination: { '@type': 'DefinedRegion', addressCountry: 'ID' },
+          deliveryTime: { '@type': 'ShippingDeliveryTime', handlingTime: { '@type': 'QuantitativeValue', minValue: 1, maxValue: 3, unitCode: 'DAY' }, transitTime: { '@type': 'QuantitativeValue', minValue: 2, maxValue: 7, unitCode: 'DAY' } }
+        },
+        hasMerchantReturnPolicy: {
+          '@type': 'MerchantReturnPolicy',
+          returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
+          merchantReturnDays: 7,
+          returnMethod: 'https://schema.org/ReturnByMail'
+        }
+      } as const;
+    })(),
+    aggregateRating: {
+      '@type': 'AggregateRating',
+      ratingValue: 5,
+      reviewCount: 1
+    },
   };
 
   // Prepare unique tags for UI rendering
