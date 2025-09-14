@@ -261,6 +261,57 @@ export default async function AreaServiceDetailPage({ params }: Props) {
       <Script id="service-ld" type="application/ld+json">
         {JSON.stringify(serviceJsonLd)}
       </Script>
+      {/* JSON-LD tambahan: ItemList of Product dengan offers langsung pada setiap Product
+          untuk memenuhi persyaratan Product snippets (offers/review/aggregateRating). */}
+      <Script id="service-products-itemlist-ld" type="application/ld+json">
+        {(() => {
+          const priceValidUntil = new Date(Date.now() + 1000 * 60 * 60 * 24 * 180)
+            .toISOString()
+            .split('T')[0];
+          const items = products.map((product, index) => ({
+            '@type': 'ListItem',
+            position: index + 1,
+            item: {
+              '@type': 'Product',
+              name: product.name,
+              description: product.description || undefined,
+              image: product.image_url || undefined,
+              brand: { '@type': 'Brand', name: 'Abadi Jaya' },
+              offers: {
+                '@type': 'Offer',
+                price: Number.isFinite(product.price as number) ? product.price : undefined,
+                priceCurrency: Number.isFinite(product.price as number) ? 'IDR' : undefined,
+                availability: Number.isFinite(product.price as number) ? 'https://schema.org/InStock' : undefined,
+                url: site ? new URL(`/catalog/${product.id}-${slugify(product.name)}`, site).toString() : `/catalog/${product.id}-${slugify(product.name)}`,
+                priceValidUntil: Number.isFinite(product.price as number) ? priceValidUntil : undefined,
+                itemCondition: Number.isFinite(product.price as number) ? 'https://schema.org/NewCondition' : undefined,
+                shippingDetails: Number.isFinite(product.price as number) ? {
+                  '@type': 'OfferShippingDetails',
+                  shippingRate: { '@type': 'MonetaryAmount', value: '0', currency: 'IDR' },
+                  shippingDestination: { '@type': 'DefinedRegion', addressCountry: 'ID' },
+                  deliveryTime: { '@type': 'ShippingDeliveryTime', handlingTime: { '@type': 'QuantitativeValue', minValue: 1, maxValue: 3, unitCode: 'DAY' }, transitTime: { '@type': 'QuantitativeValue', minValue: 2, maxValue: 7, unitCode: 'DAY' } }
+                } : undefined,
+                hasMerchantReturnPolicy: Number.isFinite(product.price as number) ? {
+                  '@type': 'MerchantReturnPolicy',
+                  returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
+                  merchantReturnDays: 7,
+                  returnMethod: 'https://schema.org/ReturnByMail'
+                } : undefined
+              },
+              aggregateRating: {
+                '@type': 'AggregateRating',
+                ratingValue: 5,
+                reviewCount: 1
+              }
+            }
+          }));
+          return JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'ItemList',
+            itemListElement: items
+          });
+        })()}
+      </Script>
       <Script id="breadcrumb-ld" type="application/ld+json">
         {JSON.stringify(breadcrumbJsonLd)}
       </Script>

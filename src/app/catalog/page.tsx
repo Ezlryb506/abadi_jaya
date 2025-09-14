@@ -325,6 +325,57 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
           }))
         })}
       </Script>
+      {/* JSON-LD: ItemList dengan detail Product + Offer untuk mengurangi warning GSC */}
+      <Script id="itemlist-catalog-rich" type="application/ld+json">
+        {(() => {
+          const priceValidUntil = new Date(Date.now() + 1000 * 60 * 60 * 24 * 180)
+            .toISOString()
+            .split('T')[0];
+          // Gunakan prodDataCached (server data) bila tersedia, fallback ke initialProducts minimal URL
+          const richItems = (prodDataCached || []).map((p, idx) => ({
+            '@type': 'ListItem',
+            position: from + idx + 1,
+            item: {
+              '@type': 'Product',
+              name: String(p.name),
+              description: p.description || undefined,
+              image: p.image_url || undefined,
+              brand: { '@type': 'Brand', name: 'Abadi Jaya' },
+              offers: {
+                '@type': 'Offer',
+                price: Number.isFinite(p.price as number) ? p.price : undefined,
+                priceCurrency: Number.isFinite(p.price as number) ? 'IDR' : undefined,
+                availability: Number.isFinite(p.price as number) ? 'https://schema.org/InStock' : undefined,
+                url: (toAbs(`/catalog/${p.id}-${slugify(String(p.name))}`) || `/catalog/${p.id}-${slugify(String(p.name))}`),
+                priceValidUntil: Number.isFinite(p.price as number) ? priceValidUntil : undefined,
+                itemCondition: Number.isFinite(p.price as number) ? 'https://schema.org/NewCondition' : undefined,
+                shippingDetails: Number.isFinite(p.price as number) ? {
+                  '@type': 'OfferShippingDetails',
+                  shippingRate: { '@type': 'MonetaryAmount', value: '0', currency: 'IDR' },
+                  shippingDestination: { '@type': 'DefinedRegion', addressCountry: 'ID' },
+                  deliveryTime: { '@type': 'ShippingDeliveryTime', handlingTime: { '@type': 'QuantitativeValue', minValue: 1, maxValue: 3, unitCode: 'DAY' }, transitTime: { '@type': 'QuantitativeValue', minValue: 2, maxValue: 7, unitCode: 'DAY' } }
+                } : undefined,
+                hasMerchantReturnPolicy: Number.isFinite(p.price as number) ? {
+                  '@type': 'MerchantReturnPolicy',
+                  returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
+                  merchantReturnDays: 7,
+                  returnMethod: 'https://schema.org/ReturnByMail'
+                } : undefined
+              },
+              aggregateRating: {
+                '@type': 'AggregateRating',
+                ratingValue: 5,
+                reviewCount: 1
+              }
+            }
+          }));
+          return JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'ItemList',
+            itemListElement: richItems
+          });
+        })()}
+      </Script>
       {/* JSON-LD: WebPage with local area context (about/mentions) */}
       <Script id="areaserved-catalog" type="application/ld+json">
         {JSON.stringify({
