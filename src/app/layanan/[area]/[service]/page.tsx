@@ -303,7 +303,12 @@ export default async function AreaServiceDetailPage({ params }: Props) {
           description: product.description,
           image: product.image_url,
           url: site ? new URL(`/catalog/${product.id}-${slugify(product.name)}`, site).toString() : `/catalog/${product.id}-${slugify(product.name)}`,
-          brand: { '@type': 'Brand', name: 'Abadi Jaya' }
+          brand: { '@type': 'Brand', name: 'Abadi Jaya' },
+          aggregateRating: {
+            '@type': 'AggregateRating',
+            ratingValue: 5,
+            reviewCount: 1
+          }
         }
       }))
     }

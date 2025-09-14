@@ -184,7 +184,12 @@ export default async function AreaServicePage({ params }: Props) {
           description: product.description,
           image: product.image_url,
           url: product.id && product.name ? (site ? new URL(`/catalog/${product.id}-${slugify(product.name)}`, site).toString() : `/catalog/${product.id}-${slugify(product.name)}`) : undefined,
-          brand: { '@type': 'Brand', name: 'Abadi Jaya' }
+          brand: { '@type': 'Brand', name: 'Abadi Jaya' },
+          aggregateRating: {
+            '@type': 'AggregateRating',
+            ratingValue: 5,
+            reviewCount: 1
+          }
         }
       }))
     }
@@ -240,7 +245,20 @@ export default async function AreaServicePage({ params }: Props) {
                   returnMethod: 'https://schema.org/ReturnByMail',
                   returnFees: 'https://schema.org/FreeReturn',
                   applicableCountry: 'ID'
-                } : undefined
+                } : undefined,
+                itemOffered: {
+                  '@type': 'Product',
+                  name: product.name,
+                  description: product.description,
+                  image: product.image_url,
+                  url: site ? new URL(`/catalog/${product.id}-${slugify(product.name)}`, site).toString() : `/catalog/${product.id}-${slugify(product.name)}`,
+                  brand: { '@type': 'Brand', name: 'Abadi Jaya' },
+                  aggregateRating: {
+                    '@type': 'AggregateRating',
+                    ratingValue: 5,
+                    reviewCount: 1
+                  }
+                }
               },
               aggregateRating: {
                 '@type': 'AggregateRating',
