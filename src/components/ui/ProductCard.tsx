@@ -17,13 +17,36 @@ interface ProductCardProps {
   };
   showConsultation?: boolean;
   className?: string;
+  context?: {
+    area?: string;
+    service?: string;
+    category?: string;
+  };
 }
 
 export default function ProductCard({ 
   product, 
   showConsultation = true, 
-  className = '' 
+  className = '',
+  context
 }: ProductCardProps) {
+  // Build WA link for consultation with contextual message
+  const waHref = (() => {
+    const parts: string[] = [];
+    if (context?.service) parts.push(`jasa ${context.service}`);
+    if (context?.category) parts.push(`kategori ${context.category}`);
+    if (context?.area) parts.push(`di ${context.area}`);
+    const ctx = parts.length ? ` (${parts.join(' ')})` : '';
+    const msg = `Halo, saya tertarik konsultasi untuk produk ${product.name}${ctx}. Mohon info rekomendasi desain & estimasi harga.`;
+    return `https://wa.me/6289653754317?text=${encodeURIComponent(msg)}`;
+  })();
+  const detailHref = (() => {
+    const baseSlug = `${product.id}-${slugify(product.name)}`;
+    if (context?.area) {
+      return `/produk/${slugify(context.area)}/${baseSlug}`;
+    }
+    return `/catalog/${baseSlug}`;
+  })();
   return (
     <Card className={`flex flex-col h-full overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1 ${className}`}>
       {/* Image Section - Consistent aspect ratio and no cropping (object-contain) */}
@@ -46,32 +69,37 @@ export default function ProductCard({
       {/* Content Section - Flexible Height */}
       <div className="p-4 flex flex-col flex-1">
         {/* Title */}
-        <h3 className="font-semibold text-lg mb-2">
+        <h3 className="font-semibold text-lg mb-2 line-clamp-2 min-h-[54px]">
           {product.name}
         </h3>
         {/* Description - Tidak terpotong */}
         <p className="text-gray-600 text-sm mb-3">
           {product.description || 'Deskripsi belum tersedia'}
         </p>
+        {/* Price & Action Buttons wrapper */}
+        <div className="mt-auto">
         {/* Price */}
-        <div className="mb-3">
+        <div className="mb-2">
           <span className="text-orange-600 font-bold">
             {product.price ? formatRupiah(product.price) : 'Hubungi Kami'}
           </span>
         </div>
         {/* Action Buttons */}
-        <div className="flex gap-2 mt-auto flex-wrap">
-          <Link href={`/catalog/${product.id}-${slugify(product.name)}`} className="flex-1">
-            <Button size="sm" variant="outline" className="w-full">
-              Lihat Detail
+        <div className="flex gap-2 mt-auto flex-wrap items-center">
+          <Link href={detailHref} className="flex-1">
+            <Button size="sm" variant="outline" className="w-full shadow-md">
+              🧾 Detail
             </Button>
           </Link>
           {showConsultation && (
-            <Button size="sm" variant="primary" className="flex-1">
-              💬 Konsultasi
-            </Button>
+            <a href={waHref} target="_blank" rel="noopener noreferrer" className="flex-1">
+              <Button size="sm" variant="primary" className="w-full shadow-md">
+                💬 Chat WA
+              </Button>
+            </a>
           )}
         </div>
+      </div>
       </div>
     </Card>
   );

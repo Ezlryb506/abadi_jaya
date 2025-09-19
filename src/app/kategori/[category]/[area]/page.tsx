@@ -336,6 +336,7 @@ export default async function CategoryAreaPage({ params }: Props) {
                   key={product.id}
                   product={product}
                   showConsultation={true}
+                  context={{ category: validCategory, area: validArea }}
                 />
               ))}
             </div>

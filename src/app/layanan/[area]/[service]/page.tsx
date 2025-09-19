@@ -455,6 +455,7 @@ export default async function AreaServiceDetailPage({ params }: Props) {
                   tags: Array.isArray(product.tags) ? product.tags : undefined,
                 }}
                 showConsultation={true}
+                context={{ area: validArea, service: validService }}
               />
             ))}
           </div>

@@ -345,6 +345,7 @@ export default async function AreaServicePage({ params }: Props) {
                 key={product.id}
                 product={product}
                 showConsultation={true}
+                context={{ area: validArea }}
               />
             ))}
           </div>

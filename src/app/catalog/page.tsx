@@ -6,6 +6,8 @@ import PrevNextHead from './PrevNextHead';
 import Script from 'next/script';
 import { slugify } from '@/lib/slug';
 import { areaAll } from '@/lib/areaLayanan';
+import Button from '@/components/ui/Button';
+import Card from '@/components/ui/Card';
 
 // Enable Incremental Static Regeneration for the catalog page (refresh every 5 minutes)
 export const revalidate = 300; // 5 minutes
@@ -364,7 +366,9 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
                   '@type': 'MerchantReturnPolicy',
                   returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
                   merchantReturnDays: 7,
-                  returnMethod: 'https://schema.org/ReturnByMail'
+                  returnMethod: 'https://schema.org/ReturnByMail',
+                  returnFees: 'https://schema.org/FreeReturn',
+                  applicableCountry: 'ID'
                 } : undefined
               },
               aggregateRating: {
@@ -401,6 +405,34 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
         initialQuery={qParam}
         categoryDescription={activeCategoryDesc || ''}
       />
+      {/* CTA Umum: dorong pengguna untuk konsultasi jika belum menemukan produk yang cocok */}
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <Card className="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-8 text-center">
+          <h2 className="text-2xl font-bold mb-3">Butuh Desain Khusus atau Produk Tidak Tersedia di Daftar?</h2>
+          <p className="text-orange-100 mb-6 max-w-3xl mx-auto">
+            Kami melayani pembuatan produk custom: pagar, kanopi, railing, teralis, stainless, hingga tangga putar. Sampaikan kebutuhan Anda,
+            kami siap memberi saran desain dan estimasi biaya secara transparan.
+          </p>
+          {(() => {
+            const msg = `Halo, saya ingin konsultasi desain custom untuk ${categoryParam !== 'Semua' ? categoryParam : 'produk las'}`;
+            const wa = `https://wa.me/6289653754317?text=${encodeURIComponent(msg)}`;
+            return (
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="https://wa.me/6289653754317" target="_blank" rel="noopener noreferrer">
+                  <Button variant="ghost" size="lg" className="bg-white text-orange-600 hover:bg-orange-50 hover:scale-[1.05]">
+                    📞 Hubungi Sekarang
+                  </Button>
+                </a>
+                <a href={wa} target="_blank" rel="noopener noreferrer">
+                  <Button variant="outline" size="lg" className="border-white text-white hover:bg-white hover:text-orange-600 hover:scale-[1.05]">
+                    💬 Konsultasi Desain Custom
+                  </Button>
+                </a>
+              </div>
+            );
+          })()}
+        </Card>
+      </div>
     </>
   );
 }

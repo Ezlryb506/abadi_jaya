@@ -320,7 +320,7 @@ export default async function ProductAreaPage({ params }: Props) {
 
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row gap-3">
-                <Button variant="primary" size="lg" className="flex-1">
+                <Button variant="outline" size="lg" className="flex-1">
                   📞 Hubungi Sekarang
                 </Button>
                 <Button variant="outline" size="lg" className="flex-1">
@@ -344,7 +344,7 @@ export default async function ProductAreaPage({ params }: Props) {
               <p className="text-gray-600 text-sm mb-4">
                 Lihat produk {product.category.toLowerCase()} lainnya di {validArea}
               </p>
-              <Link href={`/kategori/${slugify(product.category)}/${slugify(validArea)}`}>
+              <Link href={`/catalog/?category=${product.category}`}>
                 <Button variant="outline" size="sm">
                   Lihat Semua
                 </Button>
@@ -363,7 +363,7 @@ export default async function ProductAreaPage({ params }: Props) {
             Tim kami siap membantu mewujudkan desain yang Anda inginkan.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button variant="secondary" size="lg" className="bg-white text-orange-600 hover:bg-orange-50">
+            <Button variant="ghost" size="lg" className="bg-white text-orange-600 hover:bg-orange-50">
               📞 Hubungi Sekarang
             </Button>
             <Button variant="outline" size="lg" className="border-white text-white hover:bg-white hover:text-orange-600">
