@@ -239,12 +239,12 @@ export default function ContactPage() {
                 <div className="flex items-center gap-2">
                   <span>🗂️</span>
                   <a
-                    href="#"
+                    href="https://rizaldev-id.vercel.app"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-indigo-600 hover:text-indigo-700 font-medium"
                   >
-                    Lihat Portofolio (placeholder)
+                    Lihat Portofolio
                   </a>
                 </div>
               </div>
