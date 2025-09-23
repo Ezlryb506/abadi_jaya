@@ -77,13 +77,13 @@ Website ini dibangun dari dasar dengan mempertimbangkan SEO dan performa:
     * Salin isi dari `.env.example` atau tambahkan variabel yang diperlukan, terutama `NEXT_PUBLIC_SUPABASE_URL` dan `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
 
     .env.example:
-    NEXT_PUBLIC_SITE_URL -> url untuk generate sitemap (contoh https://abadi-jaya.vercel.app)
-    UPSTASH_REDIS_REST_TOKEN -> Perlu setup upstash redis, untuk rate limit pencegah brute force
-    UPSTASH_REDIS_REST_URL -> Perlu setup upstash redis, untuk rate limit pencegah brute force
-    REVALIDATE_SECRET -> bebas
-    GEMINI_API_KEY -> Perlu Setup di google AI studio, untuk mempermudah & mempercepat pengisian data produk
-    NEXT_PUBLIC_SUPABASE_URL -> Perlu Setup Project di Supabase sambil menjalankan query database dari file pada direktori dokumentasi
-    NEXT_PUBLIC_SUPABASE_ANON_KEY -> Perlu Setup Project di Supabase sambil menjalankan query database dari file pada direktori dokumentasi
+    * NEXT_PUBLIC_SITE_URL -> url untuk generate sitemap (contoh https://abadi-jaya.vercel.app).
+    * UPSTASH_REDIS_REST_TOKEN -> Perlu setup upstash redis, untuk rate limit pencegah brute force.
+    * UPSTASH_REDIS_REST_URL -> Perlu setup upstash redis, untuk rate limit pencegah brute force.
+    * REVALIDATE_SECRET -> bebas.
+    * GEMINI_API_KEY -> Perlu Setup di google AI studio, untuk mempermudah & mempercepat pengisian data produk.
+    * NEXT_PUBLIC_SUPABASE_URL -> Perlu Setup Project di Supabase sambil menjalankan query database dari file pada direktori dokumentasi.
+    * NEXT_PUBLIC_SUPABASE_ANON_KEY -> Perlu Setup Project di Supabase sambil menjalankan query database dari file pada direktori dokumentasi.
     
 
 4.  **Jalankan server development:**
