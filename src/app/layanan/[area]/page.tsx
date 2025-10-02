@@ -9,6 +9,7 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import ProductCard from '@/components/ui/ProductCard';
 import CategoryCard from '@/components/ui/CategoryCard';
+import LocalTestimonials from '@/components/sections/LocalTestimonials';
 
 type RouteParams = { area: string };
 type Props = { params: Promise<RouteParams> };
@@ -39,8 +40,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const canonicalAbs = site ? new URL(canonical, site).toString() : canonical;
 
   return {
-    title: `Jasa Las & Fabrikasi Besi di ${validArea} | Abadi Jaya`,
-    description: `Bengkel las terpercaya di ${validArea}. Pagar besi, kanopi, railing, teralis, stainless steel. Konsultasi gratis, garansi pengerjaan, harga transparan.`,
+    title: `Bengkel Las ${validArea} — Abadi Jaya | Survei Gratis & Garansi`,
+    description: `Bengkel las terpercaya di ${validArea}. Pagar besi, kanopi, railing, teralis, stainless steel. Konsultasi gratis, garansi pengerjaan, harga transparan. Survey gratis & estimasi harga.`,
     keywords: [
       'bengkel las',
       'jasa las',
@@ -59,18 +60,35 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     alternates: { canonical: canonicalAbs },
     robots: { index: true, follow: true },
     openGraph: {
-      title: `Jasa Las & Fabrikasi Besi di ${validArea} | Abadi Jaya`,
-      description: `Bengkel las terpercaya di ${validArea}. Pagar besi, kanopi, railing, teralis, stainless steel. Konsultasi gratis, garansi pengerjaan.`,
+      title: `Bengkel Las ${validArea} — Abadi Jaya | Survei Gratis & Garansi`,
+      description: `Bengkel las terpercaya di ${validArea}. Pagar besi, kanopi, railing, teralis, stainless steel. Konsultasi gratis, garansi pengerjaan, harga transparan.`,
       type: 'website',
       url: canonicalAbs,
-      images: site ? [{
-        url: new URL(`/api/og?variant=area&area=${encodeURIComponent(validArea)}&title=${encodeURIComponent(`Jasa Las di ${validArea}`)}`, site).toString()
-      }] : undefined,
+      images: site ? [
+        {
+          url: new URL(`/api/og?variant=area&area=${encodeURIComponent(validArea)}&title=${encodeURIComponent(`Jasa Las di ${validArea}`)}`, site).toString(),
+          width: 1200,
+          height: 630,
+          alt: `Bengkel Las ${validArea} - Abadi Jaya`
+        },
+        {
+          url: new URL('/images/layanan/pagar besi - modern 1.jpg', site).toString(),
+          width: 800,
+          height: 600,
+          alt: 'Pagar Besi Modern - Abadi Jaya'
+        },
+        {
+          url: new URL('/images/layanan/Modern Carport - Kanopi - 2.jpg', site).toString(),
+          width: 800,
+          height: 600,
+          alt: 'Kanopi Carport Modern - Abadi Jaya'
+        }
+      ] : undefined,
     },
     twitter: {
       card: 'summary_large_image',
-      title: `Jasa Las & Fabrikasi Besi di ${validArea} | Abadi Jaya`,
-      description: `Bengkel las terpercaya di ${validArea}. Pagar besi, kanopi, railing, teralis, stainless steel.`,
+      title: `Bengkel Las ${validArea} — Abadi Jaya | Survei Gratis & Garansi`,
+      description: `Bengkel las terpercaya di ${validArea}. Pagar besi, kanopi, railing, teralis, stainless steel. Konsultasi gratis, garansi pengerjaan.`,
     },
   };
 }
@@ -108,8 +126,7 @@ async function getPopularCategories() {
   const { data: categories } = await supabaseServer
     .from('product_categories')
     .select('name, description')
-    .order('name')
-    .limit(8);
+    .order('name');
 
   return categories || [];
 }
@@ -206,6 +223,54 @@ export default async function AreaServicePage({ params }: Props) {
     ]
   };
 
+  // FAQ JSON-LD
+  const faqJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: [
+      {
+        '@type': 'Question',
+        name: `Berapa lama waktu pengerjaan untuk proyek di ${validArea}?`,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: `Waktu pengerjaan bervariasi tergantung kompleksitas proyek. Pagar besi sederhana membutuhkan 3-5 hari, kanopi 5-7 hari, dan railing tangga 2-3 hari. Tim kami akan memberikan estimasi waktu yang akurat saat survey.`
+        }
+      },
+      {
+        '@type': 'Question',
+        name: `Apakah ada garansi untuk pengerjaan di ${validArea}?`,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: `Ya, kami memberikan garansi pengerjaan 1 tahun untuk semua proyek di ${validArea}. Garansi meliputi struktur, sambungan las, dan finishing. Kami juga menyediakan layanan purna jual.`
+        }
+      },
+      {
+        '@type': 'Question',
+        name: `Bagaimana cara mendapatkan estimasi harga yang akurat?`,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: `Hubungi kami untuk survey gratis ke lokasi proyek di ${validArea}. Tim kami akan mengukur, menganalisis kondisi, dan memberikan estimasi harga yang detail dalam 24 jam.`
+        }
+      },
+      {
+        '@type': 'Question',
+        name: `Apakah Anda melayani area ${validArea} dan sekitarnya?`,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: `Ya, kami melayani ${validArea} dan seluruh wilayah Bekasi. Tim kami berpengalaman melayani pelanggan di berbagai area dengan kualitas konsisten.`
+        }
+      },
+      {
+        '@type': 'Question',
+        name: `Material apa saja yang tersedia untuk proyek di ${validArea}?`,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: `Kami menyediakan berbagai material berkualitas: besi hollow, besi siku, stainless steel, polycarbonate, dan berbagai finishing. Semua material memiliki sertifikat kualitas.`
+        }
+      }
+    ]
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-orange-50 to-white">
       <Script id="local-business-ld" type="application/ld+json">
@@ -273,6 +338,9 @@ export default async function AreaServicePage({ params }: Props) {
       <Script id="breadcrumb-ld" type="application/ld+json">
         {JSON.stringify(breadcrumbJsonLd)}
       </Script>
+      <Script id="faq-ld" type="application/ld+json">
+        {JSON.stringify(faqJsonLd)}
+      </Script>
 
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white py-16">
@@ -286,7 +354,7 @@ export default async function AreaServicePage({ params }: Props) {
             Jasa Las & Fabrikasi Besi di {validArea}
           </h1>
           <p className="text-orange-100 text-lg">
-            Bengkel las terpercaya di {validArea} dengan pengalaman bertahun-tahun. <br></br>
+            Bengkel las terpercaya untuk daerah {validArea} dengan pengalaman bertahun-tahun. <br></br>
             Pagar besi, kanopi, railing, teralis, dan stainless steel berkualitas tinggi.
           </p>
         </div>
@@ -351,8 +419,125 @@ export default async function AreaServicePage({ params }: Props) {
           </div>
         </div>
 
+        {/* Estimasi Harga */}
+        <Card className="mb-10 p-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">
+            Estimasi Harga Layanan di {validArea}
+          </h2>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-6 rounded-lg">
+              <h3 className="font-semibold text-lg mb-3 text-orange-800">Pagar Besi</h3>
+              <p className="text-orange-700 mb-2">Mulai dari <span className="font-bold">Rp 350.000/m²</span></p>
+              <p className="text-sm text-orange-600">Termasuk material, pemasangan, dan finishing</p>
+            </div>
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-lg">
+              <h3 className="font-semibold text-lg mb-3 text-blue-800">Kanopi</h3>
+              <p className="text-blue-700 mb-2">Mulai dari <span className="font-bold">Rp 450.000/m²</span></p>
+              <p className="text-sm text-blue-600">Struktur baja ringan dengan atap polycarbonate</p>
+            </div>
+            <div className="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-lg">
+              <h3 className="font-semibold text-lg mb-3 text-green-800">Railing Tangga</h3>
+              <p className="text-green-700 mb-2">Mulai dari <span className="font-bold">Rp 250.000/meter</span></p>
+              <p className="text-sm text-green-600">Desain modern dengan finishing powder coating</p>
+            </div>
+            <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-lg">
+              <h3 className="font-semibold text-lg mb-3 text-purple-800">Pintu Besi</h3>
+              <p className="text-purple-700 mb-2">Mulai dari <span className="font-bold">Rp 1.500.000/pintu</span></p>
+              <p className="text-sm text-purple-600">Pintu besi custom dengan sistem keamanan</p>
+            </div>
+            <div className="bg-gradient-to-br from-red-50 to-red-100 p-6 rounded-lg">
+              <h3 className="font-semibold text-lg mb-3 text-red-800">Teralis Jendela</h3>
+              <p className="text-red-700 mb-2">Mulai dari <span className="font-bold">Rp 200.000/meter</span></p>
+              <p className="text-sm text-red-600">Teralis besi dengan desain minimalis</p>
+            </div>
+            <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 p-6 rounded-lg">
+              <h3 className="font-semibold text-lg mb-3 text-indigo-800">Stainless Steel</h3>
+              <p className="text-indigo-700 mb-2">Mulai dari <span className="font-bold">Rp 650.000/m²</span></p>
+              <p className="text-sm text-indigo-600">Custom stainless steel untuk dapur & furniture</p>
+            </div>
+            <div className="bg-gradient-to-br from-pink-50 to-pink-100 p-6 rounded-lg">
+              <h3 className="font-semibold text-lg mb-3 text-pink-800">Railing Balkon</h3>
+              <p className="text-pink-700 mb-2">Mulai dari <span className="font-bold">Rp 300.000/meter</span></p>
+              <p className="text-sm text-pink-600">Railing balkon dengan desain modern</p>
+            </div>
+            <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 p-6 rounded-lg">
+              <h3 className="font-semibold text-lg mb-3 text-yellow-800">Pintu Gerbang</h3>
+              <p className="text-yellow-700 mb-2">Mulai dari <span className="font-bold">Rp 2.500.000/pintu</span></p>
+              <p className="text-sm text-yellow-600">Pintu gerbang otomatis dengan remote</p>
+            </div>
+            <div className="bg-gradient-to-br from-teal-50 to-teal-100 p-6 rounded-lg">
+              <h3 className="font-semibold text-lg mb-3 text-teal-800">Tangga Putar</h3>
+              <p className="text-teal-700 mb-2">Mulai dari <span className="font-bold">Rp 8.000.000/tangga</span></p>
+              <p className="text-sm text-teal-600">Tangga putar custom dengan desain elegan</p>
+            </div>
+          </div>
+          <div className="mt-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded">
+            <p className="text-yellow-800">
+              <strong>Catatan:</strong> Harga dapat bervariasi tergantung kompleksitas desain, material yang dipilih, dan kondisi lokasi. 
+              Survey gratis untuk mendapatkan estimasi yang akurat.
+            </p>
+          </div>
+        </Card>
+
+        {/* FAQ Section */}
+        <Card className="mb-10 p-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">
+            Pertanyaan yang Sering Diajukan (FAQ)
+          </h2>
+          <div className="space-y-6">
+            <div className="border-b border-gray-200 pb-4">
+              <h3 className="font-semibold text-lg mb-2 text-gray-900">
+                Berapa lama waktu pengerjaan untuk proyek di {validArea}?
+              </h3>
+              <p className="text-gray-600">
+                Waktu pengerjaan bervariasi tergantung kompleksitas proyek. Pagar besi sederhana membutuhkan 3-5 hari, 
+                kanopi 5-7 hari, dan railing tangga 2-3 hari. Tim kami akan memberikan estimasi waktu yang akurat saat survey.
+              </p>
+            </div>
+            <div className="border-b border-gray-200 pb-4">
+              <h3 className="font-semibold text-lg mb-2 text-gray-900">
+                Apakah ada garansi untuk pengerjaan di {validArea}?
+              </h3>
+              <p className="text-gray-600">
+                Ya, kami memberikan garansi pengerjaan 1 tahun untuk semua proyek di {validArea}. 
+                Garansi meliputi struktur, sambungan las, dan finishing. Kami juga menyediakan layanan purna jual.
+              </p>
+            </div>
+            <div className="border-b border-gray-200 pb-4">
+              <h3 className="font-semibold text-lg mb-2 text-gray-900">
+                Bagaimana cara mendapatkan estimasi harga yang akurat?
+              </h3>
+              <p className="text-gray-600">
+                Hubungi kami untuk survey gratis ke lokasi proyek di {validArea}. Tim kami akan mengukur, 
+                menganalisis kondisi, dan memberikan estimasi harga yang detail dalam 24 jam.
+              </p>
+            </div>
+            <div className="border-b border-gray-200 pb-4">
+              <h3 className="font-semibold text-lg mb-2 text-gray-900">
+                Apakah Anda melayani area {validArea} dan sekitarnya?
+              </h3>
+              <p className="text-gray-600">
+                Ya, kami melayani {validArea} dan seluruh wilayah Bekasi. Tim kami berpengalaman 
+                melayani pelanggan di berbagai area dengan kualitas konsisten.
+              </p>
+            </div>
+            <div>
+              <h3 className="font-semibold text-lg mb-2 text-gray-900">
+                Material apa saja yang tersedia untuk proyek di {validArea}?
+              </h3>
+              <p className="text-gray-600">
+                Kami menyediakan berbagai material berkualitas: besi hollow, besi siku, stainless steel, 
+                polycarbonate, dan berbagai finishing. Semua material memiliki sertifikat kualitas.
+              </p>
+            </div>
+          </div>
+        </Card>
+
+        {/* Testimoni Lokal */}
+        <LocalTestimonials area={validArea} />
+
         {/* CTA Section */}
-        <Card className="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-8 text-center">
+        <Card className="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-8 text-center mt-8">
           <h2 className="text-2xl font-bold mb-4">
             Siap Memulai Proyek Anda di {validArea}?
           </h2>

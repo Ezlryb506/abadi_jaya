@@ -51,6 +51,7 @@ export default function Header() {
     if (href === '/layanan') return pathname === '/layanan' || pathname.startsWith('/layanan/');
     if (href === '/login') return pathname === '/login';
     if (href === '/testimoni') return pathname === '/testimoni';
+    if (href === '/blog') return pathname === '/blog' || pathname.startsWith('/blog/');
     return false;
   };
 
@@ -112,6 +113,16 @@ export default function Header() {
               }`}
             >
               Testimoni
+            </Link>
+            <Link
+              href="/blog"
+              className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                isActive('/blog') 
+                  ? 'bg-orange-50 text-orange-500 border-2 border-orange-200 shadow-md' 
+                  : 'text-gray-600 hover:text-orange-500 hover:bg-orange-50 border-2 border-transparent shadow-md hover:scale-[1.05]'
+              }`}
+            >
+              Blog
             </Link>
             <Link
               href="/contact"
@@ -236,6 +247,17 @@ export default function Header() {
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Testimoni
+              </Link>
+              <Link
+                href="/blog"
+                className={`inline-flex w-11/12 max-w-xs justify-center text-center px-3 py-2 rounded-lg font-medium transition-colors border-2 ${
+                  isActive('/blog') 
+                    ? 'bg-orange-100 text-orange-700 border-orange-200 shadow-md' 
+                    : 'text-gray-600 hover:bg-orange-50 border-2 border-orange-200 shadow-md'
+                }`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Blog
               </Link>
               <Link
                 href="/contact"

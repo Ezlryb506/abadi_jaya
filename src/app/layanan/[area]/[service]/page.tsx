@@ -94,9 +94,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description: `Layanan ${validService.toLowerCase()} terpercaya di ${validArea}. Kualitas tinggi, harga transparan, konsultasi gratis.`,
       type: 'website',
       url: canonicalAbs,
-      images: site ? [{
-        url: new URL(`/api/og?variant=service&service=${encodeURIComponent(validService)}&area=${encodeURIComponent(validArea)}&title=${encodeURIComponent(`Jasa ${validService} di ${validArea}`)}`, site).toString()
-      }] : undefined,
+      images: site ? [
+        {
+          url: new URL(`/api/og?variant=service&service=${encodeURIComponent(validService)}&area=${encodeURIComponent(validArea)}&title=${encodeURIComponent(`Jasa ${validService} di ${validArea}`)}`, site).toString(),
+          width: 1200,
+          height: 630,
+          alt: `Jasa ${validService} di ${validArea} - Abadi Jaya`
+        },
+        ...getServiceImages(validService, site)
+      ] : undefined,
     },
     twitter: {
       card: 'summary_large_image',
@@ -227,6 +233,111 @@ async function getCategoryDetail(serviceName: string) {
     .single();
 
   return category;
+}
+
+// Helper functions untuk pricing, timeline, dan materials
+function getServicePricing(service: string) {
+  const pricingData: Record<string, Array<{title: string, price: string, description: string, gradient: string}>> = {
+    'Pagar': [
+      { title: 'Pagar Minimalis', price: 'Rp 350.000/m²', description: 'Besi hollow galvanis 1.2mm', gradient: 'bg-gradient-to-br from-orange-50 to-orange-100 text-orange-800' },
+      { title: 'Pagar Custom', price: 'Rp 450.000/m²', description: 'Besi hollow galvanis 1.5mm', gradient: 'bg-gradient-to-br from-blue-50 to-blue-100 text-blue-800' },
+      { title: 'Pagar Stainless', price: 'Rp 650.000/m²', description: 'Stainless steel 304', gradient: 'bg-gradient-to-br from-green-50 to-green-100 text-green-800' }
+    ],
+    'Kanopi': [
+      { title: 'Kanopi Carport', price: 'Rp 450.000/m²', description: 'Baja ringan + polycarbonate', gradient: 'bg-gradient-to-br from-orange-50 to-orange-100 text-orange-800' },
+      { title: 'Kanopi Teras', price: 'Rp 400.000/m²', description: 'Baja ringan + spandek', gradient: 'bg-gradient-to-br from-blue-50 to-blue-100 text-blue-800' },
+      { title: 'Kanopi Minimalis', price: 'Rp 800.000/m²', description: 'Stainless + kaca', gradient: 'bg-gradient-to-br from-green-50 to-green-100 text-green-800' }
+    ],
+    'Railing': [
+      { title: 'Railing Sederhana', price: 'Rp 250.000/meter', description: 'Besi hollow standar', gradient: 'bg-gradient-to-br from-orange-50 to-orange-100 text-orange-800' },
+      { title: 'Railing Custom', price: 'Rp 350.000/meter', description: 'Besi hollow custom', gradient: 'bg-gradient-to-br from-blue-50 to-blue-100 text-blue-800' },
+      { title: 'Railing Stainless', price: 'Rp 450.000/meter', description: 'Stainless steel 304', gradient: 'bg-gradient-to-br from-green-50 to-green-100 text-green-800' }
+    ],
+    'Pintu Besi': [
+      { title: 'Pintu Standar', price: 'Rp 1.500.000/pintu', description: 'Pintu besi single leaf', gradient: 'bg-gradient-to-br from-orange-50 to-orange-100 text-orange-800' },
+      { title: 'Pintu Double', price: 'Rp 2.500.000/pintu', description: 'Pintu besi double leaf', gradient: 'bg-gradient-to-br from-blue-50 to-blue-100 text-blue-800' },
+      { title: 'Pintu Custom', price: 'Rp 3.500.000/pintu', description: 'Pintu besi dengan desain khusus', gradient: 'bg-gradient-to-br from-green-50 to-green-100 text-green-800' }
+    ],
+    'Teralis': [
+      { title: 'Teralis Sederhana', price: 'Rp 200.000/meter', description: 'Besi hollow minimalis', gradient: 'bg-gradient-to-br from-orange-50 to-orange-100 text-orange-800' },
+      { title: 'Teralis Custom', price: 'Rp 300.000/meter', description: 'Desain sesuai kebutuhan', gradient: 'bg-gradient-to-br from-blue-50 to-blue-100 text-blue-800' },
+      { title: 'Teralis Stainless', price: 'Rp 500.000/meter', description: 'Stainless steel premium', gradient: 'bg-gradient-to-br from-green-50 to-green-100 text-green-800' }
+    ],
+    'Stainless Steel': [
+      { title: 'Kitchen Set', price: 'Rp 650.000/m²', description: 'Stainless steel 304', gradient: 'bg-gradient-to-br from-orange-50 to-orange-100 text-orange-800' },
+      { title: 'Furniture Custom', price: 'Rp 800.000/m²', description: 'Desain sesuai kebutuhan', gradient: 'bg-gradient-to-br from-blue-50 to-blue-100 text-blue-800' },
+      { title: 'Stainless Premium', price: 'Rp 1.200.000/m²', description: 'Stainless steel 316', gradient: 'bg-gradient-to-br from-green-50 to-green-100 text-green-800' }
+    ]
+  };
+  
+  return pricingData[service] || [
+    { title: 'Layanan Standar', price: 'Hubungi Kami', description: 'Estimasi harga sesuai kebutuhan', gradient: 'bg-gradient-to-br from-gray-50 to-gray-100 text-gray-800' }
+  ];
+}
+
+function getServiceTimeline(service: string) {
+  const timelineData: Record<string, string> = {
+    'Pagar': 'Pagar besi sederhana membutuhkan 3-5 hari, pagar custom 5-7 hari, dan pagar stainless 7-10 hari.',
+    'Kanopi': 'Kanopi carport standar 5-7 hari, kanopi teras 4-6 hari, dan kanopi custom 7-10 hari.',
+    'Railing': 'Railing tangga sederhana 2-3 hari, railing custom 3-5 hari, dan railing stainless 4-6 hari.',
+    'Pintu Besi': 'Pintu besi standar 5-7 hari, pintu double 7-10 hari, dan pintu custom 10-14 hari.',
+    'Teralis': 'Teralis sederhana 2-3 hari, teralis custom 3-5 hari, dan teralis stainless 4-6 hari.',
+    'Stainless Steel': 'Kitchen set standar 7-10 hari, furniture custom 10-14 hari, dan stainless premium 14-21 hari.'
+  };
+  
+  return timelineData[service] || 'Waktu pengerjaan bervariasi tergantung kompleksitas proyek. Umumnya 3-7 hari kerja untuk proyek standar.';
+}
+
+function getServiceMaterials(service: string) {
+  const materialsData: Record<string, string> = {
+    'Pagar': 'Besi hollow galvanis, stainless steel 304/316, cat powder coating, dan berbagai finishing.',
+    'Kanopi': 'Baja ringan, polycarbonate, spandek, stainless steel, dan berbagai atap.',
+    'Railing': 'Besi hollow, stainless steel, cat powder coating, dan berbagai finishing.',
+    'Pintu Besi': 'Besi plat, engsel heavy duty, kunci keamanan, cat powder coating, dan hardware.',
+    'Teralis': 'Besi hollow, stainless steel, cat powder coating, dan berbagai finishing.',
+    'Stainless Steel': 'Stainless steel 304/316, hardware stainless, dan berbagai aksesoris.'
+  };
+  
+  return materialsData[service] || 'Besi hollow, stainless steel, dan berbagai material berkualitas sesuai kebutuhan proyek.';
+}
+
+function getServiceImages(service: string, site: string) {
+  const imageMap: Record<string, string[]> = {
+    'Pagar': [
+      '/images/layanan/pagar besi - modern 1.jpg',
+      '/images/layanan/Pintu Gerbang - Modern - Stainless 1.jpg'
+    ],
+    'Kanopi': [
+      '/images/layanan/Modern Carport - Kanopi - 2.jpg',
+      '/images/layanan/Kanopi - Pargola - Taman - Modern - 5.jpg'
+    ],
+    'Railing': [
+      '/images/layanan/Railing Tangga - Logam - 9.jpg',
+      '/images/layanan/Stainless Steel - Railing Tangga - 2.jpg',
+      '/images/layanan/Railing Balkon - Modern - Minimalis 2.jpg'
+    ],
+    'Pintu Besi': [
+      '/images/layanan/Pintu Besi - Modern - 2.jpg',
+      '/images/layanan/Pintu Gerbang - Modern - Stainless 1.jpg'
+    ],
+    'Teralis': [
+      '/images/layanan/Jendela - Teralis - Pagar - Modern 6.jpg'
+    ],
+    'Stainless Steel': [
+      '/images/layanan/kitchen Set - Rak - Stainless - 2.jpg',
+      '/images/layanan/Rak Stainless 1.jpg',
+      '/images/layanan/Stainless Steel - Railing Tangga - 2.jpg'
+    ]
+  };
+  
+  const images = imageMap[service] || ['/images/layanan/pagar besi - modern 1.jpg'];
+  
+  return images.map((imagePath, index) => ({
+    url: new URL(imagePath, site).toString(),
+    width: 800,
+    height: 600,
+    alt: `${service} - Abadi Jaya ${index + 1}`
+  }));
 }
 
 export default async function AreaServiceDetailPage({ params }: Props) {
@@ -461,41 +572,81 @@ export default async function AreaServiceDetailPage({ params }: Props) {
           </div>
         </div>
 
-        {/* FAQ Section */}
-        <div className="mb-10">
+        {/* Estimasi Harga Spesifik */}
+        <Card className="mb-10 p-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">
-            Pertanyaan Umum tentang Jasa Las Produk {validService} di {validArea}
+            Estimasi Harga {validService} di {validArea}
           </h2>
-          <div className="space-y-4">
-            <Card className="p-6">
-              <h3 className="font-semibold text-lg mb-2">
-                Berapa lama pengerjaan produk {validService.toLowerCase()} di {validArea}?
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {getServicePricing(validService).map((pricing, index) => (
+              <div key={index} className={`p-6 rounded-lg ${pricing.gradient}`}>
+                <h3 className="font-semibold text-lg mb-3">{pricing.title}</h3>
+                <p className="mb-2">
+                  <span className="font-bold text-lg">{pricing.price}</span>
+                </p>
+                <p className="text-sm opacity-80">{pricing.description}</p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded">
+            <p className="text-yellow-800">
+              <strong>Catatan:</strong> Harga dapat bervariasi tergantung kompleksitas desain, material yang dipilih, dan kondisi lokasi. 
+              Survey gratis untuk mendapatkan estimasi yang akurat.
+            </p>
+          </div>
+        </Card>
+
+        {/* FAQ Section */}
+        <Card className="mb-10 p-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">
+            Pertanyaan yang Sering Diajukan (FAQ)
+          </h2>
+          <div className="space-y-6">
+            <div className="border-b border-gray-200 pb-4">
+              <h3 className="font-semibold text-lg mb-2 text-gray-900">
+                Berapa lama pengerjaan {validService.toLowerCase()} di {validArea}?
               </h3>
               <p className="text-gray-600">
-                Waktu pengerjaan bervariasi tergantung kompleksitas proyek. Umumnya 3-7 hari kerja untuk proyek standar, 
-                dan 1-2 minggu untuk proyek kustom yang lebih kompleks.
+                {getServiceTimeline(validService)} Tim kami akan memberikan estimasi waktu yang akurat saat survey.
               </p>
-            </Card>
-            <Card className="p-6">
-              <h3 className="font-semibold text-lg mb-2">
-                Apakah ada garansi untuk produk {validService.toLowerCase()}?
+            </div>
+            <div className="border-b border-gray-200 pb-4">
+              <h3 className="font-semibold text-lg mb-2 text-gray-900">
+                Apakah ada garansi untuk {validService.toLowerCase()}?
               </h3>
               <p className="text-gray-600">
                 Ya, kami memberikan garansi pengerjaan 1 tahun untuk semua produk {validService.toLowerCase()}. 
-                Garansi meliputi kualitas pengerjaan dan material yang digunakan.
+                Garansi meliputi struktur, sambungan las, dan finishing. Kami juga menyediakan layanan purna jual.
               </p>
-            </Card>
-            <Card className="p-6">
-              <h3 className="font-semibold text-lg mb-2">
-                Bisakah produk {validService.toLowerCase()} dikustomisasi sesuai kebutuhan?
+            </div>
+            <div className="border-b border-gray-200 pb-4">
+              <h3 className="font-semibold text-lg mb-2 text-gray-900">
+                Bagaimana cara mendapatkan estimasi harga yang akurat?
+              </h3>
+              <p className="text-gray-600">
+                Hubungi kami untuk survey gratis ke lokasi proyek di {validArea}. Tim kami akan mengukur, 
+                menganalisis kondisi, dan memberikan estimasi harga yang detail dalam 24 jam.
+              </p>
+            </div>
+            <div className="border-b border-gray-200 pb-4">
+              <h3 className="font-semibold text-lg mb-2 text-gray-900">
+                Bisakah {validService.toLowerCase()} dikustomisasi sesuai kebutuhan?
               </h3>
               <p className="text-gray-600">
                 Tentu! Kami melayani kustomisasi desain, ukuran, warna, dan finishing sesuai kebutuhan spesifik Anda. 
                 Konsultasi gratis untuk menentukan desain yang tepat.
               </p>
-            </Card>
+            </div>
+            <div>
+              <h3 className="font-semibold text-lg mb-2 text-gray-900">
+                Material apa saja yang tersedia untuk {validService.toLowerCase()}?
+              </h3>
+              <p className="text-gray-600">
+                {getServiceMaterials(validService)} Semua material memiliki sertifikat kualitas.
+              </p>
+            </div>
           </div>
-        </div>
+        </Card>
 
         {/* CTA Section */}
         <Card className="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-8 text-center">

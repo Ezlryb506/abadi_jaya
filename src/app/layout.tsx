@@ -156,7 +156,7 @@ export default function RootLayout({
           `}
         </Script>
         <noscript>
-          <link id="animations-css" rel="stylesheet" href="/styles/animations.css" />
+          <style>{`@import url('/styles/animations.css');`}</style>
         </noscript>
 
         {/* Load other non-critical CSS (forms and ui helpers) non-blocking */}
@@ -181,8 +181,8 @@ export default function RootLayout({
           `}
         </Script>
         <noscript>
-          <link id="forms-css" rel="stylesheet" href="/styles/forms.css" />
-          <link id="ui-css" rel="stylesheet" href="/styles/ui.css" />
+          <style>{`@import url('/styles/forms.css');`}</style>
+          <style>{`@import url('/styles/ui.css');`}</style>
         </noscript>
         {/* JSON-LD: WebSite dengan SearchAction untuk membantu mesin pencari memahami fitur pencarian */}
         <Script id="website-searchaction" type="application/ld+json">
