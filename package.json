@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint src --ext .js,.jsx,.ts,.tsx --max-warnings=0",
     "postbuild": "next-sitemap",
-    "sitemap": "next-sitemap"
+    "sitemap": "next-sitemap",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@google/generative-ai": "^0.21.0",

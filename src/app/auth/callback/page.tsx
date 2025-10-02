@@ -18,8 +18,8 @@ function AuthCallbackInner() {
 
   useEffect(() => {
     (async () => {
-      const qsType = searchParams.get('type');
-      const code = searchParams.get('code');
+      const qsType = searchParams?.get('type');
+      const code = searchParams?.get('code');
       // Parse hash fragment (Supabase sering kirim token dan type di hash)
       const hash = typeof window !== 'undefined' ? window.location.hash : '';
       const hashParams = new URLSearchParams((hash || '').replace(/^#/, ''));

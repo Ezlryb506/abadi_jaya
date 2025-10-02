@@ -7,7 +7,8 @@ import { supabase } from "@/lib/supabaseClient";
 import { User } from "@supabase/supabase-js";
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
-  const pathname = usePathname();
+  // Normalize to non-null string to satisfy TS when doing string ops
+  const pathname = usePathname() || "";
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [authChecked, setAuthChecked] = useState(false);

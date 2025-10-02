@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 
 export default function Header() {
-  const pathname = usePathname();
+  const pathname = usePathname() || '';
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);

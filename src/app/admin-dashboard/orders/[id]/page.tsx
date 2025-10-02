@@ -9,7 +9,9 @@ import { formatTanggal } from '@/lib/format';
 import { Transaction, PaymentHistory, ProjectUpdate } from '../../types';
 
 const OrderDetailPage = () => {
-  const { id } = useParams();
+  // Narrow params to expected shape so TS knows `id` exists and is a string
+  const params = useParams<{ id: string }>();
+  const id = params?.id;
   const router = useRouter();
   const [order, setOrder] = useState<Transaction | null>(null);
   const [loading, setLoading] = useState(true);

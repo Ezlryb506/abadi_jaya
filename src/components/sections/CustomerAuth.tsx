@@ -59,7 +59,7 @@ function CustomerAuthInner() {
 
   // Init tab via query (?mode=register|login)
   useEffect(() => {
-    const mode = (searchParams.get('mode') || '').toLowerCase();
+    const mode = (searchParams?.get('mode') || '').toLowerCase();
     if (mode === 'register' || mode === 'signup') {
       setIsLogin(false);
     } else if (mode === 'login' || mode === 'signin') {
@@ -216,7 +216,7 @@ function CustomerAuthInner() {
         }
 
         setSuccess('Login berhasil!');
-        const redirectUrl = searchParams.get('redirect') || '/user-dashboard';
+        const redirectUrl = searchParams?.get('redirect') || '/user-dashboard';
         router.replace(redirectUrl);
       } else {
         if (!formData.email || !formData.password) {
