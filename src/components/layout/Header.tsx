@@ -3,45 +3,38 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabaseClient';
+import { useState } from 'react';
+import dynamic from 'next/dynamic';
+
+const DesktopAuthButtons = dynamic(
+  () => import('./HeaderAuthButtons').then((mod) => mod.DesktopAuthButtons),
+  {
+    ssr: false,
+    loading: () => (
+      <div
+        className="h-10 w-40 rounded-lg bg-gray-100 animate-pulse border-2 border-gray-200"
+        aria-hidden
+      />
+    ),
+  },
+);
+
+const MobileAuthButtons = dynamic(
+  () => import('./HeaderAuthButtons').then((mod) => mod.MobileAuthButtons),
+  {
+    ssr: false,
+    loading: () => (
+      <div
+        className="inline-flex w-11/12 max-w-xs h-10 rounded-lg bg-gray-100 animate-pulse border-2 border-gray-200"
+        aria-hidden
+      />
+    ),
+  },
+);
 
 export default function Header() {
   const pathname = usePathname() || '';
-  const [userEmail, setUserEmail] = useState<string | null>(null);
-  const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  // Ganti mounted -> isLoading untuk placeholder terkontrol (hindari SSR null)
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const init = async () => {
-      setIsLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      setUserEmail(user?.email ?? null);
-      if (user) {
-        const { data } = await supabase
-          .from('admin_users')
-          .select('auth_user_id')
-          .eq('auth_user_id', user.id)
-          .maybeSingle();
-        setIsAdmin(Boolean(data));
-      } else {
-        setIsAdmin(false);
-      }
-      setIsLoading(false);
-    };
-    init();
-
-    const { data: sub } = supabase.auth.onAuthStateChange(async () => {
-      await init();
-    });
-    return () => {
-      sub.subscription.unsubscribe();
-    };
-  }, []);
-
-  // removed unused logout function to satisfy lint
 
   const isActive = (href: string) => {
     if (href === '/') return pathname === '/';
@@ -135,46 +128,10 @@ export default function Header() {
               Kontak
             </Link>
           </nav>
-          
+
           {/* Desktop Action Buttons */}
           <div className="hidden lg:flex items-center space-x-4">
-            {isLoading ? (
-              <div className="h-10 w-40 rounded-lg bg-gray-100 animate-pulse border-2 border-gray-200" aria-hidden />
-            ) : (
-              <>
-                {!userEmail && (
-                  <Link
-                    href="/login"
-                    className={`px-4 py-2 rounded-lg font-medium transition-all transform hover:scale-105 shadow-md border-2 ${
-                      isActive('/login') 
-                        ? 'bg-orange-600 text-white border-orange-600 shadow-lg' 
-                        : 'bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    🔐 Masuk atau Daftar
-                  </Link>
-                )}
-                {userEmail && (
-                  <div className="flex items-center gap-2">
-                    {isAdmin && (
-                      <Link href="/admin-dashboard" className="px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium border-2 border-gray-200 shadow-md">Dashboard</Link>
-                    )}
-                  </div>
-                )}
-                {userEmail && !isAdmin && (
-                  <Link
-                    href="/user-dashboard"
-                    className={`px-3 py-2 rounded-lg font-medium transition-all border-2 shadow-md ${
-                      pathname === '/user-dashboard'
-                        ? 'bg-blue-600 text-white border-blue-600 shadow-lg'
-                        : 'bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200 hover:border-blue-300'
-                    }`}
-                  >
-                    Dashboard Saya
-                  </Link>
-                )}
-              </>
-            )}
+            <DesktopAuthButtons isLoginActive={isActive('/login')} pathname={pathname} />
 
             {/* Konsultasi button removed on desktop to prevent overlap */}
           </div>
@@ -274,51 +231,11 @@ export default function Header() {
 
             {/* Mobile Action Buttons (centered) */}
             <div className="space-y-3 flex flex-col items-center">
-              {isLoading ? (
-                <div className="inline-flex w-11/12 max-w-xs h-10 rounded-lg bg-gray-100 animate-pulse border-2 border-gray-200" aria-hidden />
-              ) : (
-                <>
-                  {!userEmail && (
-                    <Link
-                      href="/login"
-                      className={`inline-flex w-11/12 max-w-xs justify-center text-center px-4 py-2 rounded-lg font-medium transition-all border-2 shadow-md ${
-                        isActive('/login') 
-                          ? 'bg-orange-600 text-white border-orange-600 shadow-lg' 
-                          : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200 hover:border-gray-300 shadow-md'
-                      }`}
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      🔐 Masuk atau Daftar
-                    </Link>
-                  )}
-                  {userEmail && (
-                    <div className="space-y-2 flex flex-col items-center">
-                      {isAdmin && (
-                        <Link 
-                          href="/admin-dashboard" 
-                          className="inline-flex w-11/12 max-w-xs justify-center text-center px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium border-2 border-gray-200 shadow-md"
-                          onClick={() => setMobileMenuOpen(false)}
-                        >
-                          Dashboard
-                        </Link>
-                      )}
-                    </div>
-                  )}
-                  {userEmail && !isAdmin && (
-                    <Link
-                      href="/user-dashboard"
-                      className={`inline-flex w-11/12 max-w-xs justify-center text-center px-3 py-2 rounded-lg font-medium transition-all border-2 shadow-md ${
-                        pathname === '/user-dashboard'
-                          ? 'bg-blue-600 text-white border-blue-600 shadow-lg'
-                          : 'bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200 hover:border-blue-300'
-                      }`}
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      Dashboard Saya
-                    </Link>
-                  )}
-                </>
-              )}
+              <MobileAuthButtons
+                isLoginActive={isActive('/login')}
+                pathname={pathname}
+                onNavigate={() => setMobileMenuOpen(false)}
+              />
 
               <button
                 className="w-11/12 max-w-xs bg-orange-500 text-white px-6 py-2 rounded-lg hover:bg-orange-600 transition-colors shadow-lg border-2 border-orange-500 hover:border-orange-600"
