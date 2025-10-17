@@ -205,7 +205,7 @@ export default function RootLayout({
         <Header />
 
         {/* Main Content */}
-        <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 overflow-x-hidden [overflow-x:clip]">
+        <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 overflow-x-hidden [overflow-x:clip] pt-20 lg:pt-20">
           <div className="min-w-0 overflow-x-hidden [overflow-x:clip]">
             {children}
             <Toaster richColors />
