@@ -49,7 +49,7 @@ export default function Header() {
   };
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50 border-b border-orange-100/60 bg-white/95 shadow-md supports-[backdrop-filter]:bg-white/80 supports-[backdrop-filter]:backdrop-blur">
+    <header className="fixed inset-x-0 top-0 z-50 border-b border-orange-100 bg-white shadow-md supports-[backdrop-filter]:bg-white supports-[backdrop-filter]:backdrop-blur">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-4">
           {/* Logo dan Nama Bengkel sebagai Link ke / */}

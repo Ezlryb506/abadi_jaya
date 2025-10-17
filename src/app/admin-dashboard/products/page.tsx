@@ -202,7 +202,7 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen w-full max-w-full px-3 md:px-4 lg:px-6 py-4 md:py-6 overflow-x-hidden [overflow-x:clip]">
+    <div className="min-h-screen w-full max-w-full px-3 md:px-4 lg:px-6 py-4 md:py-6 [overflow-x:clip]">
       <div className="space-y-5 md:space-y-6 min-w-0">
         {/* Toolbar Admin */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-3 min-w-0">

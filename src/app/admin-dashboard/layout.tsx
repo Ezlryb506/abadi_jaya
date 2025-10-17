@@ -135,7 +135,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen flex bg-gradient-to-br from-gray-50 via-orange-50 to-white overflow-x-hidden [overflow-x:clip]">
+    <div className="min-h-screen flex bg-gradient-to-br from-gray-50 via-orange-50 to-white [overflow-x:clip]">
       {/* Mobile Header Bar */}
       <div className="xl:hidden fixed top-20 left-4 z-50">
         <button
@@ -218,7 +218,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       )}
 
       {/* Main Content */}
-      <main className="flex-1 min-w-0 p-4 lg:p-8 pt-16 lg:pt-8 overflow-x-hidden">
+      <main className="flex-1 min-w-0 p-4 lg:p-8 pt-16 lg:pt-8">
         {children}
       </main>
     </div>

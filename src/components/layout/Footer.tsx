@@ -11,8 +11,8 @@ export default function Footer() {
   useEffect(() => setMounted(true), []);
   return (
     // kontainer footer
-    <footer id="kontak" className="bg-gray-800 text-white py-7 overflow-x-hidden [overflow-x:clip]">
-      <div className="max-w-7xl mx-auto px-6 sm:px-6 lg:px-8 w-full overflow-x-hidden [overflow-x:clip]">
+    <footer id="kontak" className="bg-gray-800 text-white py-7 [overflow-x:clip]">
+      <div className="max-w-7xl mx-auto px-6 sm:px-6 lg:px-8 w-full [overflow-x:clip]">
 
         {/* {3 grid konten} */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 min-w-0 md:divide-x md:divide-gray-700">
